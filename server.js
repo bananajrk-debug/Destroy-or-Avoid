@@ -12,10 +12,11 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/healthz', (req, res) => res.send('ok'));
 
 // ---------- 定数 ----------
-// マップ: 従来(32x20)の約4倍の面積。迷路ノードは「通路幅3マス + 壁1マス」の周期4で構成
-const CELL = 50, COLS = 65, ROWS = 41;
+// マップ: 正方形に近いコンパクトな横長 (33 x 21)。迷路ノードは「通路幅3マス + 壁1マス」の周期4で構成
+const CELL = 50, COLS = 33, ROWS = 21;
 const W = COLS * CELL, H = ROWS * CELL;
-const NX = (COLS - 1) / 4, NY = (ROWS - 1) / 4; // 16 x 10 ノード
+const NX = (COLS - 1) / 4, NY = (ROWS - 1) / 4; // 8 x 5 ノード
+const CX = (COLS - 1) / 2, CY = (ROWS - 1) / 2;  // 中央セル (16, 10)
 const TICK_RATE = 30;
 const GAME_MS = 10 * 60 * 1000;
 const SPEED = 230, SPEED_CORE = 130, PR = 16, REACH = 70;
@@ -23,7 +24,11 @@ const SLOT_MAX = 3, MIN_PLAYERS = 2, MAX_PLAYERS = 10, MAX_IMPOSTERS = 3;
 const KILL_RANGE = 95, REPORT_RANGE = 110, BTN_RANGE = 90;
 const KILL_CD = 20000, FIRST_KILL_CD = 15000, SAB_CD = 45000, SAB_PCT = 5;
 const BTN_LOCK = 10000;
-const DISCUSS_MS = 20000, VOTE_MS = 30000, RESULT_MS = 6000, END_AUTO_MS = 25000;
+const DISCUSS_MS = 20000, VOTE_MS = 30000, END_AUTO_MS = 25000;
+const RESULT_EJ_MS = 9500;   // 追放あり: 票の集計表示(約3秒) + 宇宙追放アニメ(約6秒)
+const RESULT_NO_MS = 4500;   // 追放なし
+const REVEAL_MS = 5800;      // ロール発表アニメの長さ (この間は全員停止・タイマー停止)
+const KILL_FX_MS = 2000;     // キル演出の長さ (加害者・被害者のみ停止)
 const ACTIVE_TASKS = 3, ACTION_MIN = 60;
 const MIN_MINI = { weld: 6000, seq: 700, alt: 1200, space: 800 }; // ミニゲーム最短受理時間
 const MINI_TIMEOUT = 90000;
@@ -31,6 +36,8 @@ const MINI_TIMEOUT = 90000;
 const cp = (c, r) => ({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 });
 const ITEM_NAME = { fuse: 'ヒューズ', battery: 'バッテリー', core: 'プラズマコア' };
 const COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac', '#a9e34b', '#c08457'];
+// 頭の上のアクセサリー
+const ACCS = ['none', 'duck', 'poop', 'crown', 'halo', 'tophat', 'sprout'];
 
 // ---------- タスクプール（全15個。座標はマップ生成ごとにランダム配置） ----------
 // kind: carry(運搬) / weld(溶接) / seq(数字順押し) / alt(K/O交互連打) / space(SPACE連打)
@@ -60,9 +67,9 @@ function shuffle(a) {
 }
 
 // ---------- ランダム迷路生成 ----------
-// 1) 16x10 のノード(3x3の部屋)を再帰バックトラックで接続(必ず全ノードが連結)
+// 1) 8x5 のノード(3x3の部屋)を再帰バックトラックで接続(必ず全ノードが連結)
 // 2) ループ追加(braid) + 行き止まり除去で回遊しやすくする
-// 3) ランダムな大部屋と、中央の緊急会議ボタン広場(9x9)を完全に開放
+// 3) ランダムな大部屋と、マップ真中央の広場(7x5、中央3x3は絶対に壁なし)を開放し、中心に緊急招集ボタン
 // 4) 設備(供給所3 + タスク15)をノード中心に間隔を空けて配置、到達性を検証
 function buildLayout() {
   const hE = Array.from({ length: NY }, () => Array(NX - 1).fill(false)); // hE[j][i]: (i,j)-(i+1,j)
@@ -93,8 +100,8 @@ function buildLayout() {
     st.push([cand[0][0], cand[0][1]]);
   }
   // 2) ループ追加 & 行き止まり除去
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX - 1; i++) if (!hE[j][i] && Math.random() < 0.1) hE[j][i] = true;
-  for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX; i++) if (!vE[j][i] && Math.random() < 0.1) vE[j][i] = true;
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX - 1; i++) if (!hE[j][i] && Math.random() < 0.12) hE[j][i] = true;
+  for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX; i++) if (!vE[j][i] && Math.random() < 0.12) vE[j][i] = true;
   for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
     if (deg(i, j) <= 1 && Math.random() < 0.6) {
       const closed = nbrs(i, j).filter(n => !isOpen(n));
@@ -108,14 +115,15 @@ function buildLayout() {
   for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) carve(4 * i + 1, 4 * j + 1, 4 * i + 3, 4 * j + 3);
   for (let j = 0; j < NY; j++) for (let i = 0; i < NX - 1; i++) if (hE[j][i]) carve(4 * (i + 1), 4 * j + 1, 4 * (i + 1), 4 * j + 3);
   for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX; i++) if (vE[j][i]) carve(4 * i + 1, 4 * (j + 1), 4 * i + 3, 4 * (j + 1));
-  // 3) 大部屋(7x7)をランダムに数個
-  for (let k = 0; k < 4; k++) { const i = rand(NX - 1), j = rand(NY - 1); carve(4 * i + 1, 4 * j + 1, 4 * i + 7, 4 * j + 7); }
-  // 中央広場 (緊急会議ボタン)
-  carve(28, 16, 36, 24);
-  const button = cp(32, 20);
+  // 3) 大部屋(7x7)をランダムに2つ
+  for (let k = 0; k < 2; k++) { const i = rand(NX - 1), j = rand(NY - 1); carve(4 * i + 1, 4 * j + 1, 4 * i + 7, 4 * j + 7); }
+  // 中央広場 (7x5)。中央3x3は絶対に壁を置かない。ここに緊急招集ボタン
+  carve(CX - 3, CY - 2, CX + 3, CY + 2);
+  carve(CX - 1, CY - 1, CX + 1, CY + 1);
+  const button = cp(CX, CY);
 
   // 4) 設備配置 (広場のノードは除外)
-  const inPlaza = (i, j) => (i === 7 || i === 8) && (j === 4 || j === 5);
+  const inPlaza = (i, j) => (i === 3 || i === 4) && j === 2;
   const cand = [];
   for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) if (!inPlaza(i, j)) cand.push([i, j]);
   shuffle(cand);
@@ -128,6 +136,7 @@ function buildLayout() {
       if (picked.every(p => Math.max(Math.abs(p[0] - n[0]), Math.abs(p[1] - n[1])) >= dmin)) picked.push(n);
     }
   }
+  if (picked.length < need) return null;
   shuffle(picked);
   const at = (n) => cp(4 * n[0] + 2, 4 * n[1] + 2);
   const stations = { fuse: at(picked[0]), battery: at(picked[1]), core: at(picked[2]) };
@@ -135,8 +144,8 @@ function buildLayout() {
 
   // 到達性チェック
   const seen = new Set();
-  const q = [[32, 20]];
-  seen.add(20 * COLS + 32);
+  const q = [[CX, CY]];
+  seen.add(CY * COLS + CX);
   for (let i = 0; i < q.length; i++) {
     const [c, r] = q[i];
     for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -147,6 +156,8 @@ function buildLayout() {
   }
   const all = [...taskDefs, ...Object.values(stations)];
   if (!all.every(d => seen.has(Math.floor(d.y / CELL) * COLS + Math.floor(d.x / CELL)))) return null;
+  // 中央3x3に壁が無いことの最終確認
+  for (let r = CY - 1; r <= CY + 1; r++) for (let c = CX - 1; c <= CX + 1; c++) if (grid[r][c]) return null;
   return { grid, button, stations, taskDefs };
 }
 
@@ -241,6 +252,8 @@ const emitRoom = (room, ev, data) => io.to(room.code).emit(ev, data);
 const participants = (room) => [...room.players.values()].filter(p => !p.late);
 const hostId = (room) => { let h = null; for (const p of room.players.values()) if (!h || p.joinOrder < h.joinOrder) h = p; return h ? h.id : null; };
 const impMax = (n) => Math.max(1, Math.min(MAX_IMPOSTERS, Math.floor((n - 1) / 2)));
+const brief = (p) => ({ id: p.id, name: p.name, c: p.color, ac: p.acc });
+const frozen = (p, now) => now < (p.frozenUntil || 0);
 
 const hasItem = (p, t) => p.slots.some(s => s.t === t);
 const removeItem = (p, t) => { if (!hasItem(p, t)) return false; p.slots = p.slots.filter(s => s.t !== t); return true; };
@@ -250,6 +263,7 @@ function ringPos(room, i, n, rad) {
   const a = (i / Math.max(1, n)) * Math.PI * 2;
   return { x: room.button.x + Math.cos(a) * rad, y: room.button.y + Math.sin(a) * rad };
 }
+const RING = 90; // 広場(7x5)の内側に収まる半径
 
 // ---------- タスク割り当て ----------
 function newTask(room, p) {
@@ -278,11 +292,11 @@ function completeTask(room, p, id) {
 
 // ---------- 開始・終了 ----------
 function resetPlayer(room, p, i, n) {
-  const pos = ringPos(room, i, n, 110);
+  const pos = ringPos(room, i, n, RING);
   p.x = pos.x; p.y = pos.y;
   p.alive = true; p.slots = []; p.mini = null; p.input = { x: 0, y: 0 };
   p.tasks = []; p.doneTasks = new Set(); p.moving = false;
-  p.emUsed = false;
+  p.emUsed = false; p.frozenUntil = 0;
 }
 
 function startGame(room) {
@@ -290,21 +304,30 @@ function startGame(room) {
   const part = participants(room);
   if (part.length < MIN_PLAYERS) return;
   const now = Date.now();
+  const start = now + REVEAL_MS;           // ロール発表アニメが終わるまで全員停止・タイマー停止
   applyLayout(room);                       // 毎ゲーム新しいランダム迷路
   emitRoom(room, 'map', mapPayload(room));
   g.phase = 'playing';
   g.progress = 0; g.result = null; g.bodies = []; g.meeting = null;
-  g.endsAt = now + GAME_MS;
-  g.noMeetingUntil = now + BTN_LOCK;
+  g.endsAt = start + GAME_MS;
+  g.noMeetingUntil = start + BTN_LOCK;
   const nImp = Math.min(room.impCount, impMax(part.length));
   const imps = new Set(shuffle([...part]).slice(0, nImp));
   part.forEach((p, i) => {
     resetPlayer(room, p, i, part.length);
     p.role = imps.has(p) ? 'imposter' : 'crew';
-    p.killReady = now + FIRST_KILL_CD;
-    p.sabReady = now + 30000;
+    p.killReady = start + FIRST_KILL_CD;
+    p.sabReady = start + 30000;
+    p.frozenUntil = start;
     fillTasks(room, p);
   });
+  const impList = part.filter(p => p.role === 'imposter');
+  for (const p of part) {
+    io.to(p.id).emit('roleReveal', {
+      role: p.role, me: brief(p), nImp: impList.length, nPlayers: part.length, ms: REVEAL_MS,
+      team: p.role === 'imposter' ? impList.filter(x => x !== p).map(brief) : [],
+    });
+  }
   emitRoom(room, 'sfx', 'start');
 }
 
@@ -312,12 +335,12 @@ function endGame(room, winner, reason) {
   const g = room.game;
   if (g.phase === 'end' || g.phase === 'lobby') return true;
   const now = Date.now();
-  g.remainAtEnd = Math.max(0, g.endsAt - (g.meeting ? g.meeting.startAt : now));
+  g.remainAtEnd = Math.max(0, Math.min(GAME_MS, g.endsAt - (g.meeting ? g.meeting.startAt : now)));
   g.phase = 'end';
   g.meeting = null;
   g.endedAt = now;
   g.result = { winner, reason };
-  for (const p of room.players.values()) { cancelMini(p); p.input = { x: 0, y: 0 }; p.moving = false; }
+  for (const p of room.players.values()) { cancelMini(p); p.input = { x: 0, y: 0 }; p.moving = false; p.frozenUntil = 0; }
   emitRoom(room, 'sfx', winner === 'crew' ? 'win' : 'lose');
   return true;
 }
@@ -327,7 +350,7 @@ function toLobby(room) {
   g.phase = 'lobby'; g.meeting = null; g.bodies = []; g.result = null;
   g.remainAtEnd = GAME_MS; g.progress = 0;
   for (const p of room.players.values()) {
-    p.late = false; p.ready = false; p.role = null; p.alive = true;
+    p.late = false; p.ready = false; p.role = null; p.alive = true; p.frozenUntil = 0;
     p.slots = []; p.tasks = []; p.mini = null; p.input = { x: 0, y: 0 }; p.moving = false;
   }
 }
@@ -351,12 +374,12 @@ function startMeeting(room, caller, reason) {
   const g = room.game;
   const now = Date.now();
   g.phase = 'meeting';
-  g.meeting = { mode: 'discuss', startAt: now, modeEnds: now + DISCUSS_MS, votes: new Map(), reason, callerName: caller.name, result: null };
+  g.meeting = { mode: 'discuss', startAt: now, modeEnds: now + DISCUSS_MS, votes: new Map(), reason, callerName: caller.name, result: null, dur: 0 };
   if (reason === 'button') caller.emUsed = true;
   const part = participants(room);
   part.forEach((p, i) => {
-    cancelMini(p); p.input = { x: 0, y: 0 }; p.moving = false;
-    const pos = ringPos(room, i, part.length, 120);
+    cancelMini(p); p.input = { x: 0, y: 0 }; p.moving = false; p.frozenUntil = 0;
+    const pos = ringPos(room, i, part.length, RING);
     p.x = pos.x; p.y = pos.y;
   });
   emitRoom(room, 'sfx', 'meeting');
@@ -378,11 +401,16 @@ function resolveVotes(room, now) {
   let ej = null;
   if (top.length === 1 && max > skip) {
     const t = room.players.get(top[0]);
-    if (t) { t.alive = false; cancelMini(t); ej = { id: t.id, name: t.name, c: t.color, imp: t.role === 'imposter' }; }
+    if (t) {
+      t.alive = false; cancelMini(t);
+      const left = participants(room).filter(x => x.alive && x.role === 'imposter').length;
+      ej = { id: t.id, name: t.name, c: t.color, ac: t.acc, imp: t.role === 'imposter', left };
+    }
   }
   m.result = { ej, tally: Object.entries(counts), skip };
   m.mode = 'result';
-  m.modeEnds = now + RESULT_MS;
+  m.dur = ej ? RESULT_EJ_MS : RESULT_NO_MS;
+  m.modeEnds = now + m.dur;
 }
 
 function endMeeting(room, now) {
@@ -414,6 +442,7 @@ function doAction(room, p) {
   const g = room.game;
   if (g.phase !== 'playing' || p.late || p.mini) return;
   const now = Date.now();
+  if (frozen(p, now)) return;
   if (now - p.lastAct < ACTION_MIN) return;
   p.lastAct = now;
 
@@ -464,7 +493,7 @@ function doAction(room, p) {
 
 function doReport(room, p) {
   const g = room.game;
-  if (g.phase !== 'playing' || p.late || !p.alive) return;
+  if (g.phase !== 'playing' || p.late || !p.alive || frozen(p, Date.now())) return;
   const b = g.bodies.find(b => dist(p, b) <= REPORT_RANGE);
   if (!b) { toast(p, '近くに死体がない', 'error'); return; }
   startMeeting(room, p, 'body');
@@ -474,7 +503,7 @@ function doKill(room, p) {
   const g = room.game;
   if (g.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter') return;
   const now = Date.now();
-  if (now < p.killReady) return;
+  if (frozen(p, now) || now < p.killReady) return;
   let best = null, bd = KILL_RANGE;
   for (const v of participants(room)) {
     if (v === p || !v.alive || v.role === 'imposter') continue;
@@ -484,12 +513,18 @@ function doKill(room, p) {
   if (!best) { toast(p, '範囲内にターゲットがいない', 'error'); return; }
   best.alive = false;
   cancelMini(best);
-  g.bodies.push({ id: g.nextBody++, x: Math.round(best.x), y: Math.round(best.y), c: best.color });
+  best.input = { x: 0, y: 0 }; best.moving = false;
+  g.bodies.push({ id: g.nextBody++, x: Math.round(best.x), y: Math.round(best.y), c: best.color, ac: best.acc });
   p.x = best.x; p.y = best.y;
+  p.input = { x: 0, y: 0 }; p.moving = false;
   p.killReady = now + KILL_CD;
-  io.to(best.id).emit('sfx', 'kill');
+  // キル演出: 加害者と被害者だけに赤いカットインを再生 (その間は2人とも停止)
+  p.frozenUntil = now + KILL_FX_MS;
+  best.frozenUntil = now + KILL_FX_MS;
+  const base = { killer: brief(p), victim: brief(best), ms: KILL_FX_MS };
+  io.to(p.id).emit('killCut', { ...base, you: 'killer' });
+  io.to(best.id).emit('killCut', { ...base, you: 'victim' });
   io.to(best.id).emit('toast', { text: 'あなたはキルされた… (霊としてタスクは続けられる)', kind: 'error' });
-  io.to(p.id).emit('sfx', 'kill');
   checkWin(room, true);
 }
 
@@ -497,7 +532,7 @@ function doSabotage(room, p) {
   const g = room.game;
   if (g.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter') return;
   const now = Date.now();
-  if (now < p.sabReady) return;
+  if (frozen(p, now) || now < p.sabReady) return;
   p.sabReady = now + SAB_CD;
   g.progress = Math.max(0, g.progress - SAB_PCT);
   emitRoom(room, 'sfx', 'alarm');
@@ -530,6 +565,7 @@ function tickRoom(room, now, dt) {
     for (const p of room.players.values()) {
       if (p.late) continue;
       if (p.mini && now - p.mini.start > MINI_TIMEOUT) cancelMini(p);
+      if (frozen(p, now)) { p.moving = false; continue; } // 演出中は動けない
       if (p.mini) { p.moving = false; continue; }
       const len = Math.hypot(p.input.x, p.input.y);
       p.moving = len > 0;
@@ -556,8 +592,8 @@ function tickRoom(room, now, dt) {
 function meetView(room, v, now, part) {
   const m = room.game.meeting;
   return {
-    mode: m.mode, t: Math.max(0, m.modeEnds - now), reason: m.reason, caller: m.callerName,
-    roster: part.map(p => ({ id: p.id, name: p.name, c: p.color, a: p.alive, voted: m.votes.has(p.id) })),
+    mode: m.mode, t: Math.max(0, m.modeEnds - now), dur: m.dur || 0, reason: m.reason, caller: m.callerName,
+    roster: part.map(p => ({ id: p.id, name: p.name, c: p.color, ac: p.acc, a: p.alive, voted: m.votes.has(p.id) })),
     my: m.votes.get(v.id) || null,
     res: m.result,
   };
@@ -566,8 +602,8 @@ function meetView(room, v, now, part) {
 function broadcast(room, now) {
   const g = room.game;
   let remain = GAME_MS;
-  if (g.phase === 'playing') remain = Math.max(0, g.endsAt - now);
-  else if (g.phase === 'meeting') remain = Math.max(0, g.endsAt - g.meeting.startAt);
+  if (g.phase === 'playing') remain = Math.min(GAME_MS, Math.max(0, g.endsAt - now));
+  else if (g.phase === 'meeting') remain = Math.min(GAME_MS, Math.max(0, g.endsAt - g.meeting.startAt));
   else if (g.phase === 'end') remain = g.remainAtEnd;
 
   const part = participants(room);
@@ -576,13 +612,13 @@ function broadcast(room, now) {
   let lobby = null;
   if (g.phase === 'lobby') {
     lobby = [...room.players.values()].sort((a, b) => a.joinOrder - b.joinOrder)
-      .map(p => ({ id: p.id, name: p.name, c: p.color, ready: p.ready, host: p.id === host }));
+      .map(p => ({ id: p.id, name: p.name, c: p.color, ac: p.acc, ready: p.ready, host: p.id === host }));
     const mx = impMax(room.players.size);
     base.cfg = { imp: Math.min(room.impCount, mx), impMax: mx };
   }
   const bodies = g.bodies;
   const playersView = g.phase === 'lobby' ? null : part.map(p => ({
-    id: p.id, name: p.name, c: p.color, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face,
+    id: p.id, name: p.name, c: p.color, ac: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face,
   }));
   const roleOf = new Map(part.map(p => [p.id, p.role]));
 
@@ -605,7 +641,7 @@ function broadcast(room, now) {
       msg.players = list;
       msg.bodies = bodies;
       if (g.phase === 'meeting') msg.meet = meetView(room, v, now, part);
-      if (g.phase === 'end') msg.roster = part.map(p => ({ id: p.id, name: p.name, c: p.color, role: p.role, a: p.alive }));
+      if (g.phase === 'end') msg.roster = part.map(p => ({ id: p.id, name: p.name, c: p.color, ac: p.acc, role: p.role, a: p.alive }));
     }
     io.to(v.id).volatile.emit('state', msg);
   }
@@ -615,7 +651,7 @@ setInterval(tick, 1000 / TICK_RATE);
 
 // ---------- Socket.io ----------
 io.on('connection', (socket) => {
-  socket.emit('init', { you: socket.id, REACH, SLOT_MAX, GAME_MS, ITEM_NAME, COLORS });
+  socket.emit('init', { you: socket.id, REACH, SLOT_MAX, GAME_MS, ITEM_NAME, COLORS, ACCS });
 
   const R = () => rooms.get(socket.data.code);
   const P = () => { const r = R(); return r ? r.players.get(socket.id) : null; };
@@ -627,14 +663,15 @@ io.on('connection', (socket) => {
     const name = String((d && d.name) || '').replace(/[<>]/g, '').trim().slice(0, 10) || ('P' + room.joinCounter);
     let color = d && COLORS.includes(d.color) && !used.has(d.color) ? d.color : null;
     if (!color) color = COLORS.find(c => !used.has(c)) || COLORS[room.joinCounter % COLORS.length];
+    const acc = d && ACCS.includes(d.acc) ? d.acc : 'none';
     const late = room.game.phase !== 'lobby';
     const p = {
-      id: socket.id, num: room.joinCounter, joinOrder: room.joinCounter, name, color,
+      id: socket.id, num: room.joinCounter, joinOrder: room.joinCounter, name, color, acc,
       x: room.button.x, y: room.button.y + 100, face: 1, moving: false,
       ready: false, late, role: null, alive: !late,
       tasks: [], doneTasks: new Set(), slots: [], mini: null,
       input: { x: 0, y: 0 }, lastAct: 0, lastDisc: 0, lastChat: 0,
-      killReady: 0, sabReady: 0, emUsed: false,
+      killReady: 0, sabReady: 0, emUsed: false, frozenUntil: 0,
     };
     room.players.set(socket.id, p);
     socket.join(room.code);
@@ -657,6 +694,13 @@ io.on('connection', (socket) => {
     const room = rooms.get(code);
     if (!room) { socket.emit('joinError', 'そのコードのロビーは見つかりません'); return; }
     enter(room, d);
+  });
+
+  // ロビー中のみアクセサリー変更可
+  socket.on('setAcc', (id) => {
+    const p = P(), room = R();
+    if (!p || room.game.phase !== 'lobby' || !ACCS.includes(id)) return;
+    p.acc = id;
   });
 
   socket.on('input', (d) => {
@@ -739,4 +783,4 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => console.log(`Destroy or Avoid v5 (rooms + random maze) running on :${PORT}`));
+server.listen(PORT, () => console.log(`Destroy or Avoid v6 (cutscenes + accessories + compact maze) running on :${PORT}`));
