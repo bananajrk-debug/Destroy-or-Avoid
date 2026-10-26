@@ -7,51 +7,67 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #0f0f1a;
+      background: #0b0b16;
       color: #fff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       min-height: 100vh;
-      padding: 20px;
+      overflow: hidden;
     }
-    h1 { margin-bottom: 10px; text-shadow: 0 0 10px #4d96ff; }
-    #ui-panel {
-      margin-bottom: 15px;
+    /* タイトル画面オーバーレイ */
+    #title-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(11, 11, 22, 0.95);
       display: flex;
-      gap: 15px;
+      flex-direction: column;
       align-items: center;
-      background: #1e1e2f;
-      padding: 10px 20px;
-      border-radius: 8px;
+      justify-content: center;
+      z-index: 10;
+      gap: 20px;
     }
-    button {
-      padding: 8px 16px;
+    h1 { font-size: 3rem; text-shadow: 0 0 20px #4d96ff; }
+    .btn {
+      padding: 12px 30px;
+      font-size: 1.2rem;
       background: #ff4d4d;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255,77,77,0.4);
     }
-    button:hover { background: #ff6666; }
-    #canvas-container { position: relative; }
-    canvas {
-      background: #181824;
-      border: 3px solid #33334d;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.8);
-    }
-    #status-box {
-      font-size: 1.2rem;
+    .btn:hover { background: #ff6666; }
+
+    /* 中央上部タイマー */
+    #timer-bar {
+      position: absolute;
+      top: 15px;
+      font-size: 1.8rem;
       font-weight: bold;
       color: #ffd93d;
+      background: #1e1e2f;
+      padding: 5px 25px;
+      border-radius: 20px;
+      border: 2px solid #33334d;
+      z-index: 5;
     }
+
+    canvas {
+      background: #141422;
+      border: 4px solid #33334d;
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    }
+
     .instructions {
-      margin-top: 15px;
-      color: #aaa;
-      font-size: 0.9rem;
+      margin-top: 10px;
+      color: #888;
+      font-size: 0.85rem;
       text-align: center;
     }
   </style>
@@ -59,81 +75,56 @@
 </head>
 <body>
 
-  <h1>🚀 Destroy or Avoid</h1>
-
-  <div id="ui-panel">
-    <div>
-      <label>難易度: </label>
-      <select id="diffSelect" onchange="changeConfig()">
-        <option value="EASY">Easy</option>
-        <option value="NORMAL" selected>Normal</option>
-        <option value="HARD">Hard</option>
-      </select>
-    </div>
-    <div>
-      <label>目標ルート: </label>
-      <button style="background:#ff4d4d;" onclick="selectRoute('DESTROY')">⚙️ Destroy (エンジン)</button>
-      <button style="background:#4d96ff;" onclick="selectRoute('AVOID')">🪽 Avoid (羽)</button>
-    </div>
-    <button onclick="startGame()" style="background:#6bcb77;">ゲーム開始</button>
+  <!-- タイトル画面 -->
+  <div id="title-screen">
+    <h1>🚀 Destroy or Avoid</h1>
+    <p style="color: #aaa; font-size: 1.1rem;">隕石衝突まで5分！仲間と協力してエンジンか羽を直せ！</p>
+    <button class="btn" onclick="startGame()">ゲームスタート</button>
   </div>
 
-  <div id="status-box">準備中...</div>
+  <!-- 中央上部の制限時間 -->
+  <div id="timer-bar">残り時間: 05:00</div>
 
-  <div id="canvas-container">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-  </div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <div class="instructions">
-    操作方法: [WASD] または [矢印キー] で移動 | [Space] キーで資材取得/クラフト/作業/手放す
+    移動: [WASD] または [矢印キー] | アクション・タスク連打: [Space] キー
   </div>
 
   <script>
     const socket = io();
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const statusBox = document.getElementById('status-box');
+    const titleScreen = document.getElementById('title-screen');
+    const timerBar = document.getElementById('timer-bar');
 
     let localState = null;
-    let myPos = { x: 100, y: 200 };
+    let myPos = { x: 400, y: 300 };
     const keys = {};
-
-    // エリアの定義 (X, Y, Width, Height)
-    const AREAS = {
-      SCRAP_BOX:   { x: 50,  y: 50,  w: 100, h: 80, label: '鉄くず箱', color: '#8b8b9e' },
-      CORE_BOX:    { x: 50,  y: 470, w: 100, h: 80, label: 'プラズマコア', color: '#ff6b6b' },
-      CRAFT_BENCH: { x: 350, y: 50,  w: 120, h: 80, label: '作業台', color: '#ffd93d' },
-      WORK_STATION:{ x: 650, y: 230, w: 100, h: 140, label: '修理ステーション', color: '#4d96ff' }
-    };
 
     socket.on('stateUpdate', (state) => {
       localState = state;
-      updateUI();
+      
+      // タイトル画面の表示切り替え
+      if (state.status === 'TITLE') {
+        titleScreen.style.display = 'flex';
+      } else {
+        titleScreen.style.display = 'none';
+      }
+
+      // タイマー表示更新
+      const mins = Math.floor(state.timer / 60).toString().padStart(2, '0');
+      const secs = (state.timer % 60).toString().padStart(2, '0');
+      timerBar.innerText = `残り時間: ${mins}:${secs}`;
+
+      if (state.status === 'WIN') {
+        timerBar.innerText = '🎉 ミッション成功！クリア！';
+      } else if (state.status === 'LOSE') {
+        timerBar.innerText = '💥 隕石が激突しました... (GAMEOVER)';
+      }
+
       render();
     });
-
-    function updateUI() {
-      if (!localState) return;
-      
-      let text = `状態: ${localState.status} | 選択ルート: ${localState.route || '未選択'}`;
-      if (localState.status === 'METEOR_APPROACH') {
-        text += ` | ⚠️ 巨大隕石衝突まで: ${localState.meteorTimer}秒`;
-      } else if (localState.status === 'WIN') {
-        text = '🎉 ミッション成功！隕石の回避/破壊に成功しました！';
-      } else if (localState.status === 'LOSE') {
-        text = '💥 ミッション失敗... 隕石が激突しました！';
-      }
-      statusBox.innerText = text;
-    }
-
-    function selectRoute(route) {
-      socket.emit('setGameConfig', { route });
-    }
-
-    function changeConfig() {
-      const difficulty = document.getElementById('diffSelect').value;
-      socket.emit('setGameConfig', { difficulty });
-    }
 
     function startGame() {
       socket.emit('startGame');
@@ -143,34 +134,19 @@
     window.addEventListener('keydown', (e) => {
       keys[e.key] = true;
       if (e.key === ' ') {
-        handleAction();
+        socket.emit('action');
       }
     });
     window.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
-    // アクションキー処理
-    function handleAction() {
-      let nearArea = 'DROP';
-      for (const [key, area] of Object.entries(AREAS)) {
-        if (
-          myPos.x >= area.x - 30 && myPos.x <= area.x + area.w + 30 &&
-          myPos.y >= area.y - 30 && myPos.y <= area.y + area.h + 30
-        ) {
-          nearArea = key;
-          break;
-        }
-      }
-      socket.emit('action', { nearArea });
-    }
-
-    // ゲームループ（移動送信）
+    // 移動ループ
     setInterval(() => {
-      if (!localState) return;
+      if (!localState || localState.status !== 'PLAYING') return;
       const me = localState.players[socket.id];
       if (!me) return;
 
-      const isHeavy = me.holdingItem === 'PLATINUM_CORE';
-      const speed = isHeavy ? 2.5 : 5; // プラズマコア所持で鈍足化
+      const isHeavy = me.holdingItem === 'CORE';
+      const speed = isHeavy ? 2.5 : 5;
 
       let moved = false;
       if (keys['ArrowUp'] || keys['w']) { myPos.y -= speed; moved = true; }
@@ -186,36 +162,69 @@
       }
     }, 1000 / 30);
 
-    // 画面描画
+    // 描画処理
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // 1. 各エリア（ギミック）の描画
-      for (const [key, area] of Object.entries(AREAS)) {
-        ctx.fillStyle = area.color;
-        ctx.fillRect(area.x, area.y, area.w, area.h);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '14px sans-serif';
-        ctx.fillText(area.label, area.x + 10, area.y + 40);
-      }
-
       if (!localState) return;
 
-      // 2. タスク進捗の表示
-      if (localState.route) {
-        const activeTasks = localState.route === 'DESTROY' ? localState.tasks.destroy : localState.tasks.avoid;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '16px sans-serif';
-        ctx.fillText(`【現在のタスク: ${localState.route}】`, 300, 300);
+      // 1. エリアの描画
+      // 作業台
+      ctx.fillStyle = '#ffd93d';
+      ctx.fillRect(340, 40, 120, 70);
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('🛠 作業台 (要鉄くず3)', 342, 80);
 
-        activeTasks.forEach((t, i) => {
-          const status = t.completed ? '✅ 完了' : `${t.progress}%`;
-          ctx.fillText(`${i + 1}. ${t.name} (${t.heavy ? '重タスク' : '軽タスク'}): ${status}`, 300, 330 + (i * 25));
-        });
-      }
+      // エンジン修理 (DESTROY)
+      ctx.fillStyle = '#ff4d4d';
+      ctx.fillRect(80, 200, 140, 100);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('⚙️ エンジン (Destroy)', 85, 245);
 
-      // 3. プレイヤー描画
-      Object.values(localState.players).forEach((p) => {
+      // 羽修理 (AVOID)
+      ctx.fillStyle = '#4d96ff';
+      ctx.fillRect(580, 200, 140, 100);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('🪽 羽 (Avoid)', 615, 245);
+
+      // コア箱
+      ctx.fillStyle = '#9c27b0';
+      ctx.fillRect(60, 460, 90, 80);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('📦 プラズマコア', 65, 505);
+
+      // 2. マップ上の「鉄くず」描画
+      localState.scraps.forEach(scrap => {
+        if (scrap.active) {
+          ctx.fillStyle = '#b0bec5';
+          ctx.beginPath();
+          ctx.arc(scrap.x, scrap.y, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.stroke();
+          ctx.fillStyle = '#fff';
+          ctx.font = '10px sans-serif';
+          ctx.fillText('鉄', scrap.x - 5, scrap.y + 4);
+        }
+      });
+
+      // 3. タスク進捗の表示 (画面下部)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '13px sans-serif';
+      let dText = '【エンジン(Destroy)】 ';
+      localState.tasks.destroy.forEach(t => {
+        dText += `${t.name}(${t.clicks}/${t.maxClicks})${t.completed ? '✅ ' : '⬜ '}`;
+      });
+      ctx.fillText(dText, 30, 565);
+
+      let aText = '【羽(Avoid)】 ';
+      localState.tasks.avoid.forEach(t => {
+        aText += `${t.name}(${t.clicks}/${t.maxClicks})${t.completed ? '✅ ' : '⬜ '}`;
+      });
+      ctx.fillText(aText, 30, 585);
+
+      // 4. プレイヤーの描画
+      Object.values(localState.players).forEach(p => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
@@ -224,11 +233,14 @@
         ctx.strokeStyle = '#ffffff';
         ctx.stroke();
 
-        // 持ち手アイテムのテキスト描画
-        if (p.holdingItem) {
+        // 所持アイテム・鉄くず数の表示
+        let info = '';
+        if (p.scrapCount > 0) info += `鉄:${p.scrapCount}/3 `;
+        if (p.holdingItem) info += `[${p.holdingItem}]`;
+        if (info) {
           ctx.fillStyle = '#ffd93d';
           ctx.font = '12px sans-serif';
-          ctx.fillText(`📦 ${p.holdingItem}`, p.x - 25, p.y - 25);
+          ctx.fillText(info, p.x - 25, p.y - 25);
         }
       });
     }
