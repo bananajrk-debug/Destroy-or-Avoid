@@ -10,137 +10,135 @@ app.use(express.static(__dirname));
 
 // ゲーム状態データ
 let gameState = {
-  status: 'WAITING', // 'WAITING', 'PREPARATION', 'METEOR_APPROACH', 'WIN', 'LOSE'
-  route: null,      // 'DESTROY' (エンジン) or 'AVOID' (羽)
-  difficulty: 'NORMAL', // 'EASY', 'NORMAL', 'HARD'
-  meteorTimer: 60,  // 隕石激突までのカウントダウン（秒）
+  status: 'TITLE', // 'TITLE', 'PLAYING', 'WIN', 'LOSE'
+  timer: 300,      // 5分 (300秒)
+  // マップ上に落ちている鉄くず
+  scraps: [
+    { id: 1, x: 200, y: 120, active: true },
+    { id: 2, x: 600, y: 120, active: true },
+    { id: 3, x: 200, y: 480, active: true },
+    { id: 4, x: 600, y: 480, active: true }
+  ],
   tasks: {
-    // Destroyルート (エンジン): 重いタスク3, 軽いタスク2
+    // ⚙️ Destroy (エンジンルート): 5つのタスク
     destroy: [
-      { id: 'd1', name: 'プラズマコア抽出', heavy: true, completed: false, progress: 0 },
-      { id: 'd2', name: '高圧パイプ再接続', heavy: true, completed: false, progress: 0 },
-      { id: 'd3', name: '冷却液充填', heavy: true, completed: false, progress: 0 },
-      { id: 'd4', name: 'ボルト締め直し', heavy: false, completed: false, progress: 0 },
-      { id: 'd5', name: 'フィルター清掃', heavy: false, completed: false, progress: 0 }
+      { id: 'd1', name: 'プラズマコア抽出', maxClicks: 30, clicks: 0, completed: false },
+      { id: 'd2', name: '高圧パイプ接続', maxClicks: 30, clicks: 0, completed: false },
+      { id: 'd3', name: '冷却液充填', maxClicks: 25, clicks: 0, completed: false },
+      { id: 'd4', name: 'ボルト締め直し', maxClicks: 20, clicks: 0, completed: false },
+      { id: 'd5', name: 'フィルター清掃', maxClicks: 20, clicks: 0, completed: false }
     ],
-    // Avoidルート (羽): 重いタスク4
+    // 🪽 Avoid (羽ルート): 4つのタスク
     avoid: [
-      { id: 'a1', name: '外壁フレーム溶接', heavy: true, completed: false, progress: 0 },
-      { id: 'a2', name: 'メイン駆動アーム交換', heavy: true, completed: false, progress: 0 },
-      { id: 'a3', name: '制御ケーブル引き直し', heavy: true, completed: false, progress: 0 },
-      { id: 'a4', name: 'センサー再起動', heavy: true, completed: false, progress: 0 }
+      { id: 'a1', name: '外壁フレーム溶接', maxClicks: 40, clicks: 0, completed: false },
+      { id: 'a2', name: '駆動アーム交換', maxClicks: 40, clicks: 0, completed: false },
+      { id: 'a3', name: '制御ケーブル引直', maxClicks: 30, clicks: 0, completed: false },
+      { id: 'a4', name: 'センサー再起動', maxClicks: 30, clicks: 0, completed: false }
     ]
   },
   players: {}
 };
 
-// プレイヤーカラーのリスト
 const COLORS = ['#FF4D4D', '#4D96FF', '#6BCB77', '#FFD93D'];
+let gameInterval = null;
 
 io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`);
 
-  // 新規プレイヤー追加
-  const playerIndex = Object.keys(gameState.players).length;
+  const pIndex = Object.keys(gameState.players).length;
   gameState.players[socket.id] = {
     id: socket.id,
-    x: 100 + (playerIndex % 2) * 80,
-    y: 200 + Math.floor(playerIndex / 2) * 80,
-    color: COLORS[playerIndex % COLORS.length],
-    holdingItem: null // 持ち手アイテム
+    x: 380 + (pIndex % 2) * 40,
+    y: 280 + Math.floor(pIndex / 2) * 40,
+    color: COLORS[pIndex % COLORS.length],
+    scrapCount: 0,      // 拾った鉄くずの数 (3つでボルト作成可能)
+    holdingItem: null   // 'BOLT' または 'CORE'
   };
 
-  // 現在の状態を全送信
   io.emit('stateUpdate', gameState);
-
-  // 難易度変更・ルート選択
-  socket.on('setGameConfig', (data) => {
-    if (data.difficulty) gameState.difficulty = data.difficulty;
-    if (data.route) gameState.route = data.route;
-    
-    // 難易度によるタイマー初期化
-    if (gameState.difficulty === 'EASY') gameState.meteorTimer = 90;
-    if (gameState.difficulty === 'NORMAL') gameState.meteorTimer = 60;
-    if (gameState.difficulty === 'HARD') gameState.meteorTimer = 45;
-
-    io.emit('stateUpdate', gameState);
-  });
 
   // ゲームスタート
   socket.on('startGame', () => {
-    if (!gameState.route) return;
-    gameState.status = 'PREPARATION';
-    io.emit('stateUpdate', gameState);
-
-    // 20秒後に警報・巨大隕石接近フェーズへ移行
-    setTimeout(() => {
-      if (gameState.status === 'PREPARATION') {
-        gameState.status = 'METEOR_APPROACH';
-        io.emit('stateUpdate', gameState);
-        startMeteorTimer();
-      }
-    }, 20000);
+    if (gameState.status === 'TITLE') {
+      gameState.status = 'PLAYING';
+      gameState.timer = 300;
+      startGameTimer();
+      io.emit('stateUpdate', gameState);
+    }
   });
 
-  // プレイヤー移動処理
+  // 移動処理
   socket.on('move', (pos) => {
     const player = gameState.players[socket.id];
-    if (!player) return;
+    if (!player || gameState.status !== 'PLAYING') return;
 
-    // 重いアイテム（プラズマコア）を持っていると移動速度低下
-    const isHeavy = player.holdingItem === 'PLATINUM_CORE';
-    const speedLimit = isHeavy ? 3 : 7;
+    const isHeavy = player.holdingItem === 'CORE';
+    const speed = isHeavy ? 2.5 : 5; // コアを持っていると鈍足
 
-    player.x = Math.max(20, Math.min(780, pos.x));
-    player.y = Math.max(20, Math.min(580, pos.y));
-    
+    player.x = Math.max(30, Math.min(770, pos.x));
+    player.y = Math.max(30, Math.min(570, pos.y));
+
     io.emit('stateUpdate', gameState);
   });
 
-  // アクション処理（拾う・作業台でクラフト・タスク進行）
+  // アクション処理（拾う、クラフト、スペース連打タスク）
   socket.on('action', (data) => {
     const player = gameState.players[socket.id];
-    if (!player) return;
+    if (!player || gameState.status !== 'PLAYING') return;
 
-    // 1. 資材置き場から「鉄くず」入手
-    if (data.nearArea === 'SCRAP_BOX' && !player.holdingItem) {
-      player.holdingItem = 'SCRAP_METAL';
+    // 1. 道端の「鉄くず」を拾う
+    gameState.scraps.forEach(scrap => {
+      if (scrap.active && Math.hypot(player.x - scrap.x, player.y - scrap.y) < 40) {
+        if (player.scrapCount < 3 && !player.holdingItem) {
+          scrap.active = false;
+          player.scrapCount++;
+        }
+      }
+    });
+
+    // 2. 作業台で鉄くず3つを「ボルト」にクラフト
+    const benchDist = Math.hypot(player.x - 400, player.y - 80);
+    if (benchDist < 60 && player.scrapCount >= 3 && !player.holdingItem) {
+      player.scrapCount = 0;
+      player.holdingItem = 'BOLT';
     }
-    // 2. プラズマコア（重量物）入手
-    else if (data.nearArea === 'CORE_BOX' && !player.holdingItem) {
-      player.holdingItem = 'PLATINUM_CORE';
+
+    // 3. コア箱から「プラズマコア（重量物）」を取る
+    const coreBoxDist = Math.hypot(player.x - 100, player.y - 500);
+    if (coreBoxDist < 60 && !player.holdingItem && player.scrapCount === 0) {
+      player.holdingItem = 'CORE';
     }
-    // 3. 作業台で「鉄くず」→「スパナ」にクラフト
-    else if (data.nearArea === 'CRAFT_BENCH' && player.holdingItem === 'SCRAP_METAL') {
-      player.holdingItem = 'SPANNER';
-    }
-    // 4. ドロップ/手放す
-    else if (data.nearArea === 'DROP') {
+
+    // 4. 手放す（ドロップ）
+    const dropDist = Math.hypot(player.x - 400, player.y - 300);
+    if (dropDist < 50 && player.holdingItem) {
       player.holdingItem = null;
     }
-    // 5. タスク実行
-    else if (data.nearArea === 'WORK_STATION' && gameState.route) {
-      const activeTaskList = gameState.route === 'DESTROY' ? gameState.tasks.destroy : gameState.tasks.avoid;
-      const targetTask = activeTaskList.find(t => !t.completed);
 
-      if (targetTask) {
-        // スパナが必要な重いタスクか、素手でもできる簡単なタスクか
-        if (targetTask.heavy && player.holdingItem === 'SPANNER') {
-          targetTask.progress += 25;
-        } else if (!targetTask.heavy) {
-          targetTask.progress += 35;
+    // 5. 修理ステーションで作業（スペース連打）
+    // エンジンエリア (DESTROY)
+    const destroyDist = Math.hypot(player.x - 150, player.y - 250);
+    if (destroyDist < 70) {
+      const target = gameState.tasks.destroy.find(t => !t.completed);
+      if (target) {
+        target.clicks++;
+        if (target.clicks >= target.maxClicks) {
+          target.completed = true;
         }
+        checkWinCondition();
+      }
+    }
 
-        if (targetTask.progress >= 100) {
-          targetTask.progress = 100;
-          targetTask.completed = true;
+    // 羽エリア (AVOID)
+    const avoidDist = Math.hypot(player.x - 650, player.y - 250);
+    if (avoidDist < 70) {
+      const target = gameState.tasks.avoid.find(t => !t.completed);
+      if (target) {
+        target.clicks++;
+        if (target.clicks >= target.maxClicks) {
+          target.completed = true;
         }
-
-        // 全タスク完了チェック
-        const allDone = activeTaskList.every(t => t.completed);
-        if (allDone) {
-          gameState.status = 'WIN';
-        }
+        checkWinCondition();
       }
     }
 
@@ -154,21 +152,29 @@ io.on('connection', (socket) => {
   });
 });
 
-// 隕石カウントダウンタイマー
-let timerInterval = null;
-function startMeteorTimer() {
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    if (gameState.status === 'METEOR_APPROACH') {
-      gameState.meteorTimer -= 1;
-      if (gameState.meteorTimer <= 0) {
-        gameState.meteorTimer = 0;
+// 勝利条件チェック（どちらか片方のルートが全タスク完了すれば勝利）
+function checkWinCondition() {
+  const destroyDone = gameState.tasks.destroy.every(t => t.completed);
+  const avoidDone = gameState.tasks.avoid.every(t => t.completed);
+
+  if (destroyDone || avoidDone) {
+    gameState.status = 'WIN';
+    if (gameInterval) clearInterval(gameInterval);
+  }
+}
+
+// 5分タイマー
+function startGameTimer() {
+  if (gameInterval) clearInterval(gameInterval);
+  gameInterval = setInterval(() => {
+    if (gameState.status === 'PLAYING') {
+      gameState.timer--;
+      if (gameState.timer <= 0) {
+        gameState.timer = 0;
         gameState.status = 'LOSE';
-        clearInterval(timerInterval);
+        clearInterval(gameInterval);
       }
       io.emit('stateUpdate', gameState);
-    } else {
-      clearInterval(timerInterval);
     }
   }, 1000);
 }
