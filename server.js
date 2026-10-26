@@ -12,169 +12,75 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/healthz', (req, res) => res.send('ok'));
 
 // ---------- 定数 ----------
-const W = 1600, H = 1000;
-const CELL = 50;
-const COLS = W / CELL, ROWS = H / CELL;
+const CELL = 50, COLS = 32, ROWS = 20;
+const W = COLS * CELL, H = ROWS * CELL;
 const TICK_RATE = 30;
-const GAME_MS = 10 * 60 * 1000;   // 制限時間 10分
-const SPEED = 210;
-const SPEED_CORE = 70;            // コア所持中は激低下
-const PR = 16;
-const REACH = 70;
-const SLOT_MAX = 3;
-const SCRAP_STACK = 6;
-const CORE_SLOTS = 2;
-const SCRAP_COUNT = 30;
-const SCRAP_RESPAWN_MS = 7000;
-const ACTION_MIN_INTERVAL = 60;
-const WELD_MIN_MS = 10000;        // ミニゲーム結果の最短受理時間（不正対策）
-const WELD_TIMEOUT_MS = 50000;
-const ACTIVE_TASKS = 3;
+const GAME_MS = 10 * 60 * 1000;
+const SPEED = 230, SPEED_CORE = 130, PR = 16, REACH = 70;
+const SLOT_MAX = 3, MIN_PLAYERS = 2;
+const KILL_RANGE = 95, REPORT_RANGE = 110, BTN_RANGE = 90;
+const KILL_CD = 20000, FIRST_KILL_CD = 15000, SAB_CD = 45000, SAB_PCT = 5;
+const BTN_LOCK = 10000;
+const DISCUSS_MS = 20000, VOTE_MS = 30000, RESULT_MS = 6000, END_AUTO_MS = 25000;
+const ACTIVE_TASKS = 3, ACTION_MIN = 60;
+const MIN_MINI = { weld: 6000, seq: 1000, alt: 1200, space: 800 }; // ミニゲーム最短受理時間
+const MINI_TIMEOUT = 90000;
 
 const cp = (c, r) => ({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 });
-
-const POS = {
-  bench: cp(16, 9),
-  coreBox: cp(16, 3),
-  battBox: cp(28, 16),
-  fuseBox: cp(3, 16),
-};
-const SPAWN = cp(16, 12);
+const BUTTON = cp(16, 10);
+const STATIONS = { fuse: cp(3, 6), battery: cp(28, 6), core: cp(16, 16) };
+const ITEM_NAME = { fuse: 'ヒューズ', battery: 'バッテリー', core: 'プラズマコア' };
 
 // ---------- タスクプール（全15個） ----------
-// kind: core=コア搬入 / fuse=ヒューズ装着 / weld=溶接ミニゲーム(トーチ) / bolt=ボルト消費 / battery=バッテリー装着 / press=SPACE作業
+// kind: carry(運搬) / weld(溶接) / seq(数字順押し) / alt(K/O交互連打) / space(SPACE連打)
 const TASK_DEFS = [
-  { id: 1,  name: 'プラズマコアの搬入',     pct: 20, kind: 'core',    need: 1,  icon: '⚛️', c: 3,  r: 9 },
-  { id: 2,  name: 'ヒューズの運搬・装着',   pct: 10, kind: 'fuse',    need: 1,  icon: '🔌', c: 28, r: 3 },
-  { id: 3,  name: '外壁フレーム溶接',       pct: 10, kind: 'weld',    need: 1,  icon: '🔥', c: 8,  r: 4 },
-  { id: 4,  name: '駆動アームの交換',       pct: 10, kind: 'weld',    need: 1,  icon: '🦾', c: 24, r: 5 },
-  { id: 5,  name: '高圧パイプの接続',       pct: 10, kind: 'bolt',    need: 3,  icon: '🛢️', c: 7,  r: 14 },
-  { id: 6,  name: '冷却液の充填',           pct: 5,  kind: 'bolt',    need: 2,  icon: '🧊', c: 24, r: 14 },
-  { id: 7,  name: '配線の張り替え',         pct: 5,  kind: 'press',   need: 6,  icon: '🧵', c: 12, r: 6 },
-  { id: 8,  name: '翼面パネルの固定',       pct: 5,  kind: 'press',   need: 8,  icon: '🪽', c: 28, r: 9 },
-  { id: 9,  name: '回路のショート復旧',     pct: 5,  kind: 'press',   need: 6,  icon: '⚡', c: 20, r: 6 },
-  { id: 10, name: 'メインバルブの調整',     pct: 5,  kind: 'press',   need: 8,  icon: '🎛️', c: 12, r: 13 },
-  { id: 11, name: '冷却ファンの清掃',       pct: 5,  kind: 'press',   need: 6,  icon: '🌀', c: 20, r: 13 },
-  { id: 12, name: '通信モジュールの再起動', pct: 5,  kind: 'press',   need: 5,  icon: '📡', c: 3,  r: 3 },
-  { id: 13, name: '予備バッテリーの装着',   pct: 5,  kind: 'battery', need: 1,  icon: '🔋', c: 10, r: 17 },
-  { id: 14, name: 'センサーの校正',         pct: 5,  kind: 'press',   need: 6,  icon: '🎯', c: 21, r: 17 },
-  { id: 15, name: '点火システム最終調整',   pct: 5,  kind: 'press',   need: 10, icon: '🚀', c: 28, r: 12 },
+  { id: 1,  name: 'プラズマコアの搬入',   pct: 20, kind: 'carry', item: 'core',    icon: '⚛️', c: 3,  r: 10 },
+  { id: 2,  name: 'ヒューズの装着',       pct: 10, kind: 'carry', item: 'fuse',    icon: '🔌', c: 16, r: 2 },
+  { id: 3,  name: '予備バッテリーの装着', pct: 10, kind: 'carry', item: 'battery', icon: '🔋', c: 28, r: 10 },
+  { id: 4,  name: '外壁フレーム溶接',     pct: 10, kind: 'weld',  icon: '🔥', c: 3,  r: 3 },
+  { id: 5,  name: '駆動アームの溶接',     pct: 10, kind: 'weld',  icon: '🦾', c: 28, r: 3 },
+  { id: 6,  name: '配電盤の番号入力',     pct: 5,  kind: 'seq',   n: 5,  icon: '🔢', c: 10, r: 3 },
+  { id: 7,  name: 'パスコード入力',       pct: 5,  kind: 'seq',   n: 6,  icon: '🔐', c: 21, r: 3 },
+  { id: 8,  name: 'コンテナ番号の照合',   pct: 5,  kind: 'seq',   n: 4,  icon: '📦', c: 7,  r: 10 },
+  { id: 9,  name: '冷却ファンの回転',     pct: 5,  kind: 'alt',   n: 20, icon: '🌀', c: 24, r: 10 },
+  { id: 10, name: '発電機のクランク',     pct: 10, kind: 'alt',   n: 30, icon: '⚙️', c: 3,  r: 17 },
+  { id: 11, name: 'ポンプの加圧',         pct: 5,  kind: 'alt',   n: 16, icon: '🛢️', c: 28, r: 17 },
+  { id: 12, name: '配線の張り替え',       pct: 5,  kind: 'space', n: 6,  icon: '🧵', c: 10, r: 17 },
+  { id: 13, name: 'バルブの調整',         pct: 5,  kind: 'space', n: 8,  icon: '🎛️', c: 21, r: 17 },
+  { id: 14, name: 'アンテナの調整',       pct: 5,  kind: 'space', n: 6,  icon: '📡', c: 13, r: 12 },
+  { id: 15, name: '点火システムの調整',   pct: 5,  kind: 'space', n: 10, icon: '🚀', c: 16, r: 7 },
 ].map(d => ({ ...d, ...cp(d.c, d.r) }));
 const defOf = (id) => TASK_DEFS.find(d => d.id === id);
 
-const KIND_ITEM = { fuse: 'fuse', weld: 'torch', bolt: 'bolt', battery: 'battery' };
-const ITEM_NAME = { fuse: 'ヒューズ', torch: '溶接トーチ', bolt: 'ボルト', battery: 'バッテリー' };
+const COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac', '#a9e34b', '#c08457'];
 
-// クリアゾーン（壁を生成しない矩形）
-const ZONES = [
-  { ...POS.bench, hw: 100, hh: 80 },
-  { ...POS.coreBox, hw: 100, hh: 100 },
-  { ...POS.battBox, hw: 100, hh: 100 },
-  { ...POS.fuseBox, hw: 100, hh: 100 },
-  { ...SPAWN, hw: 160, hh: 60 },
-  ...TASK_DEFS.map(d => ({ x: d.x, y: d.y, hw: 60, hh: 60 })),
+// ---------- シンプル迷路（通路幅3マス以上・行き止まりなし） ----------
+const BLOCKS = [ // [c0, r0, c1, r1]
+  [5, 4, 8, 5], [23, 4, 26, 5], [5, 14, 8, 15], [23, 14, 26, 15],
+  [12, 5, 19, 5], [12, 14, 19, 14], [10, 8, 10, 11], [21, 8, 21, 11],
 ];
-const FAC_POINTS = [...Object.values(POS), ...TASK_DEFS];
-
-const COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac'];
-
-// ---------- 迷路マップ生成 ----------
-let grid = [];
-let openCells = [];
-const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-const key = (c, r) => r * COLS + c;
-const cellOf = (pos) => ({ c: Math.floor(pos.x / CELL), r: Math.floor(pos.y / CELL) });
-
-function component(g, start) {
-  const seen = new Uint8Array(COLS * ROWS);
-  const q = [key(start.c, start.r)];
-  seen[q[0]] = 1;
-  for (let i = 0; i < q.length; i++) {
-    const k = q[i], c = k % COLS, r = (k - c) / COLS;
-    for (const [dc, dr] of DIRS) {
-      const nc = c + dc, nr = r + dr;
-      if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || g[nr][nc]) continue;
-      const nk = key(nc, nr);
-      if (seen[nk]) continue;
-      seen[nk] = 1; q.push(nk);
-    }
-  }
-  return seen;
-}
-
-function carve(g, from, comp) {
-  const dist = new Array(COLS * ROWS).fill(Infinity);
-  const prev = new Array(COLS * ROWS).fill(-1);
-  const q = [key(from.c, from.r)];
-  dist[q[0]] = 0;
-  for (let i = 0; i < q.length; i++) {
-    const k = q[i], c = k % COLS, r = (k - c) / COLS;
-    for (const [dc, dr] of DIRS) {
-      const nc = c + dc, nr = r + dr;
-      if (nc < 1 || nr < 1 || nc >= COLS - 1 || nr >= ROWS - 1) continue;
-      const nk = key(nc, nr);
-      const nd = dist[k] + (g[nr][nc] ? 1 : 0);
-      if (nd < dist[nk]) { dist[nk] = nd; prev[nk] = k; q.push(nk); }
-    }
-  }
-  let best = -1, bd = Infinity;
-  for (let k = 0; k < comp.length; k++) if (comp[k] && dist[k] < bd) { bd = dist[k]; best = k; }
-  while (best !== -1) {
-    const c = best % COLS, r = (best - c) / COLS;
-    g[r][c] = false;
-    best = prev[best];
-  }
-}
-
-function genMap() {
-  const g = Array.from({ length: ROWS }, (_, r) =>
-    Array.from({ length: COLS }, (_, c) => r === 0 || c === 0 || r === ROWS - 1 || c === COLS - 1));
-
-  const interior = (COLS - 2) * (ROWS - 2);
-  const target = Math.floor(interior * 0.5);
-  let cnt = 0, tries = 0;
-  while (cnt < target && tries < 6000) {
-    tries++;
-    const hz = Math.random() < 0.5;
-    const len = 2 + Math.floor(Math.random() * 6);
-    const sc = 1 + Math.floor(Math.random() * (COLS - 2));
-    const sr = 1 + Math.floor(Math.random() * (ROWS - 2));
-    for (let i = 0; i < len; i++) {
-      const c = sc + (hz ? i : 0), r = sr + (hz ? 0 : i);
-      if (c >= 1 && c < COLS - 1 && r >= 1 && r < ROWS - 1 && !g[r][c]) { g[r][c] = true; cnt++; }
-    }
-  }
-
-  // 主要設備・スポーン周囲のクリアゾーン
-  for (const z of ZONES) {
-    const c0 = Math.max(1, Math.floor((z.x - z.hw) / CELL));
-    const c1 = Math.min(COLS - 2, Math.floor((z.x + z.hw) / CELL));
-    const r0 = Math.max(1, Math.floor((z.y - z.hh) / CELL));
-    const r1 = Math.min(ROWS - 2, Math.floor((z.y + z.hh) / CELL));
-    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) g[r][c] = false;
-  }
-
-  // 導線確保：スポーンから全設備・全タスク拠点へ到達可能にする
-  const spawnCell = cellOf(SPAWN);
-  let comp = component(g, spawnCell);
-  for (const f of FAC_POINTS) {
-    const fc = cellOf(f);
-    if (!comp[key(fc.c, fc.r)]) {
-      carve(g, fc, comp);
-      comp = component(g, spawnCell);
-    }
-  }
-  for (let r = 1; r < ROWS - 1; r++) for (let c = 1; c < COLS - 1; c++) {
-    if (!g[r][c] && !comp[key(c, r)]) g[r][c] = true; // 孤立ポケットは埋める
-  }
-
-  grid = g;
-  openCells = [];
-  for (let r = 1; r < ROWS - 1; r++) for (let c = 1; c < COLS - 1; c++) if (!g[r][c]) openCells.push({ c, r });
-}
-
+const grid = Array.from({ length: ROWS }, (_, r) =>
+  Array.from({ length: COLS }, (_, c) => r === 0 || c === 0 || r === ROWS - 1 || c === COLS - 1));
+for (const [c0, r0, c1, r1] of BLOCKS)
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) grid[r][c] = true;
 const mapRows = () => grid.map(row => row.map(v => (v ? '1' : '0')).join(''));
 const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : grid[r][c];
+
+// 到達性チェック（起動時）
+(function checkMap() {
+  const seen = new Set(), q = [[16, 10]];
+  seen.add(10 * COLS + 16);
+  for (let i = 0; i < q.length; i++) {
+    const [c, r] = q[i];
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nc = c + dc, nr = r + dr;
+      if (isWall(nc, nr) || seen.has(nr * COLS + nc)) continue;
+      seen.add(nr * COLS + nc); q.push([nc, nr]);
+    }
+  }
+  for (const d of [...TASK_DEFS, ...Object.values(STATIONS).map(p => ({ ...p, name: 'station', c: Math.floor(p.x / CELL), r: Math.floor(p.y / CELL) }))])
+    if (!seen.has(d.r * COLS + d.c)) console.warn('[map] unreachable:', d.name, d.c, d.r);
+})();
 
 // 円(プレイヤー) vs 矩形(壁セル) の押し出し
 function resolveWalls(p) {
@@ -215,309 +121,279 @@ const players = new Map();
 let joinCounter = 0;
 
 const game = {
-  phase: 'lobby', // lobby | playing | win | lose
+  phase: 'lobby', // lobby | playing | meeting | end
   endsAt: 0,
   remainAtEnd: GAME_MS,
-  scraps: [],
-  respawns: [],
-  nextScrapId: 1,
-  core: { state: 'box', x: 0, y: 0, holder: null },
-  active: [],          // [{id, p}] 常時3つ
-  done: new Set(),
-  progress: 0,         // 0..100
+  endedAt: 0,
+  progress: 0,
+  crewTotal: 1,
   result: null,
+  bodies: [],
+  nextBody: 1,
+  meeting: null,
+  noMeetingUntil: 0,
 };
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const near = (p, pos, r) => dist(p, pos) <= r;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const toast = (p, text, kind) => io.to(p.id).emit('toast', { text, kind: kind || 'info' });
+const participants = () => [...players.values()].filter(p => !p.late);
+const hostId = () => { let h = null; for (const p of players.values()) if (!h || p.joinOrder < h.joinOrder) h = p; return h ? h.id : null; };
 
-function fx(type, x, y, text, snd) {
-  io.emit('fx', { type, x: Math.round(x), y: Math.round(y), text, snd });
-}
-
-// ----- インベントリ -----
-const usedSlots = (p) => p.slots.length + (p.hasCore ? CORE_SLOTS : 0);
-const freeSlots = (p) => SLOT_MAX - usedSlots(p);
-const countItem = (p, t) => p.slots.reduce((a, s) => a + (s.t === t ? s.n : 0), 0);
 const hasItem = (p, t) => p.slots.some(s => s.t === t);
+const removeItem = (p, t) => { if (!hasItem(p, t)) return false; p.slots = p.slots.filter(s => s.t !== t); return true; };
+function cancelMini(p) { if (p.mini) { p.mini = null; io.to(p.id).emit('miniCancel'); } }
 
-function canTakeScrap(p) {
-  return p.slots.some(s => s.t === 'scrap' && s.n < SCRAP_STACK) || freeSlots(p) > 0;
-}
-function addScrap(p) {
-  let st = p.slots.find(s => s.t === 'scrap' && s.n < SCRAP_STACK);
-  if (!st) {
-    if (freeSlots(p) <= 0) return false;
-    st = { t: 'scrap', n: 0 };
-    p.slots.push(st);
-  }
-  st.n += 1;
-  return true;
-}
-function removeScrap(p, n) {
-  if (countItem(p, 'scrap') < n) return false;
-  for (let i = p.slots.length - 1; i >= 0 && n > 0; i--) {
-    const s = p.slots[i];
-    if (s.t !== 'scrap') continue;
-    const take = Math.min(n, s.n);
-    s.n -= take; n -= take;
-    if (s.n <= 0) p.slots.splice(i, 1);
-  }
-  return true;
-}
-function addItem(p, t) {
-  if (freeSlots(p) <= 0) return false;
-  p.slots.push({ t, n: 1 });
-  return true;
-}
-function removeItem(p, t) {
-  const i = p.slots.findIndex(s => s.t === t);
-  if (i < 0) return false;
-  p.slots.splice(i, 1);
-  return true;
+function ringPos(i, n, rad) {
+  const a = (i / Math.max(1, n)) * Math.PI * 2;
+  return { x: BUTTON.x + Math.cos(a) * rad, y: BUTTON.y + Math.sin(a) * rad };
 }
 
-// ----- スクラップ -----
-function wallNeighbors(c, r) {
-  let n = 0;
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if ((dc || dr) && isWall(c + dc, r + dr)) n++;
-  return n;
-}
-function spawnScrap() {
-  if (!openCells.length) return;
-  for (let i = 0; i < 80; i++) {
-    const cell = openCells[Math.floor(Math.random() * openCells.length)];
-    const pt = { x: cell.c * CELL + 12 + Math.random() * 26, y: cell.r * CELL + 12 + Math.random() * 26 };
-    if (FAC_POINTS.some(f => dist(pt, f) < 85)) continue;
-    if (game.scraps.some(s => dist(s, pt) < 40)) continue;
-    if (wallNeighbors(cell.c, cell.r) === 0 && Math.random() > 0.3) continue;
-    game.scraps.push({ id: game.nextScrapId++, x: pt.x, y: pt.y });
-    return;
-  }
-}
-
-// ----- タスク管理 -----
-function pickTaskId() {
-  const pool = TASK_DEFS.filter(d => !game.done.has(d.id) && !game.active.some(a => a.id === d.id));
-  if (!pool.length) return null;
+// ---------- タスク割り当て ----------
+function newTask(p) {
+  let pool = TASK_DEFS.filter(t => !p.tasks.includes(t.id) && !p.doneTasks.has(t.id));
+  if (!pool.length) { p.doneTasks.clear(); pool = TASK_DEFS.filter(t => !p.tasks.includes(t.id)); }
   return pool[Math.floor(Math.random() * pool.length)].id;
 }
-function fillActive() {
-  const added = [];
-  while (game.active.length < ACTIVE_TASKS) {
-    const id = pickTaskId();
-    if (id == null) break;
-    game.active.push({ id, p: 0 });
-    added.push(id);
+function fillTasks(p) { while (p.tasks.length < ACTIVE_TASKS) p.tasks.push(newTask(p)); }
+
+function completeTask(p, id) {
+  const d = defOf(id);
+  const idx = p.tasks.indexOf(id);
+  if (!d || idx < 0) return;
+  p.tasks.splice(idx, 1);
+  p.doneTasks.add(id);
+  fillTasks(p);
+  io.to(p.id).emit('sfx', 'done');
+  if (p.role === 'imposter') {
+    toast(p, `${d.name} (偽装タスク・進捗には影響なし)`, 'info');
+    return;
   }
-  return added;
-}
-function completeTask(act) {
-  const d = defOf(act.id);
-  game.active = game.active.filter(a => a !== act);
-  game.done.add(d.id);
-  game.progress = Math.min(100, game.progress + d.pct);
-  fx('done', d.x, d.y - 60, `${d.name} 完了! +${d.pct}%`, 'done');
-  if (game.progress >= 100) { endGame('win'); return; }
-  const added = fillActive(); // 重複なしで補充
-  for (const id of added) io.emit('toast', { text: `新タスク: ${defOf(id).name}` });
+  const k = clamp(4 / Math.max(1, game.crewTotal), 0.5, 1.5);
+  const add = d.pct * k;
+  game.progress = Math.min(100, game.progress + add);
+  toast(p, `${d.name} 完了! 進捗 +${add.toFixed(1)}%`, 'good');
+  checkWin();
 }
 
-// ----- ゲーム進行 -----
-function resetPlayer(p, i) {
-  p.x = SPAWN.x + ((i % 6) - 2.5) * 44;
-  p.y = SPAWN.y + (Math.floor(i / 6) % 2) * 44 - 22;
-  p.slots = [];
-  p.hasCore = false;
-  p.input = { x: 0, y: 0 };
-  p.weld = null;
-  p.lastAct = 0;
-  p.lastDisc = 0;
-}
-
-function regenMap() {
-  genMap();
-  io.emit('map', { rows: mapRows() });
-}
-
-function resetGame() {
-  regenMap();
-  game.scraps = [];
-  game.respawns = [];
-  for (let i = 0; i < SCRAP_COUNT; i++) spawnScrap();
-  game.core = { state: 'box', x: 0, y: 0, holder: null };
-  game.active = [];
-  game.done = new Set();
-  game.progress = 0;
-  fillActive();
-  game.result = null;
-  game.remainAtEnd = GAME_MS;
-  let i = 0;
-  for (const p of players.values()) resetPlayer(p, i++);
+// ---------- 開始・終了 ----------
+function resetPlayer(p, i, n) {
+  const pos = ringPos(i, n, 110);
+  p.x = pos.x; p.y = pos.y;
+  p.alive = true; p.slots = []; p.mini = null; p.input = { x: 0, y: 0 };
+  p.tasks = []; p.doneTasks = new Set(); p.moving = false;
+  p.emUsed = false;
 }
 
 function startGame() {
-  resetGame();
-  game.phase = 'playing';
-  game.endsAt = Date.now() + GAME_MS;
-}
-
-function endGame(type) {
-  if (game.phase !== 'playing') return;
-  game.remainAtEnd = Math.max(0, game.endsAt - Date.now());
-  game.phase = type;
-  game.result = { type, progress: Math.round(game.progress) };
-  for (const p of players.values()) { p.input = { x: 0, y: 0 }; p.weld = null; }
-}
-
-function dropCore(p) {
-  game.core.state = 'ground';
-  game.core.x = p.x;
-  game.core.y = p.y;
-  game.core.holder = null;
-  p.hasCore = false;
-}
-
-// ---------- アクション（Space） ----------
-function doAction(p) {
-  if (game.phase !== 'playing' || p.weld) return;
+  const part = participants();
+  if (part.length < MIN_PLAYERS) return;
   const now = Date.now();
-  if (now - p.lastAct < ACTION_MIN_INTERVAL) return;
+  game.phase = 'playing';
+  game.progress = 0; game.result = null; game.bodies = []; game.meeting = null;
+  game.endsAt = now + GAME_MS;
+  game.noMeetingUntil = now + BTN_LOCK;
+  const imp = part[Math.floor(Math.random() * part.length)];
+  game.crewTotal = part.length - 1;
+  part.forEach((p, i) => {
+    resetPlayer(p, i, part.length);
+    p.role = p === imp ? 'imposter' : 'crew';
+    p.killReady = now + FIRST_KILL_CD;
+    p.sabReady = now + 30000;
+    fillTasks(p);
+  });
+  io.emit('sfx', 'start');
+}
+
+function endGame(winner, reason) {
+  if (game.phase === 'end' || game.phase === 'lobby') return true;
+  const now = Date.now();
+  game.remainAtEnd = Math.max(0, game.endsAt - (game.meeting ? game.meeting.startAt : now));
+  game.phase = 'end';
+  game.meeting = null;
+  game.endedAt = now;
+  game.result = { winner, reason };
+  for (const p of players.values()) { cancelMini(p); p.input = { x: 0, y: 0 }; p.moving = false; }
+  io.emit('sfx', winner === 'crew' ? 'win' : 'lose');
+  return true;
+}
+
+function toLobby() {
+  game.phase = 'lobby'; game.meeting = null; game.bodies = []; game.result = null;
+  game.remainAtEnd = GAME_MS; game.progress = 0;
+  for (const p of players.values()) {
+    p.late = false; p.ready = false; p.role = null; p.alive = true;
+    p.slots = []; p.tasks = []; p.mini = null; p.input = { x: 0, y: 0 }; p.moving = false;
+  }
+}
+
+function checkWin() {
+  if (game.phase !== 'playing') return false;
+  const part = participants();
+  const imps = part.filter(p => p.role === 'imposter' && p.alive).length;
+  const crews = part.filter(p => p.role === 'crew' && p.alive).length;
+  if (game.progress >= 100) return endGame('crew', '全タスクが完了した! 進捗100%');
+  if (imps === 0) return endGame('crew', 'インポスターを排除した!');
+  if (crews <= imps) return endGame('imposter', 'クルーが全滅した…');
+  return false;
+}
+
+// ---------- 会議 ----------
+function startMeeting(caller, reason) {
+  const now = Date.now();
+  game.phase = 'meeting';
+  game.meeting = { mode: 'discuss', startAt: now, modeEnds: now + DISCUSS_MS, votes: new Map(), reason, callerName: caller.name, result: null };
+  if (reason === 'button') caller.emUsed = true;
+  const part = participants();
+  part.forEach((p, i) => {
+    cancelMini(p); p.input = { x: 0, y: 0 }; p.moving = false;
+    const pos = ringPos(i, part.length, 120);
+    p.x = pos.x; p.y = pos.y;
+  });
+  io.emit('sfx', 'meeting');
+}
+
+function resolveVotes(now) {
+  const m = game.meeting;
+  const counts = {};
+  let skip = 0;
+  for (const [vid, t] of m.votes) {
+    if (!players.has(vid)) continue;
+    if (t === 'skip') skip++; else counts[t] = (counts[t] || 0) + 1;
+  }
+  let max = 0, top = [];
+  for (const id in counts) {
+    if (counts[id] > max) { max = counts[id]; top = [id]; }
+    else if (counts[id] === max) top.push(id);
+  }
+  let ej = null;
+  if (top.length === 1 && max > skip) {
+    const t = players.get(top[0]);
+    if (t) { t.alive = false; cancelMini(t); ej = { id: t.id, name: t.name, c: t.color, imp: t.role === 'imposter' }; }
+  }
+  m.result = { ej, tally: Object.entries(counts), skip };
+  m.mode = 'result';
+  m.modeEnds = now + RESULT_MS;
+}
+
+function endMeeting(now) {
+  const m = game.meeting;
+  game.endsAt += now - m.startAt; // 会議中は制限時間を止める
+  game.phase = 'playing';
+  game.meeting = null;
+  game.bodies = [];
+  game.noMeetingUntil = now + BTN_LOCK;
+  for (const p of participants()) if (p.role === 'imposter') p.killReady = Math.max(p.killReady, now + 10000);
+  checkWin();
+}
+
+function tickMeeting(now) {
+  const m = game.meeting;
+  if (!m) { game.phase = 'playing'; return; }
+  if (m.mode === 'discuss') {
+    if (now >= m.modeEnds) { m.mode = 'vote'; m.modeEnds = now + VOTE_MS; }
+  } else if (m.mode === 'vote') {
+    const voters = participants().filter(p => p.alive);
+    if (now >= m.modeEnds || voters.every(p => m.votes.has(p.id))) resolveVotes(now);
+  } else if (m.mode === 'result') {
+    if (now >= m.modeEnds) endMeeting(now);
+  }
+}
+
+// ---------- アクション ----------
+function doAction(p) {
+  if (game.phase !== 'playing' || p.late || p.mini) return;
+  const now = Date.now();
+  if (now - p.lastAct < ACTION_MIN) return;
   p.lastAct = now;
-  const msg = (text, snd) => fx('msg', p.x, p.y - 44, text, snd);
 
-  const act = game.active.find(a => near(p, defOf(a.id), REACH));
-
-  // コア所持中
-  if (p.hasCore) {
-    if (act && defOf(act.id).kind === 'core') {
-      p.hasCore = false;
-      game.core = { state: 'box', x: 0, y: 0, holder: null };
-      completeTask(act);
+  // 1) 自分のタスク拠点
+  for (const id of p.tasks) {
+    const d = defOf(id);
+    if (!near(p, d, REACH)) continue;
+    if (d.kind === 'carry') {
+      if (!hasItem(p, d.item)) { toast(p, `${ITEM_NAME[d.item]}が必要! (運搬してこよう)`, 'error'); return; }
+      removeItem(p, d.item);
+      completeTask(p, id);
       return;
     }
-    dropCore(p);
-    msg('コアを置いた', 'drop');
+    p.mini = { taskId: id, kind: d.kind, start: now };
+    p.input = { x: 0, y: 0 }; p.moving = false;
+    io.to(p.id).emit('miniStart', { taskId: id });
     return;
   }
 
-  // 現在のタスク拠点
-  if (act) {
-    const d = defOf(act.id);
-    if (d.kind === 'core') { msg('プラズマコアが必要!', 'error'); return; }
-    if (d.kind === 'press') {
-      act.p += 1;
-      fx('repair', d.x, d.y - 20, `${act.p}/${d.need}`, 'repair');
-      if (act.p >= d.need) completeTask(act);
-      return;
-    }
-    if (d.kind === 'bolt') {
-      if (!removeItem(p, 'bolt')) { msg('ボルトが必要!', 'error'); return; }
-      act.p += 1;
-      fx('repair', d.x, d.y - 20, `${act.p}/${d.need}`, 'repair');
-      if (act.p >= d.need) completeTask(act);
-      return;
-    }
-    if (d.kind === 'fuse' || d.kind === 'battery') {
-      const it = KIND_ITEM[d.kind];
-      if (!removeItem(p, it)) { msg(`${ITEM_NAME[it]}が必要!`, 'error'); return; }
-      completeTask(act);
-      return;
-    }
-    if (d.kind === 'weld') {
-      if (!hasItem(p, 'torch')) { msg('溶接トーチが必要!', 'error'); return; }
-      p.weld = { taskId: d.id, start: now };
-      p.input = { x: 0, y: 0 };
-      io.to(p.id).emit('weldStart', { taskId: d.id, name: d.name });
-      return;
-    }
-  }
-
-  // 現在のタスクではない拠点
-  const idle = TASK_DEFS.find(d => near(p, d, REACH));
-  if (idle) {
-    msg(game.done.has(idle.id) ? '修理済み' : '今は必要ないタスク', 'error');
+  // 2) 運搬アイテムの供給所
+  for (const id of p.tasks) {
+    const d = defOf(id);
+    if (d.kind !== 'carry' || !near(p, STATIONS[d.item], REACH)) continue;
+    if (hasItem(p, d.item)) { toast(p, 'すでに持っている', 'error'); return; }
+    const need = d.item === 'core' ? 2 : 1;
+    if (p.slots.length + need > SLOT_MAX) { toast(p, 'スロットがいっぱい!', 'error'); return; }
+    for (let i = 0; i < need; i++) p.slots.push({ t: d.item });
+    toast(p, `${ITEM_NAME[d.item]}を取得`, 'info');
+    io.to(p.id).emit('sfx', 'click');
     return;
   }
 
-  // 作業台：バッテリー所持 → 溶接トーチ / それ以外 → ボルト
-  if (near(p, POS.bench, REACH)) {
-    const scrap = countItem(p, 'scrap');
-    if (hasItem(p, 'battery')) {
-      if (scrap < 2) { msg(`トーチには金属くず×2が必要 (${scrap}/2)`, 'error'); return; }
-      removeScrap(p, 2);
-      removeItem(p, 'battery');
-      addItem(p, 'torch');
-      fx('craft', POS.bench.x, POS.bench.y - 30, '溶接トーチ完成!', 'craft');
-      return;
-    }
-    if (scrap < 3) { msg(`金属くずが足りない (${scrap}/3)`, 'error'); return; }
-    const backup = p.slots.map(s => ({ ...s }));
-    removeScrap(p, 3);
-    if (!addItem(p, 'bolt')) {
-      p.slots = backup;
-      msg('スロットがいっぱい!', 'error');
-      return;
-    }
-    fx('craft', POS.bench.x, POS.bench.y - 30, 'ボルト完成!', 'craft');
-    return;
+  // 3) 緊急会議ボタン
+  if (near(p, BUTTON, BTN_RANGE)) {
+    if (!p.alive) return;
+    if (p.emUsed) { toast(p, '緊急会議は1人1回まで', 'error'); return; }
+    if (now < game.noMeetingUntil) { toast(p, `まだ使えない (あと${Math.ceil((game.noMeetingUntil - now) / 1000)}秒)`, 'error'); return; }
+    startMeeting(p, 'button');
   }
+}
 
-  // バッテリー箱
-  if (near(p, POS.battBox, REACH)) {
-    if (!addItem(p, 'battery')) { msg('スロットがいっぱい!', 'error'); return; }
-    fx('pick', POS.battBox.x, POS.battBox.y - 30, 'バッテリー取得', 'pick');
-    return;
-  }
+function doReport(p) {
+  if (game.phase !== 'playing' || p.late || !p.alive) return;
+  const b = game.bodies.find(b => dist(p, b) <= REPORT_RANGE);
+  if (!b) { toast(p, '近くに死体がない', 'error'); return; }
+  startMeeting(p, 'body');
+}
 
-  // ヒューズ箱
-  if (near(p, POS.fuseBox, REACH)) {
-    if (!addItem(p, 'fuse')) { msg('スロットがいっぱい!', 'error'); return; }
-    fx('pick', POS.fuseBox.x, POS.fuseBox.y - 30, 'ヒューズ取得', 'pick');
-    return;
+function doKill(p) {
+  if (game.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter') return;
+  const now = Date.now();
+  if (now < p.killReady) return;
+  let best = null, bd = KILL_RANGE;
+  for (const v of participants()) {
+    if (v === p || !v.alive || v.role === 'imposter') continue;
+    const d = dist(p, v);
+    if (d <= bd) { bd = d; best = v; }
   }
+  if (!best) { toast(p, '範囲内にターゲットがいない', 'error'); return; }
+  best.alive = false;
+  cancelMini(best);
+  game.bodies.push({ id: game.nextBody++, x: Math.round(best.x), y: Math.round(best.y), c: best.color });
+  p.x = best.x; p.y = best.y;
+  p.killReady = now + KILL_CD;
+  io.to(best.id).emit('sfx', 'kill');
+  io.to(best.id).emit('toast', { text: 'あなたはキルされた… (霊としてタスクは続けられる)', kind: 'error' });
+  io.to(p.id).emit('sfx', 'kill');
+  checkWin();
+}
 
-  // コア拾得（地面 / コア箱）
-  const coreNearGround = game.core.state === 'ground' && dist(p, game.core) <= 50;
-  const coreNearBox = game.core.state === 'box' && near(p, POS.coreBox, REACH);
-  if (coreNearGround || coreNearBox) {
-    if (freeSlots(p) < CORE_SLOTS) { msg(`コアはスロット${CORE_SLOTS}つ必要!`, 'error'); return; }
-    game.core.state = 'held';
-    game.core.holder = p.id;
-    p.hasCore = true;
-    msg('コアを持った (重い!)', 'pick');
-  }
+function doSabotage(p) {
+  if (game.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter') return;
+  const now = Date.now();
+  if (now < p.sabReady) return;
+  p.sabReady = now + SAB_CD;
+  game.progress = Math.max(0, game.progress - SAB_PCT);
+  io.emit('sfx', 'alarm');
+  io.emit('toast', { text: `⚠ 妨害工作! 進捗が${SAB_PCT}%低下`, kind: 'error' });
 }
 
 function doDiscard(p, idx) {
-  if (game.phase !== 'playing' || p.weld) return;
+  if (game.phase !== 'playing' || p.mini) return;
   const now = Date.now();
   if (now - p.lastDisc < 150) return;
   p.lastDisc = now;
-  idx = idx | 0;
-  if (idx >= 0 && idx < p.slots.length) {
-    p.slots.splice(idx, 1);
-    fx('msg', p.x, p.y - 44, 'アイテムを捨てた', 'drop');
-  } else if (p.hasCore) {
-    dropCore(p);
-    fx('msg', p.x, p.y - 44, 'コアを置いた', 'drop');
-  }
-}
-
-// 溶接ミニゲームの結果
-function doWeldEnd(p, d) {
-  const w = p.weld;
-  if (!w) return;
-  p.weld = null;
-  if (game.phase !== 'playing' || !d || d.cancel) return;
-  const msg = (text, snd) => fx('msg', p.x, p.y - 44, text, snd);
-  const act = game.active.find(a => a.id === w.taskId);
-  if (!act) { msg('このタスクは既に完了していた', 'error'); return; }
-  if (!d.ok) { msg('溶接失敗… (トーチは無事・再挑戦OK)', 'error'); return; }
-  if (Date.now() - w.start < WELD_MIN_MS) { msg('溶接が速すぎる?', 'error'); return; }
-  if (!removeItem(p, 'torch')) { msg('溶接トーチがない!', 'error'); return; }
-  completeTask(act);
+  const s = p.slots[idx | 0];
+  if (!s) return;
+  p.slots = p.slots.filter(x => x.t !== s.t);
+  toast(p, `${ITEM_NAME[s.t]}を捨てた`, 'info');
 }
 
 // ---------- ゲームループ ----------
@@ -529,125 +405,179 @@ function tick() {
 
   if (game.phase === 'playing') {
     for (const p of players.values()) {
-      if (p.weld && now - p.weld.start > WELD_TIMEOUT_MS) p.weld = null;
-      if (p.weld) continue; // 溶接中は動けない
-      let dx = p.input.x, dy = p.input.y;
-      const len = Math.hypot(dx, dy);
+      if (p.late) continue;
+      if (p.mini && now - p.mini.start > MINI_TIMEOUT) cancelMini(p);
+      if (p.mini) { p.moving = false; continue; }
+      const len = Math.hypot(p.input.x, p.input.y);
+      p.moving = len > 0;
       if (len > 0) {
-        dx /= len; dy /= len;
-        const sp = p.hasCore ? SPEED_CORE : SPEED;
+        const dx = p.input.x / len, dy = p.input.y / len;
+        const sp = hasItem(p, 'core') ? SPEED_CORE : SPEED;
         p.x += dx * sp * dt;
         p.y += dy * sp * dt;
         resolveWalls(p);
         p.x = clamp(p.x, PR, W - PR);
         p.y = clamp(p.y, PR, H - PR);
-      }
-      for (let i = game.scraps.length - 1; i >= 0; i--) {
-        if (!canTakeScrap(p)) break;
-        const s = game.scraps[i];
-        if (dist(p, s) < PR + 12) {
-          game.scraps.splice(i, 1);
-          addScrap(p);
-          game.respawns.push(now + SCRAP_RESPAWN_MS);
-          fx('pick', s.x, s.y - 10, `金属くず ${countItem(p, 'scrap')}`, 'pick');
-        }
+        if (dx !== 0) p.face = dx > 0 ? 1 : -1;
       }
     }
-    for (let i = game.respawns.length - 1; i >= 0; i--) {
-      if (now >= game.respawns[i]) {
-        game.respawns.splice(i, 1);
-        spawnScrap();
-      }
-    }
-    if (now >= game.endsAt) endGame('lose');
+    if (now >= game.endsAt) endGame('imposter', '時間切れ… クルーは間に合わなかった');
+  } else if (game.phase === 'meeting') {
+    tickMeeting(now);
+  } else if (game.phase === 'end') {
+    if (now - game.endedAt > END_AUTO_MS) toLobby();
   }
-
-  if (players.size > 0) broadcast();
+  if (players.size > 0) broadcast(now);
 }
 
-function broadcast() {
-  const now = Date.now();
+function meetView(v, now, part) {
+  const m = game.meeting;
+  return {
+    mode: m.mode, t: Math.max(0, m.modeEnds - now), reason: m.reason, caller: m.callerName,
+    roster: part.map(p => ({ id: p.id, name: p.name, c: p.color, a: p.alive, voted: m.votes.has(p.id) })),
+    my: m.votes.get(v.id) || null,
+    res: m.result,
+  };
+}
+
+function broadcast(now) {
   let remain = GAME_MS;
   if (game.phase === 'playing') remain = Math.max(0, game.endsAt - now);
-  else if (game.phase === 'win' || game.phase === 'lose') remain = game.remainAtEnd;
+  else if (game.phase === 'meeting') remain = Math.max(0, game.endsAt - game.meeting.startAt);
+  else if (game.phase === 'end') remain = game.remainAtEnd;
 
-  const core = { state: game.core.state, x: 0, y: 0 };
-  if (game.core.state === 'ground') { core.x = game.core.x; core.y = game.core.y; }
-  else if (game.core.state === 'held') {
-    const h = players.get(game.core.holder);
-    if (h) { core.x = h.x; core.y = h.y; }
+  const part = participants();
+  const host = hostId();
+  const base = { ph: game.phase, remain, prog: Math.round(game.progress * 10) / 10, result: game.result };
+  let lobby = null;
+  if (game.phase === 'lobby') {
+    lobby = [...players.values()].sort((a, b) => a.joinOrder - b.joinOrder)
+      .map(p => ({ id: p.id, name: p.name, c: p.color, ready: p.ready, host: p.id === host }));
   }
+  const bodies = game.bodies;
+  const playersView = game.phase === 'lobby' ? null : part.map(p => ({
+    id: p.id, name: p.name, c: p.color, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face,
+  }));
 
-  io.volatile.emit('state', {
-    phase: game.phase,
-    remain,
-    result: game.result,
-    players: [...players.values()].map(p => ({
-      id: p.id, n: p.num, c: p.color,
-      x: Math.round(p.x), y: Math.round(p.y),
-      sl: p.slots.map(s => [s.t, s.n]),
-      h: p.hasCore,
-      w: !!p.weld,
-    })),
-    scraps: game.scraps.map(s => ({ id: s.id, x: Math.round(s.x), y: Math.round(s.y) })),
-    core,
-    tk: {
-      a: game.active.map(a => [a.id, a.p]),
-      d: [...game.done],
-      pr: Math.round(game.progress),
-    },
-  });
+  for (const v of players.values()) {
+    const ghost = !v.alive || v.late || game.phase === 'end';
+    const msg = {
+      ...base,
+      me: {
+        role: v.role, alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
+        tasks: v.tasks, sl: v.slots.map(s => s.t),
+        kcd: Math.max(0, (v.killReady || 0) - now), scd: Math.max(0, (v.sabReady || 0) - now),
+        em: v.emUsed, emLock: Math.max(0, game.noMeetingUntil - now),
+      },
+    };
+    if (lobby) msg.lobby = lobby;
+    else {
+      msg.players = ghost ? playersView : playersView.filter(p => p.a);
+      msg.bodies = bodies;
+      if (game.phase === 'meeting') msg.meet = meetView(v, now, part);
+      if (game.phase === 'end') msg.roster = part.map(p => ({ id: p.id, name: p.name, c: p.color, role: p.role, a: p.alive }));
+    }
+    io.to(v.id).volatile.emit('state', msg);
+  }
 }
 
-genMap();
 setInterval(tick, 1000 / TICK_RATE);
 
 // ---------- Socket.io ----------
 io.on('connection', (socket) => {
-  joinCounter += 1;
-  const p = {
-    id: socket.id,
-    num: joinCounter,
-    color: COLORS[(joinCounter - 1) % COLORS.length],
-    x: 0, y: 0, slots: [], hasCore: false, weld: null,
-    input: { x: 0, y: 0 }, lastAct: 0, lastDisc: 0,
-  };
-  resetPlayer(p, players.size);
-  players.set(socket.id, p);
-
   socket.emit('init', {
-    you: socket.id, W, H, CELL, POS, SPAWN, REACH, SLOT_MAX, SCRAP_STACK, CORE_SLOTS, GAME_MS,
-    TASKS: TASK_DEFS.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, need: d.need, icon: d.icon, x: d.x, y: d.y })),
+    you: socket.id, W, H, CELL, REACH, SLOT_MAX, GAME_MS, BUTTON, STATIONS, ITEM_NAME,
+    TASKS: TASK_DEFS.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon, x: d.x, y: d.y })),
     rows: mapRows(),
   });
 
-  socket.on('input', (d) => {
-    if (!d || typeof d !== 'object' || p.weld) { p.input = { x: 0, y: 0 }; return; }
-    p.input = {
-      x: (d.right ? 1 : 0) - (d.left ? 1 : 0),
-      y: (d.down ? 1 : 0) - (d.up ? 1 : 0),
+  socket.on('join', (d) => {
+    if (players.has(socket.id)) return;
+    joinCounter += 1;
+    const used = new Set([...players.values()].map(p => p.color));
+    const name = String((d && d.name) || '').replace(/[<>]/g, '').trim().slice(0, 10) || ('P' + joinCounter);
+    const late = game.phase !== 'lobby';
+    const p = {
+      id: socket.id, num: joinCounter, joinOrder: joinCounter, name,
+      color: COLORS.find(c => !used.has(c)) || COLORS[joinCounter % COLORS.length],
+      x: BUTTON.x, y: BUTTON.y + 100, face: 1, moving: false,
+      ready: false, late, role: null, alive: !late,
+      tasks: [], doneTasks: new Set(), slots: [], mini: null,
+      input: { x: 0, y: 0 }, lastAct: 0, lastDisc: 0, lastChat: 0,
+      killReady: 0, sabReady: 0, emUsed: false,
     };
+    players.set(socket.id, p);
   });
-  socket.on('action', () => doAction(p));
-  socket.on('discard', (i) => doDiscard(p, i));
-  socket.on('weldEnd', (d) => doWeldEnd(p, d));
-  socket.on('start', () => { if (game.phase === 'lobby') startGame(); });
-  socket.on('toTitle', () => {
-    if (game.phase === 'win' || game.phase === 'lose') {
-      game.phase = 'lobby';
-      game.result = null;
-      game.remainAtEnd = GAME_MS;
+
+  const P = () => players.get(socket.id);
+
+  socket.on('input', (d) => {
+    const p = P(); if (!p) return;
+    if (!d || typeof d !== 'object' || p.mini || game.phase !== 'playing') { p.input = { x: 0, y: 0 }; return; }
+    p.input = { x: (d.right ? 1 : 0) - (d.left ? 1 : 0), y: (d.down ? 1 : 0) - (d.up ? 1 : 0) };
+  });
+  socket.on('action', () => { const p = P(); if (p) doAction(p); });
+  socket.on('report', () => { const p = P(); if (p) doReport(p); });
+  socket.on('kill', () => { const p = P(); if (p) doKill(p); });
+  socket.on('sabotage', () => { const p = P(); if (p) doSabotage(p); });
+  socket.on('discard', (i) => { const p = P(); if (p) doDiscard(p, i); });
+
+  socket.on('miniEnd', (d) => {
+    const p = P(); if (!p || !p.mini) return;
+    const m = p.mini;
+    p.mini = null;
+    if (game.phase !== 'playing' || !d || d.cancel) return;
+    if (!d.ok) { toast(p, '失敗… もう一度挑戦しよう', 'error'); return; }
+    if (!p.tasks.includes(m.taskId)) return;
+    if (Date.now() - m.start < MIN_MINI[m.kind]) { toast(p, '操作が速すぎる?', 'error'); return; }
+    completeTask(p, m.taskId);
+  });
+
+  socket.on('ready', () => {
+    const p = P();
+    if (p && game.phase === 'lobby' && p.id !== hostId()) p.ready = !p.ready;
+  });
+  socket.on('start', () => {
+    const p = P();
+    if (!p || game.phase !== 'lobby' || p.id !== hostId()) return;
+    const part = participants();
+    if (part.length < MIN_PLAYERS) { toast(p, `最低${MIN_PLAYERS}人必要`, 'error'); return; }
+    if (!part.every(x => x.id === p.id || x.ready)) { toast(p, '全員の準備が完了していない', 'error'); return; }
+    startGame();
+  });
+  socket.on('toLobby', () => { if (P() && game.phase === 'end') toLobby(); });
+
+  socket.on('chat', (t) => {
+    const p = P(); const m = game.meeting;
+    if (!p || game.phase !== 'meeting' || !m || m.mode === 'result' || !p.alive || p.late) return;
+    const now = Date.now();
+    if (now - p.lastChat < 300) return;
+    p.lastChat = now;
+    const text = String(t || '').replace(/[<>]/g, '').trim().slice(0, 60);
+    if (text) io.emit('chat', { n: p.name, c: p.color, t: text });
+  });
+  socket.on('vote', (target) => {
+    const p = P(); const m = game.meeting;
+    if (!p || game.phase !== 'meeting' || !m || m.mode !== 'vote' || !p.alive || p.late || m.votes.has(p.id)) return;
+    if (target !== 'skip') {
+      const t = players.get(target);
+      if (!t || t.late || !t.alive) return;
     }
+    m.votes.set(p.id, target);
+    io.to(p.id).emit('sfx', 'click');
   });
 
   socket.on('disconnect', () => {
-    if (p.hasCore) dropCore(p);
+    const p = P();
+    if (!p) return;
     players.delete(socket.id);
-    if (players.size === 0) {
-      game.phase = 'lobby';
-      game.result = null;
+    if (game.meeting) game.meeting.votes.delete(socket.id);
+    if (players.size === 0) { toLobby(); return; }
+    if (game.phase === 'playing' || game.phase === 'meeting') {
+      if (participants().length === 0) { toLobby(); return; }
+      if (game.phase === 'playing') checkWin();
     }
   });
 });
 
-server.listen(PORT, () => console.log(`Destroy or Avoid v3 running on :${PORT}`));
+server.listen(PORT, () => console.log(`Destroy or Avoid v4 (Among-style) running on :${PORT}`));
