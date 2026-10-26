@@ -1,7 +1,7 @@
 {
   "name": "destroy-or-avoid",
-  "version": "3.0.0",
-  "description": "Destroy or Avoid - online realtime co-op panic game (task pool + maze edition)",
+  "version": "4.0.0",
+  "description": "Destroy or Avoid - online realtime action social-deduction game (lobby + imposter + meeting/vote edition)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
