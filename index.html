@@ -1,249 +1,528 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Destroy or Avoid</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #0b0b16;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
-    }
-    /* タイトル画面オーバーレイ */
-    #title-screen {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(11, 11, 22, 0.95);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      gap: 20px;
-    }
-    h1 { font-size: 3rem; text-shadow: 0 0 20px #4d96ff; }
-    .btn {
-      padding: 12px 30px;
-      font-size: 1.2rem;
-      background: #ff4d4d;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(255,77,77,0.4);
-    }
-    .btn:hover { background: #ff6666; }
-
-    /* 中央上部タイマー */
-    #timer-bar {
-      position: absolute;
-      top: 15px;
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #ffd93d;
-      background: #1e1e2f;
-      padding: 5px 25px;
-      border-radius: 20px;
-      border: 2px solid #33334d;
-      z-index: 5;
-    }
-
-    canvas {
-      background: #141422;
-      border: 4px solid #33334d;
-      border-radius: 12px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.8);
-    }
-
-    .instructions {
-      margin-top: 10px;
-      color: #888;
-      font-size: 0.85rem;
-      text-align: center;
-    }
-  </style>
-  <script src="/socket.io/socket.io.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Destroy or Avoid</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #05070f; color: #e8ecff; font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; user-select: none; -webkit-user-select: none; }
+  #wrap { max-width: 1000px; margin: 0 auto; padding: 6px; }
+  #stage { position: relative; width: 100%; aspect-ratio: 1000 / 640; background: #000; border-radius: 10px; overflow: hidden; }
+  canvas { width: 100%; height: 100%; display: block; }
+  #timer { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: clamp(20px, 4.2vw, 40px); font-weight: 900; letter-spacing: 1px; padding: 2px 22px; border-radius: 12px; background: rgba(0,0,0,.55); border: 2px solid #5b6aa8; text-shadow: 0 0 8px #000; display: none; white-space: nowrap; }
+  #timer.warn { color: #ff6b6b; border-color: #ff6b6b; }
+  #timer.blink { animation: blink .6s infinite alternate; }
+  @keyframes blink { from { opacity: 1; } to { opacity: .35; } }
+  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(5,8,20,.86); padding: 12px; }
+  .hidden { display: none !important; }
+  h1 { margin: 0 0 6px; font-size: clamp(30px, 7vw, 72px); font-weight: 900; background: linear-gradient(90deg, #ff6b6b, #ffd43b, #4dabf7); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: #aab4e8; margin-bottom: 14px; font-size: clamp(12px, 2vw, 18px); }
+  .btn { font-size: clamp(16px, 3vw, 26px); font-weight: 800; padding: 10px 36px; border: none; border-radius: 12px; background: linear-gradient(#ffb74d, #f57c00); color: #231000; cursor: pointer; box-shadow: 0 5px 0 #8a4300; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #8a4300; }
+  .how { margin-top: 14px; font-size: clamp(11px, 1.7vw, 15px); line-height: 1.7; color: #cfd6ff; max-width: 720px; text-align: left; background: rgba(255,255,255,.06); padding: 10px 16px; border-radius: 10px; }
+  #resTitle { font-size: clamp(28px, 6vw, 60px); font-weight: 900; margin: 0 0 8px; }
+  #hud { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .panel { background: #10162b; border: 2px solid #26305a; border-radius: 10px; padding: 8px 10px; }
+  .panel h3 { margin: 0 0 6px; font-size: 14px; }
+  .panel.engine h3 { color: #ff8a80; } .panel.wing h3 { color: #82b1ff; }
+  ul.tasks { list-style: none; margin: 0; padding: 0; }
+  ul.tasks li { position: relative; font-size: 12px; padding: 3px 4px 7px; border-radius: 6px; opacity: .55; }
+  ul.tasks li.current { opacity: 1; background: rgba(255,255,255,.08); }
+  ul.tasks li.done { opacity: .5; text-decoration: line-through; }
+  .tn { font-weight: 700; } .tp { float: right; font-weight: 700; }
+  .tag { font-size: 10px; background: #7e57c2; color: #fff; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+  .bar { position: absolute; left: 4px; right: 4px; bottom: 2px; height: 3px; background: #26305a; border-radius: 2px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: #ffd43b; }
+  #inv { grid-column: 1 / 3; display: flex; gap: 18px; justify-content: center; font-size: 15px; font-weight: 700; flex-wrap: wrap; }
+  #keys { text-align: center; color: #8d97c9; font-size: 12px; margin-top: 6px; }
+  #touch { display: none; }
+  .touch #touch { display: block; }
+  .tbtn { position: fixed; width: 58px; height: 58px; border-radius: 14px; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.4); color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; touch-action: none; z-index: 10; }
+  #tUp { left: 80px; bottom: 140px; } #tDown { left: 80px; bottom: 20px; } #tLeft { left: 14px; bottom: 80px; } #tRight { left: 146px; bottom: 80px; }
+  #tAct { right: 20px; bottom: 60px; width: 96px; height: 96px; border-radius: 50%; background: rgba(245,124,0,.6); font-size: 16px; font-weight: 800; }
+</style>
 </head>
 <body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="cv" width="1000" height="640"></canvas>
+    <div id="timer">残り時間: 05:00</div>
 
-  <!-- タイトル画面 -->
-  <div id="title-screen">
-    <h1>🚀 Destroy or Avoid</h1>
-    <p style="color: #aaa; font-size: 1.1rem;">隕石衝突まで5分！仲間と協力してエンジンか羽を直せ！</p>
-    <button class="btn" onclick="startGame()">ゲームスタート</button>
+    <div id="title" class="overlay">
+      <h1>Destroy or Avoid</h1>
+      <div class="sub">隕石が迫る!5分以内に「エンジン」か「羽」を修理せよ ― 接続中: <span id="pcount">0</span>人(2人以上推奨)</div>
+      <button class="btn" id="startBtn">ゲームスタート</button>
+      <div class="how">
+        <b>操作:</b> 移動 = WASD / 矢印キー ／ アクション = <b>SPACE</b>(長押し不可・1回ずつ押す)<br>
+        <b>① 鉄くず</b>を3つ拾う → <b>② 作業台</b>でSPACE → <b>ボルト</b>1個<br>
+        <b>③ 修理ステーション</b>でSPACEを連打 → ボルト1個につき修理ゲージ+1<br>
+        <b>プラズマコア</b>はコア箱でSPACEで取得。持つと激重!SPACEで置いて仲間にパスもできる。<br>
+        エンジン(Destroy)か羽(Avoid)、<b>どちらか先に全タスク完了</b>でクリア!
+      </div>
+    </div>
+
+    <div id="result" class="overlay hidden">
+      <div id="resTitle"></div>
+      <div class="sub" id="resSub"></div>
+      <button class="btn" id="againBtn">タイトルへ戻る</button>
+    </div>
   </div>
 
-  <!-- 中央上部の制限時間 -->
-  <div id="timer-bar">残り時間: 05:00</div>
-
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
-
-  <div class="instructions">
-    移動: [WASD] または [矢印キー] | アクション・タスク連打: [Space] キー
+  <div id="hud">
+    <div class="panel engine"><h3>⚙️ エンジン修理 (Destroy)</h3><ul class="tasks" id="engineTasks"></ul></div>
+    <div class="panel wing"><h3>🪽 羽修理 (Avoid)</h3><ul class="tasks" id="wingTasks"></ul></div>
+    <div class="panel" id="inv"><span id="invScrap">鉄くず: ○○○</span><span id="invBolt">ボルト: 0</span><span id="invCore">コア: なし</span></div>
   </div>
+  <div id="keys">移動: WASD / 矢印　アクション: SPACE（押しっぱなし無効）</div>
+</div>
 
-  <script>
-    const socket = io();
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const titleScreen = document.getElementById('title-screen');
-    const timerBar = document.getElementById('timer-bar');
+<div id="touch">
+  <div class="tbtn" id="tUp">▲</div><div class="tbtn" id="tDown">▼</div>
+  <div class="tbtn" id="tLeft">◀</div><div class="tbtn" id="tRight">▶</div>
+  <div class="tbtn" id="tAct">ACTION</div>
+</div>
 
-    let localState = null;
-    let myPos = { x: 400, y: 300 };
-    const keys = {};
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(() => {
+  const W = 1000, H = 640;
+  const socket = io();
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const $ = (id) => document.getElementById(id);
 
-    socket.on('stateUpdate', (state) => {
-      localState = state;
-      
-      // タイトル画面の表示切り替え
-      if (state.status === 'TITLE') {
-        titleScreen.style.display = 'flex';
-      } else {
-        titleScreen.style.display = 'none';
-      }
+  let CFG = null, S = null, ME = null;
+  const disp = {};
+  const floaters = [];
+  let lastPhase = 'lobby';
+  let loseAt = 0;
+  let recvAt = 0;
 
-      // タイマー表示更新
-      const mins = Math.floor(state.timer / 60).toString().padStart(2, '0');
-      const secs = (state.timer % 60).toString().padStart(2, '0');
-      timerBar.innerText = `残り時間: ${mins}:${secs}`;
+  // ---------- 効果音 ----------
+  let ac = null;
+  function beep(f, d, type, v) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'square'; o.frequency.value = f;
+      g.gain.value = v || 0.04;
+      o.connect(g); g.connect(ac.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + d);
+      o.stop(ac.currentTime + d);
+    } catch (e) {}
+  }
+  const SND = {
+    pick: () => beep(760, 0.07), drop: () => beep(300, 0.1), craft: () => { beep(520, 0.1); setTimeout(() => beep(780, 0.14), 90); },
+    repair: () => beep(620, 0.06, 'triangle', 0.06), error: () => beep(140, 0.15, 'sawtooth', 0.05),
+    done: () => { beep(523, 0.12); setTimeout(() => beep(659, 0.12), 110); setTimeout(() => beep(784, 0.2), 220); },
+  };
 
-      if (state.status === 'WIN') {
-        timerBar.innerText = '🎉 ミッション成功！クリア！';
-      } else if (state.status === 'LOSE') {
-        timerBar.innerText = '💥 隕石が激突しました... (GAMEOVER)';
-      }
+  // ---------- 入力 ----------
+  const keys = { up: false, down: false, left: false, right: false };
+  let sentKey = '';
+  let spaceDown = false; // Space押下中フラグ（離すまで再発火しない）
 
-      render();
-    });
+  function sendInput() {
+    const k = `${+keys.up}${+keys.down}${+keys.left}${+keys.right}`;
+    if (k !== sentKey) { sentKey = k; socket.emit('input', keys); }
+  }
+  function fireAction() {
+    if (S && S.phase === 'playing') socket.emit('action');
+  }
+  const keyMap = {
+    KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down',
+    KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
+  };
 
-    function startGame() {
-      socket.emit('startGame');
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      // 長押し完全無効化: repeat判定 + 自前の押下中フラグ
+      if (e.repeat || spaceDown) return;
+      spaceDown = true;
+      fireAction();
+      return;
     }
+    const k = keyMap[e.code];
+    if (k) { e.preventDefault(); keys[k] = true; sendInput(); }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); spaceDown = false; return; }
+    const k = keyMap[e.code];
+    if (k) { keys[k] = false; sendInput(); }
+  });
+  window.addEventListener('blur', () => {
+    spaceDown = false;
+    for (const k in keys) keys[k] = false;
+    sendInput();
+  });
 
-    // キー入力監視
-    window.addEventListener('keydown', (e) => {
-      keys[e.key] = true;
-      if (e.key === ' ') {
-        socket.emit('action');
-      }
-    });
-    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+  // タッチ操作
+  if ('ontouchstart' in window) {
+    document.body.classList.add('touch');
+    const bind = (id, k) => {
+      const el = $(id);
+      el.addEventListener('pointerdown', (e) => { e.preventDefault(); keys[k] = true; sendInput(); });
+      const up = (e) => { e.preventDefault(); keys[k] = false; sendInput(); };
+      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up);
+    };
+    bind('tUp', 'up'); bind('tDown', 'down'); bind('tLeft', 'left'); bind('tRight', 'right');
+    $('tAct').addEventListener('pointerdown', (e) => { e.preventDefault(); fireAction(); });
+  }
 
-    // 移動ループ
-    setInterval(() => {
-      if (!localState || localState.status !== 'PLAYING') return;
-      const me = localState.players[socket.id];
-      if (!me) return;
+  $('startBtn').addEventListener('click', (e) => { socket.emit('start'); e.target.blur(); });
+  $('againBtn').addEventListener('click', (e) => { socket.emit('toTitle'); e.target.blur(); });
 
-      const isHeavy = me.holdingItem === 'CORE';
-      const speed = isHeavy ? 2.5 : 5;
+  // ---------- ネットワーク ----------
+  socket.on('init', (d) => { CFG = d; ME = d.you; buildHud(); });
+  socket.on('state', (s) => {
+    if (s.phase === 'lose' && lastPhase !== 'lose') loseAt = performance.now();
+    if (s.phase === 'win' && lastPhase !== 'win') { SND.done(); }
+    lastPhase = s.phase;
+    S = s; recvAt = performance.now();
+  });
+  socket.on('fx', (f) => {
+    const col = f.type === 'done' ? '#ffd43b' : f.type === 'error' || f.text.includes('必要') || f.text.includes('ない') ? '#ff8a80' : f.type === 'craft' ? '#ffe082' : '#ffffff';
+    floaters.push({ x: f.x, y: f.y, text: f.text, color: col, born: performance.now(), big: f.type === 'done' });
+    if (f.snd && SND[f.snd]) SND[f.snd]();
+  });
 
-      let moved = false;
-      if (keys['ArrowUp'] || keys['w']) { myPos.y -= speed; moved = true; }
-      if (keys['ArrowDown'] || keys['s']) { myPos.y += speed; moved = true; }
-      if (keys['ArrowLeft'] || keys['a']) { myPos.x -= speed; moved = true; }
-      if (keys['ArrowRight'] || keys['d']) { myPos.x += speed; moved = true; }
-
-      if (moved) {
-        socket.emit('move', myPos);
-      } else {
-        myPos.x = me.x;
-        myPos.y = me.y;
-      }
-    }, 1000 / 30);
-
-    // 描画処理
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (!localState) return;
-
-      // 1. エリアの描画
-      // 作業台
-      ctx.fillStyle = '#ffd93d';
-      ctx.fillRect(340, 40, 120, 70);
-      ctx.fillStyle = '#000';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('🛠 作業台 (要鉄くず3)', 342, 80);
-
-      // エンジン修理 (DESTROY)
-      ctx.fillStyle = '#ff4d4d';
-      ctx.fillRect(80, 200, 140, 100);
-      ctx.fillStyle = '#fff';
-      ctx.fillText('⚙️ エンジン (Destroy)', 85, 245);
-
-      // 羽修理 (AVOID)
-      ctx.fillStyle = '#4d96ff';
-      ctx.fillRect(580, 200, 140, 100);
-      ctx.fillStyle = '#fff';
-      ctx.fillText('🪽 羽 (Avoid)', 615, 245);
-
-      // コア箱
-      ctx.fillStyle = '#9c27b0';
-      ctx.fillRect(60, 460, 90, 80);
-      ctx.fillStyle = '#fff';
-      ctx.fillText('📦 プラズマコア', 65, 505);
-
-      // 2. マップ上の「鉄くず」描画
-      localState.scraps.forEach(scrap => {
-        if (scrap.active) {
-          ctx.fillStyle = '#b0bec5';
-          ctx.beginPath();
-          ctx.arc(scrap.x, scrap.y, 10, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#fff';
-          ctx.stroke();
-          ctx.fillStyle = '#fff';
-          ctx.font = '10px sans-serif';
-          ctx.fillText('鉄', scrap.x - 5, scrap.y + 4);
-        }
-      });
-
-      // 3. タスク進捗の表示 (画面下部)
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '13px sans-serif';
-      let dText = '【エンジン(Destroy)】 ';
-      localState.tasks.destroy.forEach(t => {
-        dText += `${t.name}(${t.clicks}/${t.maxClicks})${t.completed ? '✅ ' : '⬜ '}`;
-      });
-      ctx.fillText(dText, 30, 565);
-
-      let aText = '【羽(Avoid)】 ';
-      localState.tasks.avoid.forEach(t => {
-        aText += `${t.name}(${t.clicks}/${t.maxClicks})${t.completed ? '✅ ' : '⬜ '}`;
-      });
-      ctx.fillText(aText, 30, 585);
-
-      // 4. プレイヤーの描画
-      Object.values(localState.players).forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        // 所持アイテム・鉄くず数の表示
-        let info = '';
-        if (p.scrapCount > 0) info += `鉄:${p.scrapCount}/3 `;
-        if (p.holdingItem) info += `[${p.holdingItem}]`;
-        if (info) {
-          ctx.fillStyle = '#ffd93d';
-          ctx.font = '12px sans-serif';
-          ctx.fillText(info, p.x - 25, p.y - 25);
-        }
+  // ---------- HUD ----------
+  function buildHud() {
+    for (const route of ['engine', 'wing']) {
+      $(route + 'Tasks').innerHTML = CFG.TASKS[route].map((t, i) =>
+        `<li id="${route}-${i}"><span class="tn">${t.name}${t.type === 'core' ? '<b class="tag">コア運搬</b>' : ''}</span><span class="tp"></span><div class="bar"><i></i></div></li>`
+      ).join('');
+    }
+  }
+  let hudKey = '';
+  function updateHud() {
+    if (!CFG || !S) return;
+    const me = S.players.find(p => p.id === ME);
+    const key = JSON.stringify([S.prog, me && [me.s, me.b, me.h]]);
+    if (key === hudKey) return;
+    hudKey = key;
+    for (const route of ['engine', 'wing']) {
+      const r = S.prog[route];
+      CFG.TASKS[route].forEach((t, i) => {
+        const li = $(`${route}-${i}`);
+        const tp = li.querySelector('.tp'), bar = li.querySelector('.bar i');
+        if (i < r.idx) { li.className = 'done'; tp.textContent = '✔'; bar.style.width = '100%'; }
+        else if (i === r.idx) { li.className = 'current'; tp.textContent = `${r.p}/${t.need}`; bar.style.width = (r.p / t.need * 100) + '%'; }
+        else { li.className = ''; tp.textContent = `0/${t.need}`; bar.style.width = '0'; }
       });
     }
-  </script>
+    if (me) {
+      $('invScrap').textContent = '鉄くず: ' + '●'.repeat(me.s) + '○'.repeat(CFG.SCRAP_MAX - me.s);
+      $('invBolt').textContent = '🔩 ボルト: ' + me.b;
+      $('invCore').textContent = '🔋 コア: ' + (me.h ? '所持中(重い!)' : 'なし');
+    }
+  }
+
+  let ovState = '';
+  function updateOverlays(now) {
+    if (!S) return;
+    $('pcount').textContent = S.players.length;
+    let res = false;
+    if (S.phase === 'win') res = true;
+    if (S.phase === 'lose' && now - loseAt > 2800) res = true;
+    const st = (S.phase === 'lobby' ? 'T' : 'G') + (res ? 'R' : '');
+    if (st !== ovState) {
+      ovState = st;
+      $('title').classList.toggle('hidden', S.phase !== 'lobby');
+      $('result').classList.toggle('hidden', !res);
+      $('timer').style.display = S.phase === 'lobby' ? 'none' : 'block';
+      if (res) {
+        if (S.phase === 'win') {
+          $('resTitle').textContent = '🎉 MISSION COMPLETE!';
+          $('resTitle').style.color = '#69f0ae';
+          $('resSub').textContent = S.result && S.result.route === 'engine'
+            ? 'エンジンを修理して隕石を粉砕した! (Destroy)'
+            : '羽を修理して隕石を華麗に回避した! (Avoid)';
+        } else {
+          $('resTitle').textContent = '☄️ GAME OVER';
+          $('resTitle').style.color = '#ff5252';
+          $('resSub').textContent = '巨大隕石が激突した… 船は宇宙の藻屑に。';
+        }
+      }
+    }
+    // タイマー
+    const rem = Math.max(0, S.remain - (S.phase === 'playing' ? (now - recvAt) : 0));
+    const sec = Math.ceil(rem / 1000);
+    const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+    const ss = String(sec % 60).padStart(2, '0');
+    const t = $('timer');
+    t.textContent = `残り時間: ${mm}:${ss}`;
+    t.classList.toggle('warn', sec <= 60);
+    t.classList.toggle('blink', sec <= 30 && S.phase === 'playing');
+  }
+
+  // ---------- 描画ヘルパー ----------
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function label(text, x, y, size, color) {
+    ctx.font = `bold ${size}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.75)';
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = color || '#fff';
+    ctx.fillText(text, x, y);
+  }
+  function totalNeed(route) { return CFG.TASKS[route].reduce((a, t) => a + t.need, 0); }
+  function doneNeed(route) {
+    const r = S.prog[route];
+    let n = 0;
+    CFG.TASKS[route].forEach((t, i) => { if (i < r.idx) n += t.need; });
+    return n + r.p;
+  }
+
+  function drawFloor() {
+    ctx.fillStyle = '#080c1a'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#1a2338'; ctx.fillRect(20, 20, W - 40, H - 40);
+    ctx.strokeStyle = '#222d48'; ctx.lineWidth = 1;
+    for (let x = 20; x <= W - 20; x += 40) { ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, H - 20); ctx.stroke(); }
+    for (let y = 20; y <= H - 20; y += 40) { ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(W - 20, y); ctx.stroke(); }
+    ctx.strokeStyle = '#4a5a8a'; ctx.lineWidth = 5; ctx.strokeRect(20, 20, W - 40, H - 40);
+    // 床のハザードライン
+    ctx.fillStyle = 'rgba(255,214,64,.12)';
+    for (let x = 30; x < W - 40; x += 40) { ctx.fillRect(x, H - 34, 20, 8); }
+  }
+
+  function nearMe(pos) {
+    const me = S.players.find(p => p.id === ME);
+    if (!me) return false;
+    const d = disp[ME] || me;
+    return Math.hypot(d.x - pos.x, d.y - pos.y) <= CFG.REACH;
+  }
+
+  function drawProgress(route, x, y) {
+    const frac = doneNeed(route) / totalNeed(route);
+    ctx.fillStyle = 'rgba(0,0,0,.7)'; rr(x - 60, y, 120, 14, 6); ctx.fill();
+    ctx.fillStyle = route === 'engine' ? '#ff6b6b' : '#4dabf7';
+    rr(x - 58, y + 2, Math.max(0, 116 * frac), 10, 5); ctx.fill();
+    label(Math.round(frac * 100) + '%', x, y + 12, 11, '#fff');
+  }
+
+  function drawEngine(t) {
+    const { x, y } = CFG.POS.engine;
+    ctx.save(); ctx.translate(x, y);
+    // 炎
+    const fl = 18 + Math.sin(t / 70) * 6 + Math.random() * 4;
+    const g = ctx.createRadialGradient(-62, 0, 2, -62, 0, fl + 14);
+    g.addColorStop(0, '#fff7c0'); g.addColorStop(.5, '#ff9800'); g.addColorStop(1, 'rgba(255,60,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(-62, 0, fl + 12, 20, 0, 0, Math.PI * 2); ctx.fill();
+    // 本体
+    ctx.fillStyle = '#3d2530'; rr(-52, -78, 108, 156, 14); ctx.fill();
+    ctx.strokeStyle = '#8b4a5a'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#6d2f3f'; rr(-36, -58, 76, 116, 10); ctx.fill();
+    ctx.fillStyle = '#ff6b6b'; ctx.beginPath(); ctx.arc(2, 0, 22 + Math.sin(t / 200) * 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffd1d1'; ctx.beginPath(); ctx.arc(2, 0, 10, 0, Math.PI * 2); ctx.fill();
+    // パイプ
+    ctx.strokeStyle = '#9aa4c9'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(-36, -40); ctx.lineTo(-36, -70); ctx.moveTo(40, 40); ctx.lineTo(40, 70); ctx.stroke();
+    ctx.restore();
+    if (nearMe(CFG.POS.engine)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    drawProgress('engine', x, y - 110);
+    label('エンジン修理 (Destroy)', x, y + 100, 14, '#ff8a80');
+    const task = CFG.TASKS.engine[S.prog.engine.idx];
+    label(task ? task.name : 'COMPLETE', x, y + 118, 12, '#ffe0e0');
+  }
+
+  function drawWing(t) {
+    const { x, y } = CFG.POS.wing;
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = '#2c3e5c'; rr(10, -50, 44, 100, 12); ctx.fill();
+    ctx.fillStyle = '#3f5c8a';
+    ctx.beginPath(); ctx.moveTo(14, -30); ctx.lineTo(-30, -96); ctx.lineTo(-62, -96); ctx.lineTo(-30, 0);
+    ctx.lineTo(-62, 96); ctx.lineTo(-30, 96); ctx.lineTo(14, 30); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#8fb0e8'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1;
+    for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(-6, i * 12); ctx.lineTo(-48, i * 28); ctx.stroke(); }
+    ctx.fillStyle = '#ffd43b';
+    [[-30, -80], [-30, 80], [0, -20], [0, 20]].forEach(([px, py]) => { ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill(); });
+    // 溶接火花
+    if (Math.sin(t / 130) > .6) { ctx.fillStyle = '#fff59d'; ctx.fillRect(-40 + Math.random() * 10, -40 + Math.random() * 10, 3, 3); }
+    ctx.restore();
+    if (nearMe(CFG.POS.wing)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    drawProgress('wing', x, y - 110);
+    label('羽修理 (Avoid)', x, y + 118, 14, '#82b1ff');
+    const task = CFG.TASKS.wing[S.prog.wing.idx];
+    label(task ? task.name : 'COMPLETE', x, y + 136, 12, '#dce8ff');
+  }
+
+  function drawBench() {
+    const { x, y } = CFG.POS.bench;
+    ctx.fillStyle = '#5d4037'; rr(x - 48, y - 28, 96, 56, 8); ctx.fill();
+    ctx.strokeStyle = '#a1887f'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#90a4ae'; ctx.fillRect(x - 28, y - 14, 30, 12); ctx.fillRect(x - 12, y - 4, 8, 22);
+    ctx.fillStyle = '#ffca28'; ctx.fillRect(x + 12, y - 12, 22, 8);
+    if (nearMe(CFG.POS.bench)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    label('🔨 作業台', x, y + 50, 14, '#ffe0b2');
+  }
+
+  function drawCoreBox(t) {
+    const { x, y } = CFG.POS.coreBox;
+    ctx.fillStyle = '#37474f'; rr(x - 30, y - 30, 60, 60, 8); ctx.fill();
+    ctx.strokeStyle = '#78909c'; ctx.lineWidth = 3; ctx.stroke();
+    if (S.core.state === 'box') drawOrb(x, y, 11, t);
+    else { ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.fill(); }
+    if (nearMe(CFG.POS.coreBox)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    label('コア箱', x, y + 50, 14, '#b39ddb');
+  }
+
+  function drawOrb(x, y, r, t) {
+    const pulse = r + Math.sin(t / 150) * 1.5;
+    const g = ctx.createRadialGradient(x, y, 1, x, y, pulse + 8);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(.4, '#b388ff'); g.addColorStop(1, 'rgba(124,77,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, pulse + 8, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawScraps() {
+    for (const s of S.scraps) {
+      ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.id * 1.7);
+      ctx.fillStyle = '#8d97a5';
+      ctx.beginPath(); ctx.moveTo(-9, -5); ctx.lineTo(2, -10); ctx.lineTo(10, -2); ctx.lineTo(6, 8); ctx.lineTo(-7, 7); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#cfd8dc'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawPlayers(t) {
+    const list = [...S.players].sort((a, b) => a.y - b.y);
+    for (const p of list) {
+      let d = disp[p.id];
+      if (!d) d = disp[p.id] = { x: p.x, y: p.y };
+      const dd = Math.hypot(p.x - d.x, p.y - d.y);
+      if (dd > 120) { d.x = p.x; d.y = p.y; } else { d.x += (p.x - d.x) * 0.4; d.y += (p.y - d.y) * 0.4; }
+      const x = d.x, y = d.y;
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y + 14, 15, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = p.id === ME ? 4 : 2; ctx.strokeStyle = p.id === ME ? '#fff' : 'rgba(0,0,0,.5)'; ctx.stroke();
+      // 目
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - 5, y - 4, 4.5, 0, Math.PI * 2); ctx.arc(x + 5, y - 4, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x - 4, y - 4, 2, 0, Math.PI * 2); ctx.arc(x + 6, y - 4, 2, 0, Math.PI * 2); ctx.fill();
+      label(p.id === ME ? `P${p.n} (YOU)` : `P${p.n}`, x, y + 32, 11, p.id === ME ? '#ffd43b' : '#fff');
+      // 所持品
+      let iy = y - 30;
+      if (p.h) { drawOrb(x, iy - 8, 9, t); iy -= 22; }
+      if (p.b > 0) {
+        ctx.fillStyle = '#ffca28'; ctx.beginPath();
+        for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i; ctx.lineTo(x - 12 + Math.cos(a) * 8, iy + Math.sin(a) * 8); }
+        ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#6d4c00'; ctx.lineWidth = 1.5; ctx.stroke();
+        label('x' + p.b, x + 6, iy + 4, 12, '#fff');
+        iy -= 0;
+      }
+      for (let i = 0; i < p.s; i++) { ctx.fillStyle = '#90a4ae'; ctx.fillRect(x + 8 + i * 9 - 6, iy - 4, 7, 7); ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 1; ctx.strokeRect(x + 8 + i * 9 - 6, iy - 4, 7, 7); }
+    }
+    // 離脱したプレイヤーの補間データ削除
+    for (const id in disp) if (!S.players.find(p => p.id === id)) delete disp[id];
+  }
+
+  function drawCoreGround(t) {
+    if (S.core.state === 'ground') {
+      drawOrb(S.core.x, S.core.y, 11, t);
+      label('コア', S.core.x, S.core.y + 28, 12, '#d1c4e9');
+    }
+  }
+
+  function drawFloaters(now) {
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      const k = (now - f.born) / (f.big ? 1600 : 1000);
+      if (k >= 1) { floaters.splice(i, 1); continue; }
+      ctx.globalAlpha = 1 - k * k;
+      label(f.text, f.x, f.y - k * 40, f.big ? 22 : 15, f.color);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawHint() {
+    if (S.phase !== 'playing') return;
+    const me = S.players.find(p => p.id === ME);
+    if (!me) return;
+    let h = '';
+    if (me.h) {
+      if (nearMe(CFG.POS.engine) && CFG.TASKS.engine[S.prog.engine.idx] && CFG.TASKS.engine[S.prog.engine.idx].type === 'core') h = 'SPACE: コアをエンジンへ搬入';
+      else h = 'SPACE: コアを置く (パス)';
+    } else if (nearMe(CFG.POS.engine) || nearMe(CFG.POS.wing)) {
+      const route = nearMe(CFG.POS.engine) ? 'engine' : 'wing';
+      const t = CFG.TASKS[route][S.prog[route].idx];
+      h = t && t.type === 'core' ? 'プラズマコアが必要!' : (me.b > 0 ? 'SPACE: ボルトを使って修理 (連打!)' : 'ボルトが必要 (作業台で作成)');
+    } else if (nearMe(CFG.POS.bench)) h = me.s >= CFG.SCRAP_MAX ? 'SPACE: ボルトを作る' : `鉄くずを集めよう (${me.s}/${CFG.SCRAP_MAX})`;
+    else if (nearMe(CFG.POS.coreBox) && S.core.state === 'box') h = 'SPACE: プラズマコアを取る (激重)';
+    else if (S.core.state === 'ground' && Math.hypot((disp[ME] || me).x - S.core.x, (disp[ME] || me).y - S.core.y) < 50) h = 'SPACE: コアを拾う';
+    if (h) {
+      ctx.fillStyle = 'rgba(0,0,0,.65)'; rr(W / 2 - 190, H - 66, 380, 30, 10); ctx.fill();
+      label(h, W / 2, H - 45, 16, '#ffd43b');
+    }
+  }
+
+  function drawMeteor(now) {
+    const rem = S.remain - (S.phase === 'playing' ? (now - recvAt) : 0);
+    if (S.phase === 'playing' && rem <= 30000) {
+      const k = 1 - rem / 30000;
+      const mx = W - 60 - k * 120, my = 60 + k * 40, r = 18 + k * 60;
+      ctx.fillStyle = `rgba(255,40,40,${0.05 + 0.1 * Math.abs(Math.sin(now / 200))})`;
+      ctx.fillRect(0, 0, W, H);
+      meteorBody(mx, my, r, now);
+      label('☄ 隕石接近中!', mx - 30, my + r + 22, 14, '#ff8a80');
+    } else if (S.phase === 'lose') {
+      const el = now - loseAt;
+      const k = Math.min(1, el / 2400);
+      const mx = (W - 60 - 120) + (W / 2 - (W - 180)) * k, my = 100 + (H / 2 - 100) * k;
+      const r = 78 + k * k * 520;
+      meteorBody(mx, my, r, now);
+      if (el > 2300) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, 1 - (el - 2300) / 1400)})`; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = `rgba(120,0,0,${Math.min(.55, (el - 2300) / 2000)})`; ctx.fillRect(0, 0, W, H);
+      }
+    } else if (S.phase === 'win') {
+      for (let i = 0; i < 40; i++) {
+        const px = (i * 97 + now * 0.05 * (1 + i % 3)) % W;
+        const py = (i * 53 + now * 0.12 * (1 + i % 4)) % H;
+        ctx.fillStyle = ['#ff6b6b', '#ffd43b', '#4dabf7', '#51cf66'][i % 4];
+        ctx.fillRect(px, py, 8, 8);
+      }
+    }
+  }
+  function meteorBody(x, y, r, now) {
+    const tail = ctx.createLinearGradient(x, y, x + r * 3, y - r * 1.5);
+    tail.addColorStop(0, 'rgba(255,120,30,.8)'); tail.addColorStop(1, 'rgba(255,60,0,0)');
+    ctx.fillStyle = tail; ctx.beginPath(); ctx.moveTo(x - r * .7, y - r * .7); ctx.lineTo(x + r * 3, y - r * 1.5); ctx.lineTo(x + r * .7, y + r * .7); ctx.closePath(); ctx.fill();
+    const g = ctx.createRadialGradient(x - r * .3, y - r * .3, r * .1, x, y, r);
+    g.addColorStop(0, '#d7a77a'); g.addColorStop(.6, '#7b4a2a'); g.addColorStop(1, '#3a1f10');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.arc(x - r * .25, y + r * .2, r * .2, 0, Math.PI * 2); ctx.arc(x + r * .3, y - r * .25, r * .14, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // 星背景
+  const stars = Array.from({ length: 50 }, (_, i) => ({ x: (i * 193) % W, y: (i * 71) % H, r: 0.6 + (i % 3) * 0.5 }));
+
+  // ---------- メインループ ----------
+  function frame(t) {
+    requestAnimationFrame(frame);
+    const now = performance.now();
+    ctx.clearRect(0, 0, W, H);
+    drawFloor();
+    if (CFG && S) {
+      drawEngine(t); drawWing(t); drawBench(); drawCoreBox(t);
+      drawScraps(); drawCoreGround(t); drawPlayers(t);
+      drawFloaters(now); drawHint(); drawMeteor(now);
+      updateHud(); updateOverlays(now);
+    } else {
+      ctx.fillStyle = '#fff'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('接続中…', W / 2, H / 2);
+    }
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
