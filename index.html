@@ -20,24 +20,56 @@ button:active{transform:translateY(2px);box-shadow:0 2px 0 #8f2323}
 button:disabled,button.cd{filter:grayscale(.9) brightness(.6);cursor:not-allowed}
 button.blue{background:linear-gradient(#4dabf7,#2b7fc9);box-shadow:0 4px 0 #1a4f80}
 button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6b2d}
+button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b3347}
 #plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;width:min(760px,95vw)}
 .pcard{background:#12192b;border:2px solid #2b3856;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .avatar{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;border:3px solid #fff3}
 .tag{font-size:12px;padding:2px 10px;border-radius:99px;background:#334;}
 .tag.host{background:#ffd43b;color:#222}.tag.ready{background:#51cf66;color:#042}
-/* HUD */
+
+/* ---- タイトル画面 ---- */
+#title{justify-content:flex-start;padding-top:18px;gap:6px}
+#title .sub{max-width:640px}
+#avCv{height:min(46vh,430px);width:auto;aspect-ratio:360/430;flex:none;filter:drop-shadow(0 18px 28px rgba(0,0,0,.55))}
+#nameBox{display:flex;flex-direction:column;align-items:center;gap:10px}
+#swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:340px}
+.sw{width:26px;height:26px;border-radius:50%;border:3px solid #fff3;cursor:pointer}
+.sw.sel{border-color:#fff;box-shadow:0 0 10px #fff9;transform:scale(1.15)}
+#titleBtns{position:absolute;right:28px;bottom:28px;display:flex;flex-direction:column;gap:14px;align-items:stretch}
+#titleBtns button{font-size:22px;padding:16px 34px;min-width:260px}
+#titleKeys{position:absolute;left:24px;bottom:24px;text-align:left;font-size:12px;opacity:.6;line-height:1.8;max-width:42vw}
+#titleErr{position:absolute;right:28px;bottom:196px;color:#ff8787;font-weight:700;font-size:15px;max-width:340px;text-align:right}
+#joinPanel{position:fixed;inset:0;z-index:60;background:#000b;display:flex;align-items:center;justify-content:center}
+#joinBox{background:#161d30;border:3px solid #4b5b83;border-radius:18px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:14px;width:min(380px,92vw)}
+#joinBox h3{font-size:22px}
+#codeIn{font-size:42px;letter-spacing:.3em;width:100%;padding:10px 0 10px .3em;font-weight:800}
+#joinErr{color:#ff8787;min-height:20px;font-size:14px;font-weight:700}
+
+/* ---- ロビー ---- */
+#roomCodeBox{display:flex;align-items:center;gap:14px;background:#10172a;border:2px solid #4b5b83;border-radius:14px;padding:8px 18px}
+#roomCodeBox small{font-size:12px;opacity:.7}
+#roomCode{font-size:44px;font-weight:900;letter-spacing:.22em;color:#ffd43b;text-shadow:0 0 14px #ffd43b66;user-select:text}
+#roomCodeBox button{padding:8px 14px;font-size:14px}
+#impBox{display:flex;align-items:center;gap:12px;background:#12192b;border:2px solid #2b3856;border-radius:14px;padding:10px 18px}
+#impBox b{font-size:15px}
+#impNum{font-size:30px;font-weight:900;color:#ff6b6b;min-width:34px}
+#impBox button{padding:4px 16px;font-size:24px;line-height:1.2}
+#impNote{font-size:12px;opacity:.7}
+
+/* ---- HUD ---- */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
 #hud button{pointer-events:auto}
-#top{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center}
-#progWrap{position:relative;width:min(380px,50vw);height:24px;background:#0008;border:2px solid #fff6;border-radius:99px;overflow:hidden}
-#pfill{height:100%;width:0;background:linear-gradient(90deg,#51cf66,#a9e34b);transition:width .3s}
-#ptxt{position:absolute;inset:0;text-align:center;line-height:20px;font-size:14px;font-weight:700;text-shadow:0 1px 2px #000}
-#timer{font-size:26px;font-weight:800;text-shadow:0 2px 6px #000;min-width:80px}
-#tasks{position:absolute;top:12px;left:12px;background:#000a;border:1px solid #fff3;border-radius:12px;padding:10px 12px;min-width:240px;max-width:300px;font-size:14px;line-height:1.5}
+#top{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:18px;align-items:center}
+#progWrap{position:relative;width:min(720px,58vw);height:48px;background:#0a0f1cdd;border:4px solid #fff;border-radius:99px;overflow:hidden;box-shadow:0 0 0 3px #000a,0 0 26px rgba(81,207,102,.5)}
+#pfill{height:100%;width:0;background:linear-gradient(90deg,#2f9e44,#51cf66 60%,#d8f5a2);transition:width .3s;box-shadow:inset 0 -9px 12px rgba(0,0,0,.22)}
+.ptick{position:absolute;top:0;bottom:0;width:2px;background:#fff6}
+#ptxt{position:absolute;inset:0;text-align:center;line-height:40px;font-size:24px;font-weight:900;letter-spacing:.06em;text-shadow:0 2px 4px #000,0 0 8px #000}
+#timer{font-size:36px;font-weight:900;text-shadow:0 2px 8px #000;min-width:100px}
+#tasks{position:absolute;top:84px;left:12px;background:#000a;border:1px solid #fff3;border-radius:12px;padding:10px 12px;min-width:240px;max-width:300px;font-size:14px;line-height:1.5}
 #tasks h4{font-size:12px;opacity:.7;margin-bottom:4px}
 .tk{padding:3px 0;border-top:1px solid #fff2}.tk:first-of-type{border-top:none}
 .tk small{display:block;opacity:.65;font-size:11px}
-#mm{position:absolute;top:12px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:200px;height:125px}
+#mm{position:absolute;top:84px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:220px;height:139px}
 #hint{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:18px;font-weight:700;color:#ffd43b;text-shadow:0 2px 6px #000;white-space:nowrap}
 #slots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:flex-end}
 .slot{width:64px;height:64px;border-radius:12px;background:#000a;border:3px solid #fff3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;position:relative}
@@ -51,21 +83,27 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 @keyframes pulse{to{filter:brightness(1.4);transform:scale(1.06)}}
 #roleTag{position:absolute;bottom:14px;left:14px;font-size:14px;padding:6px 12px;border-radius:99px;background:#000a;font-weight:700}
 #spec{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:#000b;padding:6px 14px;border-radius:99px;font-size:14px}
-#toast{position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:50;font-size:18px;font-weight:700;padding:8px 18px;border-radius:99px;background:#000c;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+#toast{position:fixed;top:150px;left:50%;transform:translateX(-50%);z-index:50;font-size:18px;font-weight:700;padding:8px 18px;border-radius:99px;background:#000c;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}#toast.error{color:#ff8787}#toast.good{color:#8ce99a}
-#banner{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000b;pointer-events:none;animation:fade 3.2s forwards}
+#banner{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000b;pointer-events:none;animation:fade 3.2s forwards;text-align:center;padding:20px}
 #banner h2{font-size:clamp(34px,8vw,80px)}#banner p{font-size:18px;opacity:.85;margin-top:8px}
 @keyframes fade{0%,75%{opacity:1}100%{opacity:0}}
-/* mini game */
+
+/* ---- ミニゲーム ---- */
 #mini{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center}
 #miniBox{background:#161d30;border:3px solid #4b5b83;border-radius:18px;padding:18px 22px;text-align:center;width:min(580px,96vw)}
 #miniTitle{font-size:22px;font-weight:800;margin-bottom:10px}
 #miniHelp{font-size:13px;opacity:.75;margin-top:10px}
 #miniBody canvas{background:#222733;border-radius:10px;max-width:100%}
-.grid{display:grid;grid-template-columns:repeat(3,90px);gap:10px;justify-content:center}
-.grid button{height:80px;font-size:34px;padding:0}
-.grid button.ok{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6b2d}
-.grid button.bad{background:#fa5252}
+.seqrow{display:flex;gap:10px;justify-content:center;margin:4px 0 18px;flex-wrap:nowrap}
+.seqnum{width:62px;height:80px;border-radius:12px;background:#2b3552;border:4px solid #55658f;font-size:44px;font-weight:900;display:flex;align-items:center;justify-content:center;transition:.12s}
+.seqnum.cur{border-color:#ffd43b;background:#4b4620;box-shadow:0 0 18px #ffd43b88;transform:translateY(-4px)}
+.seqnum.done{border-color:#51cf66;background:#1f5a2f;color:#b8f5c2}
+.seqrow.bad .seqnum{border-color:#fa5252;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.keypad{display:grid;grid-template-columns:repeat(3,84px);gap:10px;justify-content:center}
+.keypad button{height:64px;font-size:30px;padding:0}
+.keypad button.zero{grid-column:2}
 .keyrow{display:flex;gap:24px;justify-content:center;margin:6px 0 16px}
 .keycap{width:110px;height:110px;border-radius:18px;background:#2b3552;border:4px solid #55658f;font-size:56px;font-weight:900;display:flex;align-items:center;justify-content:center}
 .keycap.exp{border-color:#ffd43b;background:#4b4620;box-shadow:0 0 22px #ffd43b88}
@@ -73,7 +111,8 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 .bar{height:22px;background:#0a0e18;border-radius:99px;overflow:hidden;border:2px solid #4b5b83;margin:8px 0}
 .bar>div{height:100%;width:0;background:linear-gradient(90deg,#4dabf7,#51cf66)}
 .spbtn{width:100%;margin-top:6px}
-/* meeting */
+
+/* ---- 会議 ---- */
 #meeting{position:fixed;inset:0;z-index:25;background:radial-gradient(circle at 50% 0,#22304f,#0a0f1c);display:flex;flex-direction:column;padding:14px;gap:10px}
 #mHead{text-align:center}#mTitle{font-size:24px;font-weight:800;color:#ff8787}#mTimer{font-size:18px;opacity:.9}
 #mMain{flex:1;display:flex;gap:12px;min-height:0}
@@ -91,40 +130,80 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 #chatForm button{padding:8px 16px;font-size:15px}
 #mFoot{text-align:center;min-height:50px}
 #mRes{font-size:22px;font-weight:800;color:#ffd43b;margin-top:6px}
-/* end */
+
+/* ---- 結果 ---- */
 #endscr{position:fixed;inset:0;z-index:35;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
 #endscr h2{font-size:clamp(34px,8vw,76px)}
 #roster{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:720px}
-@media(max-width:700px){#mMain{flex-direction:column}#tasks{min-width:0;max-width:56vw;font-size:12px}#mm{width:130px;height:81px}}
+@media(max-width:700px){#mMain{flex-direction:column}#tasks{min-width:0;max-width:56vw;font-size:12px}#mm{width:140px;height:88px}#timer{font-size:24px;min-width:70px}#ptxt{font-size:18px}#progWrap{height:40px}#titleBtns{left:16px;right:16px;bottom:16px}#titleBtns button{min-width:0}#titleKeys{display:none}#titleErr{right:16px;bottom:170px}.seqnum{width:46px;height:64px;font-size:32px}}
 </style>
 </head>
 <body>
 
 <canvas id="cv"></canvas>
 
+<!-- タイトル -->
 <div id="title" class="screen">
   <h1>DESTROY <span>or</span> AVOID</h1>
-  <p class="sub">宇宙船を修理して脱出せよ。だが、仲間の中に<b style="color:#ff6b6b">インポスター</b>が紛れている…<br>タスクをこなし、怪しい奴を見抜いて追放しよう。</p>
-  <input type="text" id="nameIn" maxlength="10" placeholder="なまえ (10文字まで)">
-  <button id="btnStart">ゲームスタート</button>
-  <p class="sub" style="font-size:12px">WASD:移動 / SPACE:使う・会議ボタン / R:報告 / E:キル / F:妨害 / 1-3:スロット選択 / Q:捨てる</p>
+  <p class="sub">宇宙船を修理して脱出せよ。だが、仲間の中に<b style="color:#ff6b6b">インポスター</b>が紛れている…</p>
+  <canvas id="avCv" width="360" height="430"></canvas>
+  <div id="nameBox">
+    <input type="text" id="nameIn" maxlength="10" placeholder="なまえ (10文字まで)">
+    <div id="swatches"></div>
+  </div>
+  <div id="titleErr"></div>
+  <div id="titleBtns">
+    <button id="btnCreate" class="green">🚀 ロビーを作成</button>
+    <button id="btnJoin" class="blue">🔑 ロビーに参加</button>
+  </div>
+  <div id="titleKeys">WASD:移動 / SPACE:使う・会議ボタン / R:報告 / E:キル / F:妨害<br>1-3:スロット選択 / Q:捨てる</div>
 </div>
 
+<div id="joinPanel" class="hidden">
+  <div id="joinBox">
+    <h3>ロビーに参加</h3>
+    <p class="sub" style="font-size:13px">ホストから教えてもらった5桁の数字コードを入力</p>
+    <input type="text" id="codeIn" maxlength="5" inputmode="numeric" autocomplete="off" placeholder="12345">
+    <div id="joinErr"></div>
+    <div style="display:flex;gap:12px">
+      <button id="btnJoinOk" class="blue">参加</button>
+      <button id="btnJoinCancel" class="gray">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ロビー -->
 <div id="lobby" class="screen hidden">
   <h1 style="font-size:clamp(24px,4vw,40px)">🚀 ロビー</h1>
+  <div id="roomCodeBox">
+    <div><small>ロビーコード</small><div id="roomCode">-----</div></div>
+    <button id="btnCopy" class="gray">コピー</button>
+  </div>
   <div id="lobbyMsg" class="sub"></div>
+  <div id="impBox">
+    <b>🔪 インポスター人数</b>
+    <button id="impMinus" class="gray">−</button>
+    <span id="impNum">1</span>
+    <button id="impPlus" class="gray">＋</button>
+  </div>
+  <div id="impNote"></div>
   <div id="plist"></div>
   <div style="display:flex;gap:12px">
+    <button id="btnLeave" class="gray">退出</button>
     <button id="btnReady" class="blue">準備OK</button>
     <button id="btnGo" class="green hidden">ゲーム開始</button>
   </div>
   <p class="sub" style="font-size:12px">ホストが全員の準備完了後にスタートすると、10分間のゲームが始まります (最低2人)</p>
 </div>
 
+<!-- HUD -->
 <div id="hud" class="hidden">
-  <div id="top"><div id="progWrap"><div id="pfill"></div><div id="ptxt">0%</div></div><div id="timer">10:00</div></div>
+  <div id="top">
+    <div id="progWrap"><div id="pfill"></div><div class="ptick" style="left:25%"></div><div class="ptick" style="left:50%"></div><div class="ptick" style="left:75%"></div><div id="ptxt">0%</div></div>
+    <div id="timer">10:00</div>
+  </div>
   <div id="tasks"></div>
-  <canvas id="mm" width="200" height="125"></canvas>
+  <canvas id="mm" width="220" height="139"></canvas>
   <div id="hint"></div>
   <div id="slots"></div>
   <div id="btns">
@@ -166,8 +245,10 @@ const socket = io();
 const cv = $('cv'), ctx = cv.getContext('2d');
 const mmc = $('mm'), mmx = mmc.getContext('2d');
 const ITEM_ICON = { fuse: '🔌', battery: '🔋', core: '⚛️' };
-let init = null, S = null, joined = false, mapCv = null, prevPh = '';
+const FALLBACK_COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac', '#a9e34b', '#c08457'];
+let init = null, map = null, S = null, joined = false, mapCv = null, prevPh = '', roomCode = '';
 let selSlot = 0, mini = null, meetSig = '', lastIn = '', taskSig = '', slotSig = '';
+let myColor = FALLBACK_COLORS[1];
 const TB = {}, ents = new Map(), keysDown = {};
 const hyp = Math.hypot, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -206,9 +287,16 @@ function toast(text, kind) {
 }
 socket.on('toast', d => toast(d.text, d.kind));
 
-// ---------- 初期化 ----------
+// ---------- 初期化 / マップ受信 ----------
 socket.on('init', d => {
   init = d;
+  buildSwatches(d.COLORS || FALLBACK_COLORS);
+});
+
+// サーバーがルームごとに生成したランダム迷路を受け取ってオフスクリーンに描画
+socket.on('map', d => {
+  map = d;
+  for (const k in TB) delete TB[k];
   d.TASKS.forEach(t => TB[t.id] = t);
   mapCv = document.createElement('canvas'); mapCv.width = d.W; mapCv.height = d.H;
   const g = mapCv.getContext('2d'), C = d.CELL;
@@ -225,33 +313,159 @@ socket.on('init', d => {
   g.beginPath(); g.arc(d.BUTTON.x, d.BUTTON.y, 110, 0, 7); g.stroke();
 });
 
-// ---------- タイトル / ロビー ----------
+// ---------- アバター共通描画 ----------
+function rr(g, x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); }
+function el(g, x, y, rx, ry) { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); }
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16); return `rgb(${((n >> 16) * k) | 0},${((n >> 8 & 255) * k) | 0},${((n & 255) * k) | 0})`; }
+
+// 宇宙飛行士風の人型 (頭・胴体・腕・脚。歩行アニメ付き) — (0,0)が腰付近、足元は約y=+20
+function drawAstroBody(g, e) {
+  g.save();
+  g.globalAlpha = e.a ? 1 : .45;
+  g.fillStyle = 'rgba(0,0,0,.35)'; el(g, 0, 19, 14, 5); g.fill();
+  g.scale(e.f || 1, 1);
+  const sw = e.mv ? Math.sin(e.ph) * .75 : 0, dark = shade(e.c, .62), mid = shade(e.c, .82);
+  const limb = (x, y, ang, col, len, glove) => {
+    g.save(); g.translate(x, y); g.rotate(ang); g.fillStyle = col; rr(g, -3.5, 0, 7, len, 3); g.fill();
+    g.fillStyle = glove; rr(g, -4, len - 4, 8, 5, 2); g.fill(); g.restore();
+  };
+  g.fillStyle = '#c9ced6'; rr(g, -18, -14, 8, 20, 3); g.fill();               // 背負い装置
+  if (e.a) { limb(-4, 8, sw, dark, 11, '#e9ecef'); limb(4, 8, -sw, mid, 11, '#e9ecef'); } // 脚
+  limb(0, -9, -sw * 1.1, dark, 12, '#e9ecef');                                  // 奥の腕
+  g.fillStyle = e.c; rr(g, -11, -15, 22, 24, 7); g.fill();                      // 胴体
+  g.strokeStyle = dark; g.lineWidth = 2; g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.25)'; rr(g, -7, -12, 5, 12, 3); g.fill();
+  limb(0, -9, sw * 1.1, mid, 12, '#e9ecef');                                    // 手前の腕
+  g.fillStyle = '#f1f3f5'; el(g, 2, -24, 12, 11); g.fill();                     // ヘルメット(頭)
+  g.strokeStyle = '#9aa3b5'; g.lineWidth = 1.5; g.stroke();
+  g.fillStyle = '#17324f'; el(g, 6, -24, 7.5, 5.5); g.fill();                   // バイザー
+  g.fillStyle = 'rgba(255,255,255,.7)'; el(g, 8, -26, 2.8, 1.5); g.fill();
+  g.restore();
+}
+function drawAstro(e, isMe) {
+  ctx.save(); ctx.translate(e.x, e.y);
+  drawAstroBody(ctx, e);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = e.a ? 1 : .6;
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000b';
+  ctx.fillStyle = (isMe && S.me.role === 'imposter') || e.i ? '#ff6b6b' : '#fff';
+  ctx.strokeText(e.name, e.x, e.y - 42); ctx.fillText(e.name, e.x, e.y - 42); ctx.restore();
+}
+function drawBody(b) {
+  ctx.save(); ctx.translate(b.x, b.y);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; el(ctx, 0, 10, 24, 7); ctx.fill();
+  ctx.fillStyle = b.c; rr(ctx, -14, -9, 30, 20, 9); ctx.fill(); ctx.strokeStyle = shade(b.c, .6); ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#f1f3f5'; el(ctx, -18, 0, 10, 9); ctx.fill();
+  ctx.strokeStyle = '#17324f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-23, -3); ctx.lineTo(-17, 3); ctx.moveTo(-17, -3); ctx.lineTo(-23, 3); ctx.stroke();
+  ctx.fillStyle = '#fff'; rr(ctx, 10, -15, 4, 14, 2); ctx.fill(); el(ctx, 12, -16, 4, 3); ctx.fill();
+  ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.fillText('💀', 0, -22 + Math.sin(performance.now() / 300) * 3);
+  ctx.restore();
+}
+
+// ---------- タイトル画面 (等身大アバター) ----------
+const avCv = $('avCv'), avx = avCv.getContext('2d');
+const avE = { x: 0, y: 0, ph: 0, mv: true, f: 1, a: true, c: myColor };
+function drawTitleAvatar(dt) {
+  avx.clearRect(0, 0, 360, 430);
+  avE.c = myColor; avE.ph += dt * 5;
+  // 足元のスポットライト
+  const g = avx.createRadialGradient(180, 392, 10, 180, 392, 150);
+  g.addColorStop(0, 'rgba(142,203,255,.35)'); g.addColorStop(1, 'rgba(142,203,255,0)');
+  avx.fillStyle = g; avx.fillRect(0, 300, 360, 130);
+  avx.save();
+  avx.translate(188, 238 + Math.sin(avE.ph * 2) * 2);
+  avx.scale(6, 6);
+  drawAstroBody(avx, avE);
+  avx.restore();
+}
+function buildSwatches(cols) {
+  const box = $('swatches'); box.innerHTML = '';
+  let saved = null; try { saved = localStorage.getItem('doa_color'); } catch (e) {}
+  myColor = cols.includes(saved) ? saved : cols[1] || cols[0];
+  cols.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'sw' + (c === myColor ? ' sel' : ''); d.style.background = c;
+    d.onclick = () => {
+      myColor = c; try { localStorage.setItem('doa_color', c); } catch (e) {}
+      box.querySelectorAll('.sw').forEach(x => x.classList.toggle('sel', x === d)); SFX.click();
+    };
+    box.appendChild(d);
+  });
+}
+
+// ---------- タイトル → ロビー作成 / 参加 ----------
 try { $('nameIn').value = localStorage.getItem('doa_name') || ''; } catch (e) {}
-function doJoin() {
-  if (!init) return;
+const myName = () => {
   const name = $('nameIn').value.trim();
   try { localStorage.setItem('doa_name', name); } catch (e) {}
-  joined = true; socket.emit('join', { name });
+  return name;
+};
+function titleErr(t) { $('titleErr').textContent = t || ''; }
+$('btnCreate').onclick = () => {
+  if (!init) return;
+  SFX.click(); titleErr('');
+  socket.emit('createLobby', { name: myName(), color: myColor });
+};
+$('btnJoin').onclick = () => {
+  if (!init) return;
+  SFX.click(); titleErr('');
+  $('joinErr').textContent = ''; $('codeIn').value = '';
+  $('joinPanel').classList.remove('hidden');
+  setTimeout(() => $('codeIn').focus(), 30);
+};
+$('btnJoinCancel').onclick = () => $('joinPanel').classList.add('hidden');
+function submitJoin() {
+  const code = $('codeIn').value.trim();
+  if (!/^\d{5}$/.test(code)) { $('joinErr').textContent = '5桁の数字を入力してください'; SFX.error(); return; }
+  $('joinErr').textContent = '';
+  socket.emit('joinLobby', { name: myName(), color: myColor, code });
+}
+$('btnJoinOk').onclick = submitJoin;
+$('codeIn').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5); });
+$('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') submitJoin(); if (e.key === 'Escape') $('joinPanel').classList.add('hidden'); });
+$('nameIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnCreate').click(); });
+
+socket.on('joinError', msg => {
+  if (!$('joinPanel').classList.contains('hidden')) $('joinErr').textContent = msg; else titleErr(msg);
+  SFX.error();
+});
+socket.on('joined', d => {
+  joined = true; roomCode = d.code;
+  $('joinPanel').classList.add('hidden');
   $('title').classList.add('hidden');
   SFX.click();
-}
-$('btnStart').onclick = doJoin;
-$('nameIn').addEventListener('keydown', e => { if (e.key === 'Enter') doJoin(); });
+});
+
+// ---------- ロビー ----------
 $('btnReady').onclick = () => { socket.emit('ready'); SFX.click(); };
 $('btnGo').onclick = () => socket.emit('start');
 $('btnLobby').onclick = () => socket.emit('toLobby');
+$('btnLeave').onclick = () => location.reload();
+$('btnCopy').onclick = () => {
+  try { navigator.clipboard.writeText(roomCode); toast('コードをコピーしました', 'good'); } catch (e) { toast('コピーできませんでした', 'error'); }
+};
 socket.on('disconnect', () => { joined = false; S = null; location.reload(); });
 
 function avatar(c, size) { return `<div class="avatar" style="background:${c};${size ? `width:${size}px;height:${size}px` : ''}">🧑‍🚀</div>`; }
 const esc = s => String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
 
+let impCur = 1, impMaxCur = 1;
+$('impMinus').onclick = () => { if (S && S.me.host) { socket.emit('setImp', impCur - 1); SFX.click(); } };
+$('impPlus').onclick = () => { if (S && S.me.host) { socket.emit('setImp', impCur + 1); SFX.click(); } };
+
 function renderLobby(s) {
-  const L = s.lobby, me = s.me;
+  const L = s.lobby, me = s.me, cfg = s.cfg;
+  impCur = cfg.imp; impMaxCur = cfg.impMax;
+  $('roomCode').textContent = s.code;
   const sig = L.map(p => p.id + p.ready + p.host + p.name).join('|');
   if (sig !== renderLobby.sig) {
     renderLobby.sig = sig;
-    $('plist').innerHTML = L.map(p => `<div class="pcard">${avatar(p.c)}<b>${esc(p.name)}</b>${p.host ? '<span class="tag host">HOST</span>' : p.ready ? '<span class="tag ready">READY</span>' : '<span class="tag">待機中</span>'}</div>`).join('');
+    $('plist').innerHTML = L.map(p => `<div class="pcard">${avatar(p.c)}<b>${esc(p.name)}${p.id === init.you ? ' (あなた)' : ''}</b>${p.host ? '<span class="tag host">HOST</span>' : p.ready ? '<span class="tag ready">READY</span>' : '<span class="tag">待機中</span>'}</div>`).join('');
   }
+  $('impNum').textContent = cfg.imp;
+  $('impMinus').disabled = !me.host || cfg.imp <= 1;
+  $('impPlus').disabled = !me.host || cfg.imp >= cfg.impMax;
+  $('impNote').textContent = `現在 ${L.length}人 → 最大 ${cfg.impMax}人まで設定可能` + (me.host ? '' : ' (設定できるのはホストだけ)');
   $('btnReady').classList.toggle('hidden', me.host);
   $('btnReady').textContent = me.ready ? '準備解除' : '準備OK';
   $('btnGo').classList.toggle('hidden', !me.host);
@@ -279,7 +493,7 @@ function onPhase(old, now) {
 function showBanner(role) {
   const b = document.createElement('div'); b.id = 'banner';
   b.innerHTML = role === 'imposter'
-    ? '<h2 style="color:#ff4d4d">あなたは インポスター</h2><p>正体を隠してクルーを排除しろ (E:キル / F:妨害)。タスクは偽装用です</p>'
+    ? '<h2 style="color:#ff4d4d">あなたは インポスター</h2><p>正体を隠してクルーを排除しろ (E:キル / F:妨害)。タスクをこなすと全体の進捗も進む(偽装＋貢献)ので注意!</p>'
     : '<h2 style="color:#8ecbff">あなたは クルー</h2><p>タスクをこなして進捗100%を目指せ。インポスターを見抜け!</p>';
   document.body.appendChild(b); setTimeout(() => b.remove(), 3300);
 }
@@ -289,6 +503,7 @@ socket.on('state', s => {
   S = s;
   if (s.ph !== prevPh) { const o = prevPh; prevPh = s.ph; onPhase(o, s.ph); }
   if (s.ph === 'lobby') { renderLobby(s); return; }
+  if (!map) return;
   updateEnts(s); renderHud(s);
   if (s.ph === 'meeting') renderMeeting(s);
   if (s.ph === 'end') renderEnd(s);
@@ -301,7 +516,7 @@ function updateEnts(s) {
     let e = ents.get(p.id);
     if (!e) { e = { x: p.x, y: p.y, ph: 0 }; ents.set(p.id, e); }
     if (hyp(p.x - e.x, p.y - e.y) > 160) { e.x = p.x; e.y = p.y; }
-    Object.assign(e, { id: p.id, tx: p.x, ty: p.y, mv: p.mv, f: p.f, a: p.a, name: p.name, c: p.c });
+    Object.assign(e, { id: p.id, tx: p.x, ty: p.y, mv: p.mv, f: p.f, a: p.a, name: p.name, c: p.c, i: p.i });
   }
   for (const id of [...ents.keys()]) if (!seen.has(id)) ents.delete(id);
 }
@@ -312,15 +527,15 @@ function nearHint(me, e) {
   if (!e || me.late) return { text: '', body: false, tgt: false };
   const body = me.alive && S.bodies.some(b => hyp(b.x - e.x, b.y - e.y) <= 110);
   let tgt = false;
-  if (me.role === 'imposter') tgt = S.players.some(p => p.id !== init.you && p.a && hyp(p.x - e.x, p.y - e.y) <= 95);
+  if (me.role === 'imposter') tgt = S.players.some(p => p.id !== init.you && p.a && !p.i && hyp(p.x - e.x, p.y - e.y) <= 95);
   let text = '';
   if (body) text = 'R: 死体を報告';
   else {
-    for (const id of me.tasks) { const d = TB[id]; if (hyp(d.x - e.x, d.y - e.y) <= init.REACH) {
+    for (const id of me.tasks) { const d = TB[id]; if (d && hyp(d.x - e.x, d.y - e.y) <= init.REACH) {
       text = d.kind === 'carry' ? (me.sl.includes(d.item) ? 'SPACE: 設置する' : `${init.ITEM_NAME[d.item]}が必要`) : `SPACE: ${d.name}`; break; } }
-    if (!text) for (const id of me.tasks) { const d = TB[id]; if (d.kind !== 'carry') continue; const st = init.STATIONS[d.item];
+    if (!text) for (const id of me.tasks) { const d = TB[id]; if (!d || d.kind !== 'carry') continue; const st = map.STATIONS[d.item];
       if (hyp(st.x - e.x, st.y - e.y) <= init.REACH) { text = `SPACE: ${init.ITEM_NAME[d.item]}を取る`; break; } }
-    if (!text && me.alive && hyp(init.BUTTON.x - e.x, init.BUTTON.y - e.y) <= 90) text = me.em ? '' : (me.emLock > 0 ? `会議ボタン (あと${Math.ceil(me.emLock / 1000)}秒)` : 'SPACE: 緊急会議ボタン');
+    if (!text && me.alive && hyp(map.BUTTON.x - e.x, map.BUTTON.y - e.y) <= 90) text = me.em ? '' : (me.emLock > 0 ? `会議ボタン (あと${Math.ceil(me.emLock / 1000)}秒)` : 'SPACE: 緊急会議ボタン');
   }
   return { text, body, tgt };
 }
@@ -333,18 +548,18 @@ function renderHud(s) {
   $('timer').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
   $('timer').style.color = sec < 60 ? '#ff6b6b' : '#fff';
 
-  const tsig = me.tasks.join() + me.role + me.sl.join();
+  const tsig = me.tasks.join() + me.role + me.sl.join() + (map ? map.W : '');
   if (tsig !== taskSig) {
     taskSig = tsig;
-    $('tasks').innerHTML = me.late ? '<h4>観戦中</h4>' : `<h4>${me.role === 'imposter' ? 'タスク (偽装用・進捗に影響なし)' : 'あなたのタスク'}</h4>` +
-      me.tasks.map(id => { const d = TB[id];
-        const sub = d.kind === 'carry' ? (me.sl.includes(d.item) ? '持っている → 設置場所へ' : `${init.ITEM_NAME[d.item]}を取りに行く`) : ({ weld: '溶接 (A/D)', seq: '数字を順番に', alt: 'K / O 交互連打', space: 'SPACE連打' })[d.kind];
+    $('tasks').innerHTML = me.late ? '<h4>観戦中</h4>' : `<h4>${me.role === 'imposter' ? 'タスク (偽装 ＋ 進捗にも貢献)' : 'あなたのタスク'}</h4>` +
+      me.tasks.map(id => { const d = TB[id]; if (!d) return '';
+        const sub = d.kind === 'carry' ? (me.sl.includes(d.item) ? '持っている → 設置場所へ' : `${init.ITEM_NAME[d.item]}を取りに行く`) : ({ weld: '溶接 (A/D)', seq: '数字の並びを順番に入力', alt: 'K / O 交互連打', space: 'SPACE連打' })[d.kind];
         return `<div class="tk">${d.icon} ${d.name} <b style="color:#ffd43b">+${d.pct}%</b><small>${sub}</small></div>`; }).join('');
   }
   const ssig = me.sl.join() + selSlot;
   if (ssig !== slotSig) {
     slotSig = ssig;
-    let html = '', i = 0;
+    let html = '';
     for (let k = 0; k < init.SLOT_MAX; k++) {
       const t = me.sl[k];
       html += `<div class="slot ${k === selSlot ? 'sel' : ''}"><b>${k + 1}</b>${t ? ITEM_ICON[t] : ''}${t ? `<small>${init.ITEM_NAME[t].slice(0, 4)}</small>` : ''}</div>`;
@@ -414,7 +629,7 @@ function renderEnd(s) {
 }
 
 // ---------- ミニゲーム ----------
-socket.on('miniStart', d => openMini(TB[d.taskId]));
+socket.on('miniStart', d => openMini(TB[d.taskId], d.seq));
 socket.on('miniCancel', () => closeMini());
 function closeMini() { mini = null; $('mini').classList.add('hidden'); sendInput(true); }
 function finishMini(ok) {
@@ -424,14 +639,15 @@ function finishMini(ok) {
   if (!ok) toast('失敗… もう一度挑戦しよう', 'error');
 }
 function cancelMini() { if (!mini) return; socket.emit('miniEnd', { cancel: true }); closeMini(); }
-function openMini(d) {
+function openMini(d, seq) {
   if (!d) return;
   mini = { d, kind: d.kind, t: 0 };
   const body = $('miniBody'); body.innerHTML = '';
   $('mini').classList.remove('hidden');
   $('miniTitle').textContent = `${d.icon} ${d.name}`;
   sendInput(true);
-  ({ weld: initWeld, seq: initSeq, alt: initAlt, space: initSpace })[d.kind](body, d.n);
+  if (d.kind === 'seq') initSeq(body, seq || []);
+  else ({ weld: initWeld, alt: initAlt, space: initSpace })[d.kind](body, d.n);
 }
 const later = (m, fn, ms) => setTimeout(() => { if (mini === m) fn(); }, ms);
 
@@ -465,25 +681,38 @@ function updateWeld(dt) {
   else if (m.ty >= WELD_END) finishMini(true);
 }
 
-// 数字の順番押し
-function initSeq(body, n) {
-  mini.n = n; mini.next = 1;
-  const nums = Array.from({ length: n }, (_, i) => i + 1).sort(() => Math.random() - .5);
-  const grid = document.createElement('div'); grid.className = 'grid';
-  nums.forEach(v => { const b = document.createElement('button'); b.textContent = v; b.dataset.n = v; b.onclick = () => seqPress(v); grid.appendChild(b); });
-  body.appendChild(grid);
-  $('miniHelp').textContent = `1 → ${n} の順番に押そう (数字キーも使えます / Escで中止)`;
+// 数字の順番入力: サーバーが毎回ランダムに選んだ5〜6個の数字を横に並べ、その順番通りに入力
+function initSeq(body, seq) {
+  Object.assign(mini, { seq, idx: 0 });
+  const row = document.createElement('div'); row.className = 'seqrow'; row.id = 'seqRow';
+  seq.forEach((v, i) => { const d = document.createElement('div'); d.className = 'seqnum' + (i === 0 ? ' cur' : ''); d.textContent = v; row.appendChild(d); });
+  body.appendChild(row);
+  const pad = document.createElement('div'); pad.className = 'keypad';
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(v => {
+    const b = document.createElement('button'); b.textContent = v; if (v === 0) b.className = 'zero';
+    b.onclick = () => { seqPress(v); b.blur(); };
+    pad.appendChild(b);
+  });
+  body.appendChild(pad);
+  $('miniHelp').textContent = `上の ${seq.length} 個の数字を左から順番に入力 (数字キーも使えます / 間違えると最初から / Escで中止)`;
+}
+function seqUi() {
+  const m = mini; if (!m) return;
+  [...$('seqRow').children].forEach((d, i) => {
+    d.classList.toggle('done', i < m.idx);
+    d.classList.toggle('cur', i === m.idx);
+  });
 }
 function seqPress(v) {
-  const m = mini; if (!m || m.kind !== 'seq') return;
-  const btns = [...$('miniBody').querySelectorAll('button')];
-  if (v === m.next) {
-    btns.find(b => +b.dataset.n === v).classList.add('ok'); SFX.click(); m.next++;
-    if (m.next > m.n) later(m, () => finishMini(true), 250);
-  } else if (v <= m.n) {
-    SFX.error(); const b = btns.find(b => +b.dataset.n === v); b.classList.add('bad');
-    btns.forEach(x => x.classList.remove('ok')); m.next = 1;
-    setTimeout(() => b.classList.remove('bad'), 300);
+  const m = mini; if (!m || m.kind !== 'seq' || m.idx >= m.seq.length) return;
+  if (v === m.seq[m.idx]) {
+    m.idx++; SFX.click(); seqUi();
+    if (m.idx >= m.seq.length) later(m, () => finishMini(true), 250);
+  } else {
+    SFX.error(); m.idx = 0;
+    const row = $('seqRow'); row.classList.remove('bad'); void row.offsetWidth; row.classList.add('bad');
+    setTimeout(() => row.classList.remove('bad'), 320);
+    seqUi();
   }
 }
 
@@ -501,7 +730,7 @@ function altUi() {
 function altKey(k) {
   const m = mini; if (!m || m.kind !== 'alt' || (k !== 'k' && k !== 'o')) return;
   if (k === m.exp) { m.cnt++; m.exp = k === 'k' ? 'o' : 'k'; beep(400 + m.cnt * 12, .04); altUi(); if (m.cnt >= m.n) later(m, () => finishMini(true), 200); }
-  else { const el = $(k === 'k' ? 'kK' : 'kO'); el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 150); }
+  else { const el2 = $(k === 'k' ? 'kK' : 'kO'); el2.classList.add('bad'); setTimeout(() => el2.classList.remove('bad'), 150); }
 }
 
 // SPACE連打 (1回ずつ)
@@ -520,7 +749,7 @@ function spacePress() {
 }
 function miniKey(e, k) {
   if (e.repeat) return;
-  if (mini.kind === 'seq' && /^[1-9]$/.test(k)) seqPress(+k);
+  if (mini.kind === 'seq' && /^[0-9]$/.test(k)) seqPress(+k);
   else if (mini.kind === 'alt') altKey(k);
   else if (mini.kind === 'space' && k === ' ') spacePress();
 }
@@ -562,49 +791,6 @@ addEventListener('keyup', e => {
 addEventListener('blur', () => { for (const k in keysDown) keysDown[k] = false; sendInput(); });
 
 // ---------- 描画 ----------
-function rr(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
-function el(x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); }
-function shade(hex, k) { const n = parseInt(hex.slice(1), 16); return `rgb(${((n >> 16) * k) | 0},${((n >> 8 & 255) * k) | 0},${((n & 255) * k) | 0})`; }
-
-// 宇宙飛行士風の人型 (頭・胴体・腕・脚。歩行アニメ付き)
-function drawAstro(e, isMe) {
-  ctx.save(); ctx.translate(e.x, e.y);
-  ctx.globalAlpha = e.a ? 1 : .45;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; el(0, 19, 14, 5); ctx.fill();
-  ctx.scale(e.f || 1, 1);
-  const sw = e.mv ? Math.sin(e.ph) * .75 : 0, dark = shade(e.c, .62), mid = shade(e.c, .82);
-  const limb = (x, y, ang, col, len, glove) => {
-    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.fillStyle = col; rr(-3.5, 0, 7, len, 3); ctx.fill();
-    ctx.fillStyle = glove; rr(-4, len - 4, 8, 5, 2); ctx.fill(); ctx.restore();
-  };
-  ctx.fillStyle = '#c9ced6'; rr(-18, -14, 8, 20, 3); ctx.fill();               // 背負い装置
-  if (e.a) { limb(-4, 8, sw, dark, 11, '#e9ecef'); limb(4, 8, -sw, mid, 11, '#e9ecef'); } // 脚
-  limb(0, -9, -sw * 1.1, dark, 12, '#e9ecef');                                  // 奥の腕
-  ctx.fillStyle = e.c; rr(-11, -15, 22, 24, 7); ctx.fill();                     // 胴体
-  ctx.strokeStyle = dark; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,.25)'; rr(-7, -12, 5, 12, 3); ctx.fill();
-  limb(0, -9, sw * 1.1, mid, 12, '#e9ecef');                                    // 手前の腕
-  ctx.fillStyle = '#f1f3f5'; el(2, -24, 12, 11); ctx.fill();                    // ヘルメット(頭)
-  ctx.strokeStyle = '#9aa3b5'; ctx.lineWidth = 1.5; ctx.stroke();
-  ctx.fillStyle = '#17324f'; el(6, -24, 7.5, 5.5); ctx.fill();                  // バイザー
-  ctx.fillStyle = 'rgba(255,255,255,.7)'; el(8, -26, 2.8, 1.5); ctx.fill();
-  ctx.restore();
-  ctx.save(); ctx.globalAlpha = e.a ? 1 : .6;
-  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000b';
-  ctx.fillStyle = isMe && S.me.role === 'imposter' ? '#ff6b6b' : '#fff';
-  ctx.strokeText(e.name, e.x, e.y - 42); ctx.fillText(e.name, e.x, e.y - 42); ctx.restore();
-}
-function drawBody(b) {
-  ctx.save(); ctx.translate(b.x, b.y);
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; el(0, 10, 24, 7); ctx.fill();
-  ctx.fillStyle = b.c; rr(-14, -9, 30, 20, 9); ctx.fill(); ctx.strokeStyle = shade(b.c, .6); ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = '#f1f3f5'; el(-18, 0, 10, 9); ctx.fill();
-  ctx.strokeStyle = '#17324f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-23, -3); ctx.lineTo(-17, 3); ctx.moveTo(-17, -3); ctx.lineTo(-23, 3); ctx.stroke();
-  ctx.fillStyle = '#fff'; rr(10, -15, 4, 14, 2); ctx.fill(); el(12, -16, 4, 3); ctx.fill();
-  ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.fillText('💀', 0, -22 + Math.sin(performance.now() / 300) * 3);
-  ctx.restore();
-}
-
 function drawGame(dt) {
   const w = cv.width, h = cv.height;
   ctx.clearRect(0, 0, w, h);
@@ -614,28 +800,32 @@ function drawGame(dt) {
     if (e.mv) e.ph += dt * 13; else e.ph = 0;
   }
   const me = S.me, mine = myEnt();
-  const cam = mine || [...ents.values()][0] || { x: init.W / 2, y: init.H / 2 };
+  const cam = mine || [...ents.values()][0] || { x: map.W / 2, y: map.H / 2 };
   const sc = Math.max(1.5, h / 430);                    // 高ズーム
   ctx.fillStyle = '#05070d'; ctx.fillRect(0, 0, w, h);
   ctx.save(); ctx.translate(w / 2, h / 2); ctx.scale(sc, sc); ctx.translate(-cam.x, -cam.y);
-  ctx.drawImage(mapCv, 0, 0);
+  // 巨大マップなので、画面に見えている範囲だけ転送する
+  const vw = w / sc, vh = h / sc;
+  const x0 = Math.max(0, cam.x - vw / 2), y0 = Math.max(0, cam.y - vh / 2);
+  const x1 = Math.min(map.W, cam.x + vw / 2), y1 = Math.min(map.H, cam.y + vh / 2);
+  if (x1 > x0 && y1 > y0) ctx.drawImage(mapCv, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const pulse = 1 + Math.sin(performance.now() / 250) * .12;
   // 供給所
   for (const it of ['fuse', 'battery', 'core']) {
-    const p = init.STATIONS[it], need = me.tasks.some(id => TB[id].item === it);
-    ctx.fillStyle = need ? '#3a3f1f' : '#252b3a'; rr(p.x - 22, p.y - 22, 44, 44, 8); ctx.fill();
+    const p = map.STATIONS[it], need = me.tasks.some(id => TB[id] && TB[id].item === it);
+    ctx.fillStyle = need ? '#3a3f1f' : '#252b3a'; rr(ctx, p.x - 22, p.y - 22, 44, 44, 8); ctx.fill();
     ctx.strokeStyle = need ? '#ffd43b' : '#4a5572'; ctx.lineWidth = need ? 3 : 2; ctx.stroke();
     ctx.font = '24px serif'; ctx.fillStyle = '#fff'; ctx.fillText(ITEM_ICON[it], p.x, p.y);
     ctx.font = '10px sans-serif'; ctx.fillText(init.ITEM_NAME[it] + '箱', p.x, p.y + 32);
   }
   // 緊急会議ボタン
-  const B = init.BUTTON;
-  ctx.fillStyle = '#4a1f1f'; el(B.x, B.y, 30, 22); ctx.fill();
-  ctx.fillStyle = '#ff3b3b'; el(B.x, B.y - 4, 22, 15); ctx.fill();
+  const B = map.BUTTON;
+  ctx.fillStyle = '#4a1f1f'; el(ctx, B.x, B.y, 30, 22); ctx.fill();
+  ctx.fillStyle = '#ff3b3b'; el(ctx, B.x, B.y - 4, 22, 15); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('EMERGENCY', B.x, B.y - 4);
   // タスク拠点
-  for (const d of init.TASKS) {
+  for (const d of map.TASKS) {
     const act = !me.late && me.tasks.includes(d.id);
     if (!act && !me.late && me.alive) { ctx.globalAlpha = .18; ctx.font = '20px serif'; ctx.fillStyle = '#fff'; ctx.fillText(d.icon, d.x, d.y); ctx.globalAlpha = 1; continue; }
     if (act) {
@@ -654,10 +844,11 @@ function drawGame(dt) {
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
   }
   // ミニマップ
-  mmx.clearRect(0, 0, 200, 125);
-  mmx.drawImage(mapCv, 0, 0, 200, 125);
-  const kx = 200 / init.W, ky = 125 / init.H;
-  if (!me.late) for (const id of me.tasks) { const d = TB[id]; mmx.fillStyle = '#ffd43b'; mmx.beginPath(); mmx.arc(d.x * kx, d.y * ky, 3.5, 0, 7); mmx.fill(); }
+  const MW = mmc.width, MH = mmc.height;
+  mmx.clearRect(0, 0, MW, MH);
+  mmx.drawImage(mapCv, 0, 0, MW, MH);
+  const kx = MW / map.W, ky = MH / map.H;
+  if (!me.late) for (const id of me.tasks) { const d = TB[id]; if (!d) continue; mmx.fillStyle = '#ffd43b'; mmx.beginPath(); mmx.arc(d.x * kx, d.y * ky, 3.5, 0, 7); mmx.fill(); }
   mmx.fillStyle = '#ff3b3b'; mmx.fillRect(B.x * kx - 2, B.y * ky - 2, 4, 4);
   for (const b of S.bodies) { mmx.fillStyle = '#f33'; mmx.fillRect(b.x * kx - 3, b.y * ky - 3, 6, 6); }
   if (mine) { mmx.fillStyle = '#fff'; mmx.beginPath(); mmx.arc(mine.x * kx, mine.y * ky, 3.5, 0, 7); mmx.fill(); }
@@ -666,7 +857,9 @@ function drawGame(dt) {
 let lastT = performance.now();
 function frame(t) {
   const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
-  if (joined && S && S.ph !== 'lobby' && init) drawGame(dt); else ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!joined) { ctx.clearRect(0, 0, cv.width, cv.height); drawTitleAvatar(dt); }
+  else if (S && S.ph !== 'lobby' && init && map) drawGame(dt);
+  else ctx.clearRect(0, 0, cv.width, cv.height);
   if (mini && mini.kind === 'weld') updateWeld(dt);
   requestAnimationFrame(frame);
 }
