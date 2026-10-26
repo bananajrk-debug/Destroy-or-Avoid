@@ -10,17 +10,17 @@
   #wrap { max-width: 1000px; margin: 0 auto; padding: 6px; }
   #stage { position: relative; width: 100%; aspect-ratio: 1000 / 640; background: #000; border-radius: 10px; overflow: hidden; }
   canvas { width: 100%; height: 100%; display: block; }
-  #timer { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: clamp(20px, 4.2vw, 40px); font-weight: 900; letter-spacing: 1px; padding: 2px 22px; border-radius: 12px; background: rgba(0,0,0,.55); border: 2px solid #5b6aa8; text-shadow: 0 0 8px #000; display: none; white-space: nowrap; }
+  #timer { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: clamp(20px, 4.2vw, 40px); font-weight: 900; letter-spacing: 1px; padding: 2px 22px; border-radius: 12px; background: rgba(0,0,0,.6); border: 2px solid #5b6aa8; text-shadow: 0 0 8px #000; display: none; white-space: nowrap; }
   #timer.warn { color: #ff6b6b; border-color: #ff6b6b; }
   #timer.blink { animation: blink .6s infinite alternate; }
   @keyframes blink { from { opacity: 1; } to { opacity: .35; } }
-  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(5,8,20,.86); padding: 12px; }
+  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(5,8,20,.88); padding: 12px; }
   .hidden { display: none !important; }
   h1 { margin: 0 0 6px; font-size: clamp(30px, 7vw, 72px); font-weight: 900; background: linear-gradient(90deg, #ff6b6b, #ffd43b, #4dabf7); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .sub { color: #aab4e8; margin-bottom: 14px; font-size: clamp(12px, 2vw, 18px); }
   .btn { font-size: clamp(16px, 3vw, 26px); font-weight: 800; padding: 10px 36px; border: none; border-radius: 12px; background: linear-gradient(#ffb74d, #f57c00); color: #231000; cursor: pointer; box-shadow: 0 5px 0 #8a4300; }
   .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #8a4300; }
-  .how { margin-top: 14px; font-size: clamp(11px, 1.7vw, 15px); line-height: 1.7; color: #cfd6ff; max-width: 720px; text-align: left; background: rgba(255,255,255,.06); padding: 10px 16px; border-radius: 10px; }
+  .how { margin-top: 12px; font-size: clamp(10px, 1.55vw, 14px); line-height: 1.65; color: #cfd6ff; max-width: 780px; text-align: left; background: rgba(255,255,255,.06); padding: 10px 16px; border-radius: 10px; }
   #resTitle { font-size: clamp(28px, 6vw, 60px); font-weight: 900; margin: 0 0 8px; }
   #hud { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
   .panel { background: #10162b; border: 2px solid #26305a; border-radius: 10px; padding: 8px 10px; }
@@ -32,15 +32,24 @@
   ul.tasks li.done { opacity: .5; text-decoration: line-through; }
   .tn { font-weight: 700; } .tp { float: right; font-weight: 700; }
   .tag { font-size: 10px; background: #7e57c2; color: #fff; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+  .tag.t2 { background: #e64a19; } .tag.t3 { background: #f9a825; color: #231000; }
   .bar { position: absolute; left: 4px; right: 4px; bottom: 2px; height: 3px; background: #26305a; border-radius: 2px; overflow: hidden; }
   .bar i { display: block; height: 100%; width: 0; background: #ffd43b; }
-  #inv { grid-column: 1 / 3; display: flex; gap: 18px; justify-content: center; font-size: 15px; font-weight: 700; flex-wrap: wrap; }
+  #inv { grid-column: 1 / 3; }
+  #slots { display: flex; gap: 8px; justify-content: center; }
+  .slot { flex: 0 1 200px; min-height: 52px; border: 2px solid #3a4778; border-radius: 10px; background: #0b1020; padding: 4px 8px; font-size: 13px; font-weight: 700; display: flex; flex-direction: column; justify-content: center; position: relative; cursor: pointer; }
+  .slot.sel { border-color: #ffd43b; box-shadow: 0 0 8px rgba(255,212,59,.5); }
+  .slot .num { position: absolute; top: 1px; right: 6px; font-size: 10px; color: #7f8bc0; }
+  .slot .nm { font-size: 11px; opacity: .85; }
+  .slot.empty { color: #55608f; font-weight: 400; }
+  #invHelp { text-align: center; color: #8d97c9; font-size: 11px; margin-top: 6px; }
   #keys { text-align: center; color: #8d97c9; font-size: 12px; margin-top: 6px; }
   #touch { display: none; }
   .touch #touch { display: block; }
   .tbtn { position: fixed; width: 58px; height: 58px; border-radius: 14px; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.4); color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; touch-action: none; z-index: 10; }
   #tUp { left: 80px; bottom: 140px; } #tDown { left: 80px; bottom: 20px; } #tLeft { left: 14px; bottom: 80px; } #tRight { left: 146px; bottom: 80px; }
   #tAct { right: 20px; bottom: 60px; width: 96px; height: 96px; border-radius: 50%; background: rgba(245,124,0,.6); font-size: 16px; font-weight: 800; }
+  #tDrop { right: 30px; bottom: 170px; font-size: 14px; background: rgba(211,47,47,.55); }
 </style>
 </head>
 <body>
@@ -54,11 +63,12 @@
       <div class="sub">隕石が迫る!5分以内に「エンジン」か「羽」を修理せよ ― 接続中: <span id="pcount">0</span>人(2人以上推奨)</div>
       <button class="btn" id="startBtn">ゲームスタート</button>
       <div class="how">
-        <b>操作:</b> 移動 = WASD / 矢印キー ／ アクション = <b>SPACE</b>(長押し不可・1回ずつ押す)<br>
-        <b>① 鉄くず</b>を3つ拾う → <b>② 作業台</b>でSPACE → <b>ボルト</b>1個<br>
-        <b>③ 修理ステーション</b>でSPACEを連打 → ボルト1個につき修理ゲージ+1<br>
-        <b>プラズマコア</b>はコア箱でSPACEで取得。持つと激重!SPACEで置いて仲間にパスもできる。<br>
-        エンジン(Destroy)か羽(Avoid)、<b>どちらか先に全タスク完了</b>でクリア!
+        <b>操作:</b> 移動 = WASD / 矢印 ／ アクション = <b>SPACE</b>(長押し不可・1回ずつ) ／ スロット選択 = 1・2・3 ／ 捨てる = Q<br>
+        <b>所持スロットは3つ。</b>金属くずは1スロットに最大6個までスタック、他のアイテムは1個ごとにスロットを占有。<br>
+        <b>⚙️ エンジン(Destroy):</b> 金属くず×3 → 作業台で SPACE → <b>ボルト</b> → エンジンで SPACE 連打<br>
+        <b>🪽 羽(Avoid):</b> 金属くず×2 + <b>バッテリー</b>(迷路の奥のバッテリー箱) → 作業台で SPACE → <b>溶接トーチ</b> → 羽で SPACE<br>
+        <b>プラズマコア</b>はスロットを2つ使い、移動が激遅に。SPACEで置いてパスもできる。<br>
+        迷路の壁に注意!ミニマップ(右下)で施設の位置を確認。<b>どちらか先に全タスク完了</b>でクリア!
       </div>
     </div>
 
@@ -70,34 +80,50 @@
   </div>
 
   <div id="hud">
-    <div class="panel engine"><h3>⚙️ エンジン修理 (Destroy)</h3><ul class="tasks" id="engineTasks"></ul></div>
-    <div class="panel wing"><h3>🪽 羽修理 (Avoid)</h3><ul class="tasks" id="wingTasks"></ul></div>
-    <div class="panel" id="inv"><span id="invScrap">鉄くず: ○○○</span><span id="invBolt">ボルト: 0</span><span id="invCore">コア: なし</span></div>
+    <div class="panel engine"><h3>⚙️ エンジン修理 (Destroy) ― ボルト</h3><ul class="tasks" id="engineTasks"></ul></div>
+    <div class="panel wing"><h3>🪽 羽修理 (Avoid) ― 溶接トーチ</h3><ul class="tasks" id="wingTasks"></ul></div>
+    <div class="panel" id="inv">
+      <div id="slots"></div>
+      <div id="invHelp">金属くず×3→ボルト ／ 金属くず×2+バッテリー→溶接トーチ ／ 1・2・3でスロット選択、Qで捨てる</div>
+    </div>
   </div>
-  <div id="keys">移動: WASD / 矢印　アクション: SPACE（押しっぱなし無効）</div>
+  <div id="keys">移動: WASD / 矢印　アクション: SPACE（押しっぱなし無効）　捨てる: Q</div>
 </div>
 
 <div id="touch">
   <div class="tbtn" id="tUp">▲</div><div class="tbtn" id="tDown">▼</div>
   <div class="tbtn" id="tLeft">◀</div><div class="tbtn" id="tRight">▶</div>
+  <div class="tbtn" id="tDrop">捨てる</div>
   <div class="tbtn" id="tAct">ACTION</div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
 (() => {
-  const W = 1000, H = 640;
+  const VW = 1000, VH = 640;           // 画面(ビューポート)サイズ
   const socket = io();
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
   const $ = (id) => document.getElementById(id);
 
   let CFG = null, S = null, ME = null;
+  let W = 1600, H = 1000, CELL = 50;
+  let ROWS_DATA = null, mapCv = null, miniCv = null;
   const disp = {};
+  const cam = { x: 0, y: 0, init: false };
   const floaters = [];
   let lastPhase = 'lobby';
   let loseAt = 0;
   let recvAt = 0;
+  let selSlot = 0;
+
+  const META = {
+    scrap: { i: '⚙️', n: '金属くず', c: '#90a4ae' },
+    bolt: { i: '🔩', n: 'ボルト', c: '#ffca28' },
+    battery: { i: '🔋', n: 'バッテリー', c: '#66bb6a' },
+    torch: { i: '🔥', n: '溶接トーチ', c: '#ff7043' },
+    core: { i: '🟣', n: 'プラズマコア', c: '#b388ff' },
+  };
 
   // ---------- 効果音 ----------
   let ac = null;
@@ -114,7 +140,8 @@
     } catch (e) {}
   }
   const SND = {
-    pick: () => beep(760, 0.07), drop: () => beep(300, 0.1), craft: () => { beep(520, 0.1); setTimeout(() => beep(780, 0.14), 90); },
+    pick: () => beep(760, 0.07), drop: () => beep(300, 0.1),
+    craft: () => { beep(520, 0.1); setTimeout(() => beep(780, 0.14), 90); },
     repair: () => beep(620, 0.06, 'triangle', 0.06), error: () => beep(140, 0.15, 'sawtooth', 0.05),
     done: () => { beep(523, 0.12); setTimeout(() => beep(659, 0.12), 110); setTimeout(() => beep(784, 0.2), 220); },
   };
@@ -122,15 +149,16 @@
   // ---------- 入力 ----------
   const keys = { up: false, down: false, left: false, right: false };
   let sentKey = '';
-  let spaceDown = false; // Space押下中フラグ（離すまで再発火しない）
+  let spaceDown = false; // Space押下中（離すまで再発火しない）
+  let qDown = false;
 
   function sendInput() {
     const k = `${+keys.up}${+keys.down}${+keys.left}${+keys.right}`;
     if (k !== sentKey) { sentKey = k; socket.emit('input', keys); }
   }
-  function fireAction() {
-    if (S && S.phase === 'playing') socket.emit('action');
-  }
+  function fireAction() { if (S && S.phase === 'playing') socket.emit('action'); }
+  function fireDiscard() { if (S && S.phase === 'playing') socket.emit('discard', selSlot); }
+
   const keyMap = {
     KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down',
     KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
@@ -139,27 +167,34 @@
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
       e.preventDefault();
-      // 長押し完全無効化: repeat判定 + 自前の押下中フラグ
+      // 長押し完全無効化: event.repeat 判定 + 自前の押下中フラグ
       if (e.repeat || spaceDown) return;
       spaceDown = true;
       fireAction();
       return;
+    }
+    if (e.code === 'KeyQ') {
+      if (e.repeat || qDown) return;
+      qDown = true; fireDiscard(); return;
+    }
+    if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') {
+      selSlot = Number(e.code.slice(-1)) - 1; return;
     }
     const k = keyMap[e.code];
     if (k) { e.preventDefault(); keys[k] = true; sendInput(); }
   });
   window.addEventListener('keyup', (e) => {
     if (e.code === 'Space') { e.preventDefault(); spaceDown = false; return; }
+    if (e.code === 'KeyQ') { qDown = false; return; }
     const k = keyMap[e.code];
     if (k) { keys[k] = false; sendInput(); }
   });
   window.addEventListener('blur', () => {
-    spaceDown = false;
+    spaceDown = false; qDown = false;
     for (const k in keys) keys[k] = false;
     sendInput();
   });
 
-  // タッチ操作
   if ('ontouchstart' in window) {
     document.body.classList.add('touch');
     const bind = (id, k) => {
@@ -170,44 +205,127 @@
     };
     bind('tUp', 'up'); bind('tDown', 'down'); bind('tLeft', 'left'); bind('tRight', 'right');
     $('tAct').addEventListener('pointerdown', (e) => { e.preventDefault(); fireAction(); });
+    $('tDrop').addEventListener('pointerdown', (e) => { e.preventDefault(); fireDiscard(); });
   }
 
+  $('slots').addEventListener('click', (e) => {
+    const el = e.target.closest('.slot');
+    if (el) selSlot = Number(el.dataset.i);
+  });
   $('startBtn').addEventListener('click', (e) => { socket.emit('start'); e.target.blur(); });
   $('againBtn').addEventListener('click', (e) => { socket.emit('toTitle'); e.target.blur(); });
 
   // ---------- ネットワーク ----------
-  socket.on('init', (d) => { CFG = d; ME = d.you; buildHud(); });
+  socket.on('init', (d) => {
+    CFG = d; ME = d.you; W = d.W; H = d.H; CELL = d.CELL;
+    buildHud(); buildMap(d.rows);
+  });
+  socket.on('map', (d) => buildMap(d.rows));
   socket.on('state', (s) => {
     if (s.phase === 'lose' && lastPhase !== 'lose') loseAt = performance.now();
-    if (s.phase === 'win' && lastPhase !== 'win') { SND.done(); }
+    if (s.phase === 'win' && lastPhase !== 'win') SND.done();
+    if (s.phase === 'playing' && lastPhase !== 'playing') cam.init = false;
     lastPhase = s.phase;
     S = s; recvAt = performance.now();
   });
   socket.on('fx', (f) => {
-    const col = f.type === 'done' ? '#ffd43b' : f.type === 'error' || f.text.includes('必要') || f.text.includes('ない') ? '#ff8a80' : f.type === 'craft' ? '#ffe082' : '#ffffff';
+    const col = f.snd === 'error' ? '#ff8a80' : f.type === 'done' ? '#ffd43b' : f.type === 'craft' ? '#ffe082' : '#ffffff';
     floaters.push({ x: f.x, y: f.y, text: f.text, color: col, born: performance.now(), big: f.type === 'done' });
     if (f.snd && SND[f.snd]) SND[f.snd]();
   });
 
+  // ---------- マップ（SF風迷路）事前描画 ----------
+  function hash(c, r) { let h = (c * 73856093) ^ (r * 19349663); h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+
+  function buildMap(rows) {
+    ROWS_DATA = rows;
+    const R = rows.length, C = rows[0].length;
+    const wall = (c, r) => (c < 0 || r < 0 || c >= C || r >= R) ? true : rows[r][c] === '1';
+    const mc = document.createElement('canvas'); mc.width = W; mc.height = H;
+    const g = mc.getContext('2d');
+    // 床
+    g.fillStyle = '#0c1323'; g.fillRect(0, 0, W, H);
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      if (wall(c, r)) continue;
+      g.fillStyle = (c + r) % 2 ? '#101a2f' : '#0e1729';
+      g.fillRect(c * CELL, r * CELL, CELL, CELL);
+      g.strokeStyle = 'rgba(80,110,170,.14)'; g.lineWidth = 1;
+      g.strokeRect(c * CELL + .5, r * CELL + .5, CELL - 1, CELL - 1);
+      if (hash(c, r) > 0.93) { g.fillStyle = 'rgba(255,214,64,.10)'; g.fillRect(c * CELL + 6, r * CELL + CELL - 12, CELL - 12, 6); }
+    }
+    // 壁ブロック
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      if (!wall(c, r)) continue;
+      const x = c * CELL, y = r * CELL;
+      const gr = g.createLinearGradient(x, y, x + CELL, y + CELL);
+      gr.addColorStop(0, '#1f2f55'); gr.addColorStop(1, '#131d38');
+      g.fillStyle = gr; g.fillRect(x, y, CELL, CELL);
+      g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(x + 4, y + 4, CELL - 8, CELL - 8);
+      // 回路パターン
+      const h = hash(c, r);
+      g.strokeStyle = 'rgba(80,170,255,.28)'; g.lineWidth = 1.5;
+      g.beginPath();
+      if (h < 0.33) { g.moveTo(x + 8, y + 14); g.lineTo(x + 26, y + 14); g.lineTo(x + 26, y + 36); g.lineTo(x + 42, y + 36); }
+      else if (h < 0.66) { g.moveTo(x + 10, y + 40); g.lineTo(x + 10, y + 20); g.lineTo(x + 40, y + 20); }
+      else { g.moveTo(x + 14, y + 8); g.lineTo(x + 14, y + 42); g.moveTo(x + 36, y + 8); g.lineTo(x + 36, y + 42); }
+      g.stroke();
+      g.fillStyle = 'rgba(120,200,255,.5)';
+      g.beginPath(); g.arc(x + 9, y + 9, 1.6, 0, 7); g.arc(x + CELL - 9, y + CELL - 9, 1.6, 0, 7); g.fill();
+    }
+    // ネオンの縁（通路に面した辺）
+    g.save();
+    g.shadowColor = '#3fc8ff'; g.shadowBlur = 10;
+    g.strokeStyle = '#52d6ff'; g.lineWidth = 2;
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      if (!wall(c, r)) continue;
+      const x = c * CELL, y = r * CELL;
+      g.beginPath();
+      if (!wall(c, r - 1)) { g.moveTo(x, y + 1); g.lineTo(x + CELL, y + 1); }
+      if (!wall(c, r + 1)) { g.moveTo(x, y + CELL - 1); g.lineTo(x + CELL, y + CELL - 1); }
+      if (!wall(c - 1, r)) { g.moveTo(x + 1, y); g.lineTo(x + 1, y + CELL); }
+      if (!wall(c + 1, r)) { g.moveTo(x + CELL - 1, y); g.lineTo(x + CELL - 1, y + CELL); }
+      g.stroke();
+    }
+    g.restore();
+    mapCv = mc;
+
+    // ミニマップ
+    const sc = 160 / W;
+    const mini = document.createElement('canvas'); mini.width = 160; mini.height = Math.round(H * sc);
+    const m = mini.getContext('2d');
+    m.fillStyle = '#0a1020'; m.fillRect(0, 0, mini.width, mini.height);
+    m.fillStyle = '#3a5f9c';
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (wall(c, r)) m.fillRect(c * CELL * sc, r * CELL * sc, CELL * sc + .5, CELL * sc + .5);
+    miniCv = mini;
+  }
+
   // ---------- HUD ----------
   function buildHud() {
+    const tag = { core: '<b class="tag">コア運搬</b>', torch: '<b class="tag t2">トーチ</b>', bolt: '<b class="tag t3">ボルト</b>' };
     for (const route of ['engine', 'wing']) {
       $(route + 'Tasks').innerHTML = CFG.TASKS[route].map((t, i) =>
-        `<li id="${route}-${i}"><span class="tn">${t.name}${t.type === 'core' ? '<b class="tag">コア運搬</b>' : ''}</span><span class="tp"></span><div class="bar"><i></i></div></li>`
+        `<li id="${route}-${i}"><span class="tn">${t.name}${tag[t.type] || ''}</span><span class="tp"></span><div class="bar"><i></i></div></li>`
       ).join('');
     }
   }
   let hudKey = '';
+  function slotView(me) {
+    const arr = me.sl.map(([t, n]) => ({ t, n }));
+    if (me.h) for (let i = 0; i < CFG.CORE_SLOTS; i++) arr.push({ t: 'core', part: i });
+    while (arr.length < CFG.SLOT_MAX) arr.push(null);
+    return arr;
+  }
   function updateHud() {
     if (!CFG || !S) return;
     const me = S.players.find(p => p.id === ME);
-    const key = JSON.stringify([S.prog, me && [me.s, me.b, me.h]]);
+    const key = JSON.stringify([S.prog, me && [me.sl, me.h], selSlot]);
     if (key === hudKey) return;
     hudKey = key;
     for (const route of ['engine', 'wing']) {
       const r = S.prog[route];
       CFG.TASKS[route].forEach((t, i) => {
         const li = $(`${route}-${i}`);
+        if (!li) return;
         const tp = li.querySelector('.tp'), bar = li.querySelector('.bar i');
         if (i < r.idx) { li.className = 'done'; tp.textContent = '✔'; bar.style.width = '100%'; }
         else if (i === r.idx) { li.className = 'current'; tp.textContent = `${r.p}/${t.need}`; bar.style.width = (r.p / t.need * 100) + '%'; }
@@ -215,9 +333,16 @@
       });
     }
     if (me) {
-      $('invScrap').textContent = '鉄くず: ' + '●'.repeat(me.s) + '○'.repeat(CFG.SCRAP_MAX - me.s);
-      $('invBolt').textContent = '🔩 ボルト: ' + me.b;
-      $('invCore').textContent = '🔋 コア: ' + (me.h ? '所持中(重い!)' : 'なし');
+      $('slots').innerHTML = slotView(me).map((s, i) => {
+        const sel = i === selSlot ? ' sel' : '';
+        if (!s) return `<div class="slot empty${sel}" data-i="${i}"><span class="num">${i + 1}</span>空き</div>`;
+        const m = META[s.t];
+        if (s.t === 'core') {
+          return `<div class="slot${sel}" data-i="${i}" style="border-color:${s.part ? '#7e57c2' : '#b388ff'}"><span class="num">${i + 1}</span>${s.part ? '<span class="nm">↑ コアが2枠使用中</span>' : `${m.i} ${m.n}<span class="nm">激重・移動激遅</span>`}</div>`;
+        }
+        const cnt = s.t === 'scrap' ? `<span class="nm">x${s.n} / ${CFG.SCRAP_STACK}</span>` : '';
+        return `<div class="slot${sel}" data-i="${i}" style="color:${m.c}"><span class="num">${i + 1}</span>${m.i} ${m.n}${cnt}</div>`;
+      }).join('');
     }
   }
 
@@ -248,13 +373,10 @@
         }
       }
     }
-    // タイマー
     const rem = Math.max(0, S.remain - (S.phase === 'playing' ? (now - recvAt) : 0));
     const sec = Math.ceil(rem / 1000);
-    const mm = String(Math.floor(sec / 60)).padStart(2, '0');
-    const ss = String(sec % 60).padStart(2, '0');
     const t = $('timer');
-    t.textContent = `残り時間: ${mm}:${ss}`;
+    t.textContent = `残り時間: ${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
     t.classList.toggle('warn', sec <= 60);
     t.classList.toggle('blink', sec <= 30 && S.phase === 'playing');
   }
@@ -269,36 +391,30 @@
   function label(text, x, y, size, color) {
     ctx.font = `bold ${size}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.75)';
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.8)';
     ctx.strokeText(text, x, y);
     ctx.fillStyle = color || '#fff';
     ctx.fillText(text, x, y);
   }
-  function totalNeed(route) { return CFG.TASKS[route].reduce((a, t) => a + t.need, 0); }
+  const totalNeed = (route) => CFG.TASKS[route].reduce((a, t) => a + t.need, 0);
   function doneNeed(route) {
     const r = S.prog[route];
     let n = 0;
     CFG.TASKS[route].forEach((t, i) => { if (i < r.idx) n += t.need; });
     return n + r.p;
   }
-
-  function drawFloor() {
-    ctx.fillStyle = '#080c1a'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#1a2338'; ctx.fillRect(20, 20, W - 40, H - 40);
-    ctx.strokeStyle = '#222d48'; ctx.lineWidth = 1;
-    for (let x = 20; x <= W - 20; x += 40) { ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, H - 20); ctx.stroke(); }
-    for (let y = 20; y <= H - 20; y += 40) { ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(W - 20, y); ctx.stroke(); }
-    ctx.strokeStyle = '#4a5a8a'; ctx.lineWidth = 5; ctx.strokeRect(20, 20, W - 40, H - 40);
-    // 床のハザードライン
-    ctx.fillStyle = 'rgba(255,214,64,.12)';
-    for (let x = 30; x < W - 40; x += 40) { ctx.fillRect(x, H - 34, 20, 8); }
-  }
-
+  const meP = () => S.players.find(p => p.id === ME);
+  const myPos = () => { const m = meP(); if (!m) return null; return disp[ME] || m; };
   function nearMe(pos) {
-    const me = S.players.find(p => p.id === ME);
-    if (!me) return false;
-    const d = disp[ME] || me;
-    return Math.hypot(d.x - pos.x, d.y - pos.y) <= CFG.REACH;
+    const d = myPos();
+    return d ? Math.hypot(d.x - pos.x, d.y - pos.y) <= CFG.REACH : false;
+  }
+  const countMe = (t) => { const m = meP(); return m ? m.sl.reduce((a, s) => a + (s[0] === t ? s[1] : 0), 0) : 0; };
+
+  function reachRing(pos) {
+    if (!nearMe(pos)) return;
+    ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
   }
 
   function drawProgress(route, x, y) {
@@ -312,22 +428,19 @@
   function drawEngine(t) {
     const { x, y } = CFG.POS.engine;
     ctx.save(); ctx.translate(x, y);
-    // 炎
     const fl = 18 + Math.sin(t / 70) * 6 + Math.random() * 4;
     const g = ctx.createRadialGradient(-62, 0, 2, -62, 0, fl + 14);
     g.addColorStop(0, '#fff7c0'); g.addColorStop(.5, '#ff9800'); g.addColorStop(1, 'rgba(255,60,0,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(-62, 0, fl + 12, 20, 0, 0, Math.PI * 2); ctx.fill();
-    // 本体
     ctx.fillStyle = '#3d2530'; rr(-52, -78, 108, 156, 14); ctx.fill();
     ctx.strokeStyle = '#8b4a5a'; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = '#6d2f3f'; rr(-36, -58, 76, 116, 10); ctx.fill();
     ctx.fillStyle = '#ff6b6b'; ctx.beginPath(); ctx.arc(2, 0, 22 + Math.sin(t / 200) * 2, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#ffd1d1'; ctx.beginPath(); ctx.arc(2, 0, 10, 0, Math.PI * 2); ctx.fill();
-    // パイプ
     ctx.strokeStyle = '#9aa4c9'; ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(-36, -40); ctx.lineTo(-36, -70); ctx.moveTo(40, 40); ctx.lineTo(40, 70); ctx.stroke();
     ctx.restore();
-    if (nearMe(CFG.POS.engine)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    reachRing(CFG.POS.engine);
     drawProgress('engine', x, y - 110);
     label('エンジン修理 (Destroy)', x, y + 100, 14, '#ff8a80');
     const task = CFG.TASKS.engine[S.prog.engine.idx];
@@ -346,10 +459,9 @@
     for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(-6, i * 12); ctx.lineTo(-48, i * 28); ctx.stroke(); }
     ctx.fillStyle = '#ffd43b';
     [[-30, -80], [-30, 80], [0, -20], [0, 20]].forEach(([px, py]) => { ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill(); });
-    // 溶接火花
     if (Math.sin(t / 130) > .6) { ctx.fillStyle = '#fff59d'; ctx.fillRect(-40 + Math.random() * 10, -40 + Math.random() * 10, 3, 3); }
     ctx.restore();
-    if (nearMe(CFG.POS.wing)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    reachRing(CFG.POS.wing);
     drawProgress('wing', x, y - 110);
     label('羽修理 (Avoid)', x, y + 118, 14, '#82b1ff');
     const task = CFG.TASKS.wing[S.prog.wing.idx];
@@ -362,8 +474,15 @@
     ctx.strokeStyle = '#a1887f'; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = '#90a4ae'; ctx.fillRect(x - 28, y - 14, 30, 12); ctx.fillRect(x - 12, y - 4, 8, 22);
     ctx.fillStyle = '#ffca28'; ctx.fillRect(x + 12, y - 12, 22, 8);
-    if (nearMe(CFG.POS.bench)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    reachRing(CFG.POS.bench);
     label('🔨 作業台', x, y + 50, 14, '#ffe0b2');
+  }
+
+  function drawOrb(x, y, r, t) {
+    const pulse = r + Math.sin(t / 150) * 1.5;
+    const g = ctx.createRadialGradient(x, y, 1, x, y, pulse + 8);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(.4, '#b388ff'); g.addColorStop(1, 'rgba(124,77,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, pulse + 8, 0, Math.PI * 2); ctx.fill();
   }
 
   function drawCoreBox(t) {
@@ -372,15 +491,21 @@
     ctx.strokeStyle = '#78909c'; ctx.lineWidth = 3; ctx.stroke();
     if (S.core.state === 'box') drawOrb(x, y, 11, t);
     else { ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.fill(); }
-    if (nearMe(CFG.POS.coreBox)) { ctx.strokeStyle = '#ffd43b'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, CFG.REACH, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    reachRing(CFG.POS.coreBox);
     label('コア箱', x, y + 50, 14, '#b39ddb');
   }
 
-  function drawOrb(x, y, r, t) {
-    const pulse = r + Math.sin(t / 150) * 1.5;
-    const g = ctx.createRadialGradient(x, y, 1, x, y, pulse + 8);
-    g.addColorStop(0, '#ffffff'); g.addColorStop(.4, '#b388ff'); g.addColorStop(1, 'rgba(124,77,255,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, pulse + 8, 0, Math.PI * 2); ctx.fill();
+  function drawBattBox(t) {
+    const { x, y } = CFG.POS.battBox;
+    ctx.fillStyle = '#1b3d2b'; rr(x - 32, y - 32, 64, 64, 8); ctx.fill();
+    ctx.strokeStyle = '#4caf50'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#66bb6a'; rr(x - 16, y - 10, 30, 20, 3); ctx.fill();
+    ctx.fillRect(x + 14, y - 5, 5, 10);
+    ctx.fillStyle = '#c8e6c9';
+    const k = 0.5 + 0.5 * Math.sin(t / 250);
+    ctx.fillRect(x - 12, y - 6, 8, 12); ctx.globalAlpha = k; ctx.fillRect(x - 2, y - 6, 8, 12); ctx.globalAlpha = 1;
+    reachRing(CFG.POS.battBox);
+    label('バッテリー箱', x, y + 52, 14, '#a5d6a7');
   }
 
   function drawScraps() {
@@ -393,41 +518,65 @@
     }
   }
 
-  function drawPlayers(t) {
-    const list = [...S.players].sort((a, b) => a.y - b.y);
-    for (const p of list) {
-      let d = disp[p.id];
-      if (!d) d = disp[p.id] = { x: p.x, y: p.y };
-      const dd = Math.hypot(p.x - d.x, p.y - d.y);
-      if (dd > 120) { d.x = p.x; d.y = p.y; } else { d.x += (p.x - d.x) * 0.4; d.y += (p.y - d.y) * 0.4; }
-      const x = d.x, y = d.y;
-      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y + 14, 15, 6, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
-      ctx.lineWidth = p.id === ME ? 4 : 2; ctx.strokeStyle = p.id === ME ? '#fff' : 'rgba(0,0,0,.5)'; ctx.stroke();
-      // 目
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - 5, y - 4, 4.5, 0, Math.PI * 2); ctx.arc(x + 5, y - 4, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x - 4, y - 4, 2, 0, Math.PI * 2); ctx.arc(x + 6, y - 4, 2, 0, Math.PI * 2); ctx.fill();
-      label(p.id === ME ? `P${p.n} (YOU)` : `P${p.n}`, x, y + 32, 11, p.id === ME ? '#ffd43b' : '#fff');
-      // 所持品
-      let iy = y - 30;
-      if (p.h) { drawOrb(x, iy - 8, 9, t); iy -= 22; }
-      if (p.b > 0) {
-        ctx.fillStyle = '#ffca28'; ctx.beginPath();
-        for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i; ctx.lineTo(x - 12 + Math.cos(a) * 8, iy + Math.sin(a) * 8); }
-        ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#6d4c00'; ctx.lineWidth = 1.5; ctx.stroke();
-        label('x' + p.b, x + 6, iy + 4, 12, '#fff');
-        iy -= 0;
-      }
-      for (let i = 0; i < p.s; i++) { ctx.fillStyle = '#90a4ae'; ctx.fillRect(x + 8 + i * 9 - 6, iy - 4, 7, 7); ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 1; ctx.strokeRect(x + 8 + i * 9 - 6, iy - 4, 7, 7); }
-    }
-    // 離脱したプレイヤーの補間データ削除
-    for (const id in disp) if (!S.players.find(p => p.id === id)) delete disp[id];
-  }
-
   function drawCoreGround(t) {
     if (S.core.state === 'ground') {
       drawOrb(S.core.x, S.core.y, 11, t);
       label('コア', S.core.x, S.core.y + 28, 12, '#d1c4e9');
+    }
+  }
+
+  function itemIcon(t, x, y, n) {
+    if (t === 'scrap') {
+      ctx.fillStyle = '#78909c'; rr(x - 8, y - 8, 16, 16, 3); ctx.fill();
+      ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 1.5; ctx.stroke();
+      label(String(n), x, y + 4, 11, '#fff');
+    } else if (t === 'bolt') {
+      ctx.fillStyle = '#ffca28'; ctx.beginPath();
+      for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i; ctx.lineTo(x + Math.cos(a) * 9, y + Math.sin(a) * 9); }
+      ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#6d4c00'; ctx.lineWidth = 1.5; ctx.stroke();
+    } else if (t === 'battery') {
+      ctx.fillStyle = '#66bb6a'; rr(x - 9, y - 6, 16, 12, 2); ctx.fill();
+      ctx.fillRect(x + 7, y - 3, 3, 6); ctx.strokeStyle = '#1b5e20'; ctx.lineWidth = 1.2; ctx.strokeRect(x - 9, y - 6, 16, 12);
+    } else if (t === 'torch') {
+      ctx.fillStyle = '#ff7043'; rr(x - 9, y - 4, 14, 8, 2); ctx.fill();
+      ctx.fillStyle = '#ffd54f'; ctx.beginPath(); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x + 13, y); ctx.lineTo(x + 5, y + 5); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  function updateDisp() {
+    for (const p of S.players) {
+      let d = disp[p.id];
+      if (!d) d = disp[p.id] = { x: p.x, y: p.y };
+      const dd = Math.hypot(p.x - d.x, p.y - d.y);
+      if (dd > 150) { d.x = p.x; d.y = p.y; } else { d.x += (p.x - d.x) * 0.4; d.y += (p.y - d.y) * 0.4; }
+    }
+    for (const id in disp) if (!S.players.find(p => p.id === id)) delete disp[id];
+  }
+
+  function updateCamera() {
+    const d = myPos();
+    const tx = d ? d.x - VW / 2 : (W - VW) / 2;
+    const ty = d ? d.y - VH / 2 : (H - VH) / 2;
+    const cx = Math.max(0, Math.min(W - VW, tx)), cy = Math.max(0, Math.min(H - VH, ty));
+    if (!cam.init) { cam.x = cx; cam.y = cy; cam.init = true; }
+    else { cam.x += (cx - cam.x) * 0.25; cam.y += (cy - cam.y) * 0.25; }
+  }
+
+  function drawPlayers(t) {
+    const list = [...S.players].sort((a, b) => a.y - b.y);
+    for (const p of list) {
+      const d = disp[p.id];
+      const x = d.x, y = d.y;
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y + 14, 15, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = p.id === ME ? 4 : 2; ctx.strokeStyle = p.id === ME ? '#fff' : 'rgba(0,0,0,.5)'; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - 5, y - 4, 4.5, 0, Math.PI * 2); ctx.arc(x + 5, y - 4, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x - 4, y - 4, 2, 0, Math.PI * 2); ctx.arc(x + 6, y - 4, 2, 0, Math.PI * 2); ctx.fill();
+      label(p.id === ME ? `P${p.n} (YOU)` : `P${p.n}`, x, y + 32, 11, p.id === ME ? '#ffd43b' : '#fff');
+      // 所持品アイコン
+      const n = p.sl.length;
+      p.sl.forEach(([it, cnt], i) => itemIcon(it, x - (n - 1) * 11 + i * 22, y - 32, cnt));
+      if (p.h) drawOrb(x, y - (n ? 52 : 34), 10, t);
     }
   }
 
@@ -444,54 +593,53 @@
 
   function drawHint() {
     if (S.phase !== 'playing') return;
-    const me = S.players.find(p => p.id === ME);
-    if (!me) return;
+    const me = meP(); if (!me) return;
+    const P = CFG.POS;
     let h = '';
+    const scrap = countMe('scrap');
     if (me.h) {
-      if (nearMe(CFG.POS.engine) && CFG.TASKS.engine[S.prog.engine.idx] && CFG.TASKS.engine[S.prog.engine.idx].type === 'core') h = 'SPACE: コアをエンジンへ搬入';
-      else h = 'SPACE: コアを置く (パス)';
-    } else if (nearMe(CFG.POS.engine) || nearMe(CFG.POS.wing)) {
-      const route = nearMe(CFG.POS.engine) ? 'engine' : 'wing';
+      const t = CFG.TASKS.engine[S.prog.engine.idx];
+      h = nearMe(P.engine) && t && t.type === 'core' ? 'SPACE: コアをエンジンへ搬入' : 'SPACE: コアを置く (パス)';
+    } else if (nearMe(P.engine) || nearMe(P.wing)) {
+      const route = nearMe(P.engine) ? 'engine' : 'wing';
       const t = CFG.TASKS[route][S.prog[route].idx];
-      h = t && t.type === 'core' ? 'プラズマコアが必要!' : (me.b > 0 ? 'SPACE: ボルトを使って修理 (連打!)' : 'ボルトが必要 (作業台で作成)');
-    } else if (nearMe(CFG.POS.bench)) h = me.s >= CFG.SCRAP_MAX ? 'SPACE: ボルトを作る' : `鉄くずを集めよう (${me.s}/${CFG.SCRAP_MAX})`;
-    else if (nearMe(CFG.POS.coreBox) && S.core.state === 'box') h = 'SPACE: プラズマコアを取る (激重)';
-    else if (S.core.state === 'ground' && Math.hypot((disp[ME] || me).x - S.core.x, (disp[ME] || me).y - S.core.y) < 50) h = 'SPACE: コアを拾う';
+      if (!t) h = '';
+      else if (t.type === 'core') h = 'プラズマコアが必要!';
+      else h = countMe(t.type) > 0 ? `SPACE: ${META[t.type].n}を使って修理 (連打!)` : `${META[t.type].n}が必要`;
+    } else if (nearMe(P.bench)) {
+      if (countMe('battery') > 0) h = scrap >= 2 ? 'SPACE: 溶接トーチを作る' : 'トーチは金属くず×2 + バッテリー';
+      else h = scrap >= 3 ? 'SPACE: ボルトを作る' : `金属くずを集めよう (${scrap}/3)`;
+    } else if (nearMe(P.battBox)) h = 'SPACE: バッテリーを取る';
+    else if (nearMe(P.coreBox) && S.core.state === 'box') h = 'SPACE: プラズマコアを取る (2枠・激重)';
+    else if (S.core.state === 'ground') {
+      const d = myPos();
+      if (d && Math.hypot(d.x - S.core.x, d.y - S.core.y) < 50) h = 'SPACE: コアを拾う';
+    }
     if (h) {
-      ctx.fillStyle = 'rgba(0,0,0,.65)'; rr(W / 2 - 190, H - 66, 380, 30, 10); ctx.fill();
-      label(h, W / 2, H - 45, 16, '#ffd43b');
+      ctx.fillStyle = 'rgba(0,0,0,.7)'; rr(VW / 2 - 200, VH - 56, 400, 30, 10); ctx.fill();
+      label(h, VW / 2, VH - 35, 16, '#ffd43b');
     }
   }
 
-  function drawMeteor(now) {
-    const rem = S.remain - (S.phase === 'playing' ? (now - recvAt) : 0);
-    if (S.phase === 'playing' && rem <= 30000) {
-      const k = 1 - rem / 30000;
-      const mx = W - 60 - k * 120, my = 60 + k * 40, r = 18 + k * 60;
-      ctx.fillStyle = `rgba(255,40,40,${0.05 + 0.1 * Math.abs(Math.sin(now / 200))})`;
-      ctx.fillRect(0, 0, W, H);
-      meteorBody(mx, my, r, now);
-      label('☄ 隕石接近中!', mx - 30, my + r + 22, 14, '#ff8a80');
-    } else if (S.phase === 'lose') {
-      const el = now - loseAt;
-      const k = Math.min(1, el / 2400);
-      const mx = (W - 60 - 120) + (W / 2 - (W - 180)) * k, my = 100 + (H / 2 - 100) * k;
-      const r = 78 + k * k * 520;
-      meteorBody(mx, my, r, now);
-      if (el > 2300) {
-        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, 1 - (el - 2300) / 1400)})`; ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = `rgba(120,0,0,${Math.min(.55, (el - 2300) / 2000)})`; ctx.fillRect(0, 0, W, H);
-      }
-    } else if (S.phase === 'win') {
-      for (let i = 0; i < 40; i++) {
-        const px = (i * 97 + now * 0.05 * (1 + i % 3)) % W;
-        const py = (i * 53 + now * 0.12 * (1 + i % 4)) % H;
-        ctx.fillStyle = ['#ff6b6b', '#ffd43b', '#4dabf7', '#51cf66'][i % 4];
-        ctx.fillRect(px, py, 8, 8);
-      }
+  function drawMini() {
+    if (!miniCv) return;
+    const mw = miniCv.width, mh = miniCv.height, mx = VW - mw - 14, my = VH - mh - 14, sc = mw / W;
+    ctx.fillStyle = 'rgba(0,0,0,.7)'; rr(mx - 5, my - 5, mw + 10, mh + 10, 8); ctx.fill();
+    ctx.globalAlpha = .9; ctx.drawImage(miniCv, mx, my); ctx.globalAlpha = 1;
+    const P = CFG.POS;
+    const mark = (pos, txt, col) => { ctx.fillStyle = col; ctx.fillRect(mx + pos.x * sc - 5, my + pos.y * sc - 5, 10, 10); ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText(txt, mx + pos.x * sc, my + pos.y * sc + 3); };
+    mark(P.engine, 'E', '#ff6b6b'); mark(P.wing, 'W', '#4dabf7'); mark(P.bench, '工', '#ffca28');
+    mark(P.coreBox, 'C', '#b388ff'); mark(P.battBox, 'B', '#66bb6a');
+    for (const p of S.players) {
+      const d = disp[p.id] || p;
+      ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(mx + d.x * sc, my + d.y * sc, p.id === ME ? 3.5 : 2.5, 0, Math.PI * 2); ctx.fill();
+      if (p.id === ME) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
     }
+    ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1;
+    ctx.strokeRect(mx + cam.x * sc, my + cam.y * sc, VW * sc, VH * sc);
   }
-  function meteorBody(x, y, r, now) {
+
+  function meteorBody(x, y, r) {
     const tail = ctx.createLinearGradient(x, y, x + r * 3, y - r * 1.5);
     tail.addColorStop(0, 'rgba(255,120,30,.8)'); tail.addColorStop(1, 'rgba(255,60,0,0)');
     ctx.fillStyle = tail; ctx.beginPath(); ctx.moveTo(x - r * .7, y - r * .7); ctx.lineTo(x + r * 3, y - r * 1.5); ctx.lineTo(x + r * .7, y + r * .7); ctx.closePath(); ctx.fill();
@@ -502,24 +650,56 @@
     ctx.beginPath(); ctx.arc(x - r * .25, y + r * .2, r * .2, 0, Math.PI * 2); ctx.arc(x + r * .3, y - r * .25, r * .14, 0, Math.PI * 2); ctx.fill();
   }
 
-  // 星背景
-  const stars = Array.from({ length: 50 }, (_, i) => ({ x: (i * 193) % W, y: (i * 71) % H, r: 0.6 + (i % 3) * 0.5 }));
+  function drawMeteor(now) {
+    const rem = S.remain - (S.phase === 'playing' ? (now - recvAt) : 0);
+    if (S.phase === 'playing' && rem <= 30000) {
+      const k = 1 - rem / 30000;
+      ctx.fillStyle = `rgba(255,40,40,${0.04 + 0.08 * Math.abs(Math.sin(now / 200))})`;
+      ctx.fillRect(0, 0, VW, VH);
+      const mx = VW - 70 - k * 60, my = 110 + k * 20, r = 16 + k * 44;
+      meteorBody(mx, my, r);
+      label('☄ 隕石接近中!', mx - 30, my + r + 20, 14, '#ff8a80');
+    } else if (S.phase === 'lose') {
+      const el = now - loseAt, k = Math.min(1, el / 2400);
+      const mx = (VW - 130) + (VW / 2 - (VW - 130)) * k, my = 100 + (VH / 2 - 100) * k;
+      meteorBody(mx, my, 78 + k * k * 520);
+      if (el > 2300) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, 1 - (el - 2300) / 1400)})`; ctx.fillRect(0, 0, VW, VH);
+        ctx.fillStyle = `rgba(120,0,0,${Math.min(.55, (el - 2300) / 2000)})`; ctx.fillRect(0, 0, VW, VH);
+      }
+    } else if (S.phase === 'win') {
+      for (let i = 0; i < 40; i++) {
+        const px = (i * 97 + now * 0.05 * (1 + i % 3)) % VW;
+        const py = (i * 53 + now * 0.12 * (1 + i % 4)) % VH;
+        ctx.fillStyle = ['#ff6b6b', '#ffd43b', '#4dabf7', '#51cf66'][i % 4];
+        ctx.fillRect(px, py, 8, 8);
+      }
+    }
+  }
 
   // ---------- メインループ ----------
   function frame(t) {
     requestAnimationFrame(frame);
     const now = performance.now();
-    ctx.clearRect(0, 0, W, H);
-    drawFloor();
-    if (CFG && S) {
-      drawEngine(t); drawWing(t); drawBench(); drawCoreBox(t);
-      drawScraps(); drawCoreGround(t); drawPlayers(t);
-      drawFloaters(now); drawHint(); drawMeteor(now);
-      updateHud(); updateOverlays(now);
-    } else {
+    ctx.fillStyle = '#080c1a'; ctx.fillRect(0, 0, VW, VH);
+    if (!(CFG && S && mapCv)) {
       ctx.fillStyle = '#fff'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('接続中…', W / 2, H / 2);
+      ctx.fillText('接続中…', VW / 2, VH / 2);
+      return;
     }
+    updateDisp();
+    updateCamera();
+    const cx = Math.round(cam.x), cy = Math.round(cam.y);
+
+    ctx.save();
+    ctx.translate(-cx, -cy);
+    ctx.drawImage(mapCv, cx, cy, VW, VH, cx, cy, VW, VH);
+    drawEngine(t); drawWing(t); drawBench(); drawCoreBox(t); drawBattBox(t);
+    drawScraps(); drawCoreGround(t); drawPlayers(t); drawFloaters(now);
+    ctx.restore();
+
+    drawHint(); drawMini(); drawMeteor(now);
+    updateHud(); updateOverlays(now);
   }
   requestAnimationFrame(frame);
 })();
