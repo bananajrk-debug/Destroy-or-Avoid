@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Destroy or Avoid</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f1a;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 10px; text-shadow: 0 0 10px #4d96ff; }
+    #ui-panel {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      background: #1e1e2f;
+      padding: 10px 20px;
+      border-radius: 8px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #ff6666; }
+    #canvas-container { position: relative; }
+    canvas {
+      background: #181824;
+      border: 3px solid #33334d;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    }
+    #status-box {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ffd93d;
+    }
+    .instructions {
+      margin-top: 15px;
+      color: #aaa;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <h1>🚀 Destroy or Avoid</h1>
+
+  <div id="ui-panel">
+    <div>
+      <label>難易度: </label>
+      <select id="diffSelect" onchange="changeConfig()">
+        <option value="EASY">Easy</option>
+        <option value="NORMAL" selected>Normal</option>
+        <option value="HARD">Hard</option>
+      </select>
+    </div>
+    <div>
+      <label>目標ルート: </label>
+      <button style="background:#ff4d4d;" onclick="selectRoute('DESTROY')">⚙️ Destroy (エンジン)</button>
+      <button style="background:#4d96ff;" onclick="selectRoute('AVOID')">🪽 Avoid (羽)</button>
+    </div>
+    <button onclick="startGame()" style="background:#6bcb77;">ゲーム開始</button>
+  </div>
+
+  <div id="status-box">準備中...</div>
+
+  <div id="canvas-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+  </div>
+
+  <div class="instructions">
+    操作方法: [WASD] または [矢印キー] で移動 | [Space] キーで資材取得/クラフト/作業/手放す
+  </div>
+
+  <script>
+    const socket = io();
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusBox = document.getElementById('status-box');
+
+    let localState = null;
+    let myPos = { x: 100, y: 200 };
+    const keys = {};
+
+    // エリアの定義 (X, Y, Width, Height)
+    const AREAS = {
+      SCRAP_BOX:   { x: 50,  y: 50,  w: 100, h: 80, label: '鉄くず箱', color: '#8b8b9e' },
+      CORE_BOX:    { x: 50,  y: 470, w: 100, h: 80, label: 'プラズマコア', color: '#ff6b6b' },
+      CRAFT_BENCH: { x: 350, y: 50,  w: 120, h: 80, label: '作業台', color: '#ffd93d' },
+      WORK_STATION:{ x: 650, y: 230, w: 100, h: 140, label: '修理ステーション', color: '#4d96ff' }
+    };
+
+    socket.on('stateUpdate', (state) => {
+      localState = state;
+      updateUI();
+      render();
+    });
+
+    function updateUI() {
+      if (!localState) return;
+      
+      let text = `状態: ${localState.status} | 選択ルート: ${localState.route || '未選択'}`;
+      if (localState.status === 'METEOR_APPROACH') {
+        text += ` | ⚠️ 巨大隕石衝突まで: ${localState.meteorTimer}秒`;
+      } else if (localState.status === 'WIN') {
+        text = '🎉 ミッション成功！隕石の回避/破壊に成功しました！';
+      } else if (localState.status === 'LOSE') {
+        text = '💥 ミッション失敗... 隕石が激突しました！';
+      }
+      statusBox.innerText = text;
+    }
+
+    function selectRoute(route) {
+      socket.emit('setGameConfig', { route });
+    }
+
+    function changeConfig() {
+      const difficulty = document.getElementById('diffSelect').value;
+      socket.emit('setGameConfig', { difficulty });
+    }
+
+    function startGame() {
+      socket.emit('startGame');
+    }
+
+    // キー入力監視
+    window.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+      if (e.key === ' ') {
+        handleAction();
+      }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+    // アクションキー処理
+    function handleAction() {
+      let nearArea = 'DROP';
+      for (const [key, area] of Object.entries(AREAS)) {
+        if (
+          myPos.x >= area.x - 30 && myPos.x <= area.x + area.w + 30 &&
+          myPos.y >= area.y - 30 && myPos.y <= area.y + area.h + 30
+        ) {
+          nearArea = key;
+          break;
+        }
+      }
+      socket.emit('action', { nearArea });
+    }
+
+    // ゲームループ（移動送信）
+    setInterval(() => {
+      if (!localState) return;
+      const me = localState.players[socket.id];
+      if (!me) return;
+
+      const isHeavy = me.holdingItem === 'PLATINUM_CORE';
+      const speed = isHeavy ? 2.5 : 5; // プラズマコア所持で鈍足化
+
+      let moved = false;
+      if (keys['ArrowUp'] || keys['w']) { myPos.y -= speed; moved = true; }
+      if (keys['ArrowDown'] || keys['s']) { myPos.y += speed; moved = true; }
+      if (keys['ArrowLeft'] || keys['a']) { myPos.x -= speed; moved = true; }
+      if (keys['ArrowRight'] || keys['d']) { myPos.x += speed; moved = true; }
+
+      if (moved) {
+        socket.emit('move', myPos);
+      } else {
+        myPos.x = me.x;
+        myPos.y = me.y;
+      }
+    }, 1000 / 30);
+
+    // 画面描画
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. 各エリア（ギミック）の描画
+      for (const [key, area] of Object.entries(AREAS)) {
+        ctx.fillStyle = area.color;
+        ctx.fillRect(area.x, area.y, area.w, area.h);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px sans-serif';
+        ctx.fillText(area.label, area.x + 10, area.y + 40);
+      }
+
+      if (!localState) return;
+
+      // 2. タスク進捗の表示
+      if (localState.route) {
+        const activeTasks = localState.route === 'DESTROY' ? localState.tasks.destroy : localState.tasks.avoid;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px sans-serif';
+        ctx.fillText(`【現在のタスク: ${localState.route}】`, 300, 300);
+
+        activeTasks.forEach((t, i) => {
+          const status = t.completed ? '✅ 完了' : `${t.progress}%`;
+          ctx.fillText(`${i + 1}. ${t.name} (${t.heavy ? '重タスク' : '軽タスク'}): ${status}`, 300, 330 + (i * 25));
+        });
+      }
+
+      // 3. プレイヤー描画
+      Object.values(localState.players).forEach((p) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // 持ち手アイテムのテキスト描画
+        if (p.holdingItem) {
+          ctx.fillStyle = '#ffd93d';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(`📦 ${p.holdingItem}`, p.x - 25, p.y - 25);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
