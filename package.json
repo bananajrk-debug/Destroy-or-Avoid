@@ -1,7 +1,7 @@
 {
   "name": "destroy-or-avoid",
-  "version": "4.0.0",
-  "description": "Destroy or Avoid - online realtime action social-deduction game (lobby + imposter + meeting/vote edition)",
+  "version": "6.0.0",
+  "description": "Destroy or Avoid - online realtime action social-deduction game (role reveal / eject / kill cutscenes + head accessories + compact maze edition)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
