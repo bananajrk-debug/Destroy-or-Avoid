@@ -12,11 +12,11 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/healthz', (req, res) => res.send('ok'));
 
 // ---------- 定数 ----------
-// マップ: 正方形に近いコンパクトな横長 (33 x 21)。迷路ノードは「通路幅3マス + 壁1マス」の周期4で構成
-const CELL = 50, COLS = 33, ROWS = 21;
+// マップ: ブロック配置による固定の宇宙船 (41 x 27)。部屋・通路・柱・斜めブロックで構成
+const CELL = 50, COLS = 41, ROWS = 27;
 const W = COLS * CELL, H = ROWS * CELL;
-const NX = (COLS - 1) / 4, NY = (ROWS - 1) / 4; // 8 x 5 ノード
-const CX = (COLS - 1) / 2, CY = (ROWS - 1) / 2;  // 中央セル (16, 10)
+const CX = (COLS - 1) / 2, CY = (ROWS - 1) / 2;  // 中央セル (20, 13) = カフェテリアの中心 (緊急会議ボタン)
+const GHOST_MULT = 1.5;                          // 幽霊の移動速度倍率 (壁も通り抜け可能)
 const TICK_RATE = 30;
 const GAME_MS = 10 * 60 * 1000;
 const SPEED = 230, SPEED_CORE = 130, PR = 16, REACH = 70;
@@ -39,24 +39,25 @@ const COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b'
 // 頭の上のアクセサリー
 const ACCS = ['none', 'duck', 'poop', 'crown', 'halo', 'tophat', 'sprout'];
 
-// ---------- タスクプール（全15個。座標はマップ生成ごとにランダム配置） ----------
+// ---------- タスクプール（全15個。固定の宇宙船マップ上の決まった場所） ----------
 // kind: carry(運搬) / weld(溶接) / seq(数字順押し) / alt(K/O交互連打) / space(SPACE連打)
+// goal: 画面右側の「次にやること」リストに出す簡潔な目標文
 const TASK_BASE = [
-  { id: 1,  name: 'プラズマコアの搬入',   pct: 20, kind: 'carry', item: 'core',    icon: '⚛️' },
-  { id: 2,  name: 'ヒューズの装着',       pct: 10, kind: 'carry', item: 'fuse',    icon: '🔌' },
-  { id: 3,  name: '予備バッテリーの装着', pct: 10, kind: 'carry', item: 'battery', icon: '🔋' },
-  { id: 4,  name: '外壁フレーム溶接',     pct: 10, kind: 'weld',  icon: '🔥' },
-  { id: 5,  name: '駆動アームの溶接',     pct: 10, kind: 'weld',  icon: '🦾' },
-  { id: 6,  name: '配電盤の番号入力',     pct: 5,  kind: 'seq',   icon: '🔢' },
-  { id: 7,  name: 'パスコード入力',       pct: 5,  kind: 'seq',   icon: '🔐' },
-  { id: 8,  name: 'コンテナ番号の照合',   pct: 5,  kind: 'seq',   icon: '📦' },
-  { id: 9,  name: '冷却ファンの回転',     pct: 5,  kind: 'alt',   n: 20, icon: '🌀' },
-  { id: 10, name: '発電機のクランク',     pct: 10, kind: 'alt',   n: 30, icon: '⚙️' },
-  { id: 11, name: 'ポンプの加圧',         pct: 5,  kind: 'alt',   n: 16, icon: '🛢️' },
-  { id: 12, name: '配線の張り替え',       pct: 5,  kind: 'space', n: 6,  icon: '🧵' },
-  { id: 13, name: 'バルブの調整',         pct: 5,  kind: 'space', n: 8,  icon: '🎛️' },
-  { id: 14, name: 'アンテナの調整',       pct: 5,  kind: 'space', n: 6,  icon: '📡' },
-  { id: 15, name: '点火システムの調整',   pct: 5,  kind: 'space', n: 10, icon: '🚀' },
+  { id: 1,  name: 'プラズマコアの搬入',   goal: 'プラズマコアを運ぶ',     pct: 20, kind: 'carry', item: 'core',    icon: '⚛️' },
+  { id: 2,  name: 'ヒューズの装着',       goal: 'ヒューズを運ぶ',         pct: 10, kind: 'carry', item: 'fuse',    icon: '🔌' },
+  { id: 3,  name: '予備バッテリーの装着', goal: 'バッテリーを運ぶ',       pct: 10, kind: 'carry', item: 'battery', icon: '🔋' },
+  { id: 4,  name: '外壁フレーム溶接',     goal: '外壁フレームを溶接する', pct: 10, kind: 'weld',  icon: '🔥' },
+  { id: 5,  name: '駆動アームの溶接',     goal: '駆動アームを溶接する',   pct: 10, kind: 'weld',  icon: '🦾' },
+  { id: 6,  name: '配電盤の番号入力',     goal: '配電盤の番号を入力する', pct: 5,  kind: 'seq',   icon: '🔢' },
+  { id: 7,  name: 'パスコード入力',       goal: 'パスコードを入力する',   pct: 5,  kind: 'seq',   icon: '🔐' },
+  { id: 8,  name: 'コンテナ番号の照合',   goal: 'コンテナ番号を照合する', pct: 5,  kind: 'seq',   icon: '📦' },
+  { id: 9,  name: '冷却ファンの回転',     goal: '冷却ファンを回す',       pct: 5,  kind: 'alt',   n: 20, icon: '🌀' },
+  { id: 10, name: '発電機のクランク',     goal: '発電機を回す',           pct: 10, kind: 'alt',   n: 30, icon: '⚙️' },
+  { id: 11, name: 'ポンプの加圧',         goal: 'ポンプを加圧する',       pct: 5,  kind: 'alt',   n: 16, icon: '🛢️' },
+  { id: 12, name: '配線の張り替え',       goal: '配線を張り替える',       pct: 5,  kind: 'space', n: 6,  icon: '🧵' },
+  { id: 13, name: 'バルブの調整',         goal: 'バルブを調整する',       pct: 5,  kind: 'space', n: 8,  icon: '🎛️' },
+  { id: 14, name: 'アンテナの調整',       goal: 'アンテナを調整する',     pct: 5,  kind: 'space', n: 6,  icon: '📡' },
+  { id: 15, name: '点火システムの調整',   goal: '点火システムを調整する', pct: 5,  kind: 'space', n: 10, icon: '🚀' },
 ];
 
 // ---------- 乱数ユーティリティ ----------
@@ -66,123 +67,121 @@ function shuffle(a) {
   return a;
 }
 
-// ---------- ランダム迷路生成 ----------
-// 1) 8x5 のノード(3x3の部屋)を再帰バックトラックで接続(必ず全ノードが連結)
-// 2) ループ追加(braid) + 行き止まり除去で回遊しやすくする
-// 3) ランダムな大部屋と、マップ真中央の広場(7x5、中央3x3は絶対に壁なし)を開放し、中心に緊急招集ボタン
-// 4) 設備(供給所3 + タスク15)をノード中心に間隔を空けて配置、到達性を検証
-function buildLayout() {
-  const hE = Array.from({ length: NY }, () => Array(NX - 1).fill(false)); // hE[j][i]: (i,j)-(i+1,j)
-  const vE = Array.from({ length: NY - 1 }, () => Array(NX).fill(false)); // vE[j][i]: (i,j)-(i,j+1)
-  const arr = (t) => (t === 'h' ? hE : vE);
-  const nbrs = (i, j) => {
-    const a = [];
-    if (i > 0) a.push([i - 1, j, 'h', i - 1, j]);
-    if (i < NX - 1) a.push([i + 1, j, 'h', i, j]);
-    if (j > 0) a.push([i, j - 1, 'v', i, j - 1]);
-    if (j < NY - 1) a.push([i, j + 1, 'v', i, j]);
-    return a; // [隣i, 隣j, 辺種別, 辺i, 辺j]
-  };
-  const isOpen = (n) => arr(n[2])[n[4]][n[3]];
-  const open = (n) => { arr(n[2])[n[4]][n[3]] = true; };
-  const deg = (i, j) => nbrs(i, j).filter(isOpen).length;
+// ---------- 宇宙船マップ (ブロック配置による固定マップ) ----------
+// grid[r][c]: false=床 / true=壁ブロック / 'A''B''C''D'=斜めブロック(三角形の壁)
+//   A=左上が壁 / B=右上が壁 / C=左下が壁 / D=右下が壁 (斜辺の反対側が床)
+// 各部屋の四隅は斜めブロックで面取りされる。中央のカフェテリア中心(3x3)は絶対に壁を置かない。
+const ROOMS = [ // [c0, r0, c1, r1]
+  { n: 'ブリッジ',         r: [16, 2, 24, 5] },
+  { n: 'ナビゲーション',   r: [2, 2, 9, 6] },
+  { n: '通信室',           r: [31, 2, 38, 6] },
+  { n: 'エンジンルーム',   r: [2, 9, 9, 17] },
+  { n: 'カフェテリア',     r: [14, 9, 26, 17] },
+  { n: 'リアクター',       r: [31, 9, 38, 17] },
+  { n: '医務室',           r: [2, 20, 9, 24] },
+  { n: '貨物室',           r: [16, 21, 24, 24] },
+  { n: '兵器室',           r: [31, 20, 38, 24] },
+];
+const CORRIDORS = [
+  [19, 6, 21, 8], [19, 18, 21, 20], [10, 12, 13, 14], [27, 12, 30, 14],   // カフェテリアから四方へ
+  [4, 7, 6, 8], [33, 7, 35, 8], [4, 18, 6, 19], [33, 18, 35, 19],         // 左右の縦通路
+  [10, 3, 15, 5], [25, 3, 30, 5], [10, 21, 15, 23], [25, 21, 30, 23],     // 上下の横通路
+];
+const PILLARS = [ // 柱・テーブルなどの壁ブロック
+  [17, 11, 17, 11], [23, 11, 23, 11], [17, 15, 17, 15], [23, 15, 23, 15], // カフェテリアのテーブル
+  [4, 12, 5, 14], [35, 12, 36, 14],                                        // エンジン / リアクターの機械
+];
+const TASK_POS = { 1: [36, 11], 2: [4, 4], 3: [36, 4], 4: [18, 23], 5: [3, 11], 6: [18, 4], 7: [22, 4], 8: [22, 23],
+  9: [34, 16], 10: [7, 16], 11: [4, 22], 12: [15, 14], 13: [25, 11], 14: [12, 4], 15: [36, 22] };
+const STATION_POS = { core: [7, 10], fuse: [32, 10], battery: [8, 21] };
 
-  // 1) 迷路(全域木)
-  const vis = Array.from({ length: NY }, () => Array(NX).fill(false));
-  const st = [[rand(NX), rand(NY)]];
-  vis[st[0][1]][st[0][0]] = true;
-  while (st.length) {
-    const [i, j] = st[st.length - 1];
-    const cand = shuffle(nbrs(i, j).filter(n => !vis[n[1]][n[0]]));
-    if (!cand.length) { st.pop(); continue; }
-    open(cand[0]);
-    vis[cand[0][1]][cand[0][0]] = true;
-    st.push([cand[0][0], cand[0][1]]);
-  }
-  // 2) ループ追加 & 行き止まり除去
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX - 1; i++) if (!hE[j][i] && Math.random() < 0.12) hE[j][i] = true;
-  for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX; i++) if (!vE[j][i] && Math.random() < 0.12) vE[j][i] = true;
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
-    if (deg(i, j) <= 1 && Math.random() < 0.6) {
-      const closed = nbrs(i, j).filter(n => !isOpen(n));
-      if (closed.length) open(shuffle(closed)[0]);
-    }
-  }
+const roomName = (c, r) => { const o = ROOMS.find(o => c >= o.r[0] && c <= o.r[2] && r >= o.r[1] && r <= o.r[3]); return o ? o.n : '通路'; };
 
-  // ラスタライズ
+function buildShip() {
   const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(true));
-  const carve = (c0, r0, c1, r1) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) grid[r][c] = false; };
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) carve(4 * i + 1, 4 * j + 1, 4 * i + 3, 4 * j + 3);
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX - 1; i++) if (hE[j][i]) carve(4 * (i + 1), 4 * j + 1, 4 * (i + 1), 4 * j + 3);
-  for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX; i++) if (vE[j][i]) carve(4 * i + 1, 4 * (j + 1), 4 * i + 3, 4 * (j + 1));
-  // 3) 大部屋(7x7)をランダムに2つ
-  for (let k = 0; k < 2; k++) { const i = rand(NX - 1), j = rand(NY - 1); carve(4 * i + 1, 4 * j + 1, 4 * i + 7, 4 * j + 7); }
-  // 中央広場 (7x5)。中央3x3は絶対に壁を置かない。ここに緊急招集ボタン
-  carve(CX - 3, CY - 2, CX + 3, CY + 2);
-  carve(CX - 1, CY - 1, CX + 1, CY + 1);
+  const carve = (c0, r0, c1, r1, v = false) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) grid[r][c] = v; };
+  ROOMS.forEach(o => carve(...o.r));
+  CORRIDORS.forEach(r => carve(...r));
+  ROOMS.forEach(o => { const [c0, r0, c1, r1] = o.r; grid[r0][c0] = 'A'; grid[r0][c1] = 'B'; grid[r1][c0] = 'C'; grid[r1][c1] = 'D'; });
+  PILLARS.forEach(r => carve(...r, true));
   const button = cp(CX, CY);
-
-  // 4) 設備配置 (広場のノードは除外)
-  const inPlaza = (i, j) => (i === 3 || i === 4) && j === 2;
-  const cand = [];
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) if (!inPlaza(i, j)) cand.push([i, j]);
-  shuffle(cand);
-  const need = 3 + TASK_BASE.length;
-  const picked = [];
-  for (let dmin = 3; dmin >= 1 && picked.length < need; dmin--) {
-    for (const n of cand) {
-      if (picked.length >= need) break;
-      if (picked.includes(n)) continue;
-      if (picked.every(p => Math.max(Math.abs(p[0] - n[0]), Math.abs(p[1] - n[1])) >= dmin)) picked.push(n);
-    }
-  }
-  if (picked.length < need) return null;
-  shuffle(picked);
-  const at = (n) => cp(4 * n[0] + 2, 4 * n[1] + 2);
-  const stations = { fuse: at(picked[0]), battery: at(picked[1]), core: at(picked[2]) };
-  const taskDefs = TASK_BASE.map((d, k) => ({ ...d, ...at(picked[3 + k]) }));
-
-  // 到達性チェック
-  const seen = new Set();
-  const q = [[CX, CY]];
-  seen.add(CY * COLS + CX);
+  const stations = {}, stationLoc = {};
+  for (const k in STATION_POS) { stations[k] = cp(...STATION_POS[k]); stationLoc[k] = roomName(...STATION_POS[k]); }
+  const taskDefs = TASK_BASE.map(d => ({ ...d, ...cp(...TASK_POS[d.id]), loc: roomName(...TASK_POS[d.id]) }));
+  // 検証: 中央3x3が床 / 設備が床 / 全設備がボタンから到達可能
+  for (let r = CY - 1; r <= CY + 1; r++) for (let c = CX - 1; c <= CX + 1; c++) if (grid[r][c] !== false) throw new Error('center must be open');
+  const seen = new Set([CY * COLS + CX]), q = [[CX, CY]];
   for (let i = 0; i < q.length; i++) {
     const [c, r] = q[i];
     for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nc = c + dc, nr = r + dr;
-      if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || grid[nr][nc] || seen.has(nr * COLS + nc)) continue;
+      if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || grid[nr][nc] !== false || seen.has(nr * COLS + nc)) continue;
       seen.add(nr * COLS + nc); q.push([nc, nr]);
     }
   }
-  const all = [...taskDefs, ...Object.values(stations)];
-  if (!all.every(d => seen.has(Math.floor(d.y / CELL) * COLS + Math.floor(d.x / CELL)))) return null;
-  // 中央3x3に壁が無いことの最終確認
-  for (let r = CY - 1; r <= CY + 1; r++) for (let c = CX - 1; c <= CX + 1; c++) if (grid[r][c]) return null;
-  return { grid, button, stations, taskDefs };
+  for (const d of [...taskDefs, ...Object.values(stations)]) {
+    const c = Math.floor(d.x / CELL), r = Math.floor(d.y / CELL);
+    if (grid[r][c] !== false || !seen.has(r * COLS + c)) throw new Error('unreachable facility at ' + c + ',' + r);
+  }
+  return { grid, button, stations, stationLoc, taskDefs };
 }
+const SHIP = buildShip();
 
 function applyLayout(room) {
-  let L = null;
-  for (let i = 0; i < 30 && !L; i++) L = buildLayout();
-  if (!L) throw new Error('map generation failed');
-  room.grid = L.grid;
-  room.rows = L.grid.map(row => row.map(v => (v ? '1' : '0')).join(''));
-  room.button = L.button;
-  room.stations = L.stations;
-  room.taskDefs = L.taskDefs;
+  room.grid = SHIP.grid;
+  room.rows = SHIP.grid.map(row => row.map(v => (v === true ? '1' : v === false ? '0' : v)).join(''));
+  room.button = SHIP.button;
+  room.stations = SHIP.stations;
+  room.stationLoc = SHIP.stationLoc;
+  room.taskDefs = SHIP.taskDefs;
 }
 
-const isWall = (room, c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : room.grid[r][c];
+const cellAt = (room, c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : room.grid[r][c];
 const defOf = (room, id) => room.taskDefs.find(d => d.id === id);
 
 function mapPayload(room) {
   return {
-    W, H, CELL, rows: room.rows, BUTTON: room.button, STATIONS: room.stations,
-    TASKS: room.taskDefs.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon, x: d.x, y: d.y })),
+    W, H, CELL, rows: room.rows, BUTTON: room.button, STATIONS: room.stations, SLOC: room.stationLoc,
+    TASKS: room.taskDefs.map(d => ({ id: d.id, name: d.name, goal: d.goal, loc: d.loc, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon, x: d.x, y: d.y })),
   };
 }
 
-// 円(プレイヤー) vs 矩形(壁セル) の押し出し
+// 斜めブロックの三角形頂点
+function triPts(t, x, y) {
+  const X = x + CELL, Y = y + CELL;
+  if (t === 'A') return [[x, y], [X, y], [x, Y]];
+  if (t === 'B') return [[x, y], [X, y], [X, Y]];
+  if (t === 'C') return [[x, y], [x, Y], [X, Y]];
+  return [[X, y], [X, Y], [x, Y]];
+}
+// 円(プレイヤー) vs 三角形 の押し出し
+function pushTri(p, pts) {
+  const gx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, gy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
+  let bd = Infinity, bq = null, be = null, neg = 0, pos = 0;
+  for (let i = 0; i < 3; i++) {
+    const a = pts[i], b = pts[(i + 1) % 3];
+    const ex = b[0] - a[0], ey = b[1] - a[1];
+    const t = clamp(((p.x - a[0]) * ex + (p.y - a[1]) * ey) / (ex * ex + ey * ey), 0, 1);
+    const qx = a[0] + ex * t, qy = a[1] + ey * t;
+    const d = Math.hypot(p.x - qx, p.y - qy);
+    if (d < bd) { bd = d; bq = [qx, qy]; be = [ex, ey]; }
+    const cr = ex * (p.y - a[1]) - ey * (p.x - a[0]);
+    if (cr < 0) neg++; else pos++;
+  }
+  const inside = neg === 0 || pos === 0;
+  if (inside) { // 三角形の中にめり込んだ: 最寄りの辺から外へ押し出す
+    let nx = be[1], ny = -be[0];
+    const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
+    if (nx * (bq[0] - gx) + ny * (bq[1] - gy) < 0) { nx = -nx; ny = -ny; }
+    p.x = bq[0] + nx * PR; p.y = bq[1] + ny * PR;
+    return true;
+  }
+  if (bd >= PR) return false;
+  if (bd > 1e-6) { p.x = bq[0] + (p.x - bq[0]) / bd * PR; p.y = bq[1] + (p.y - bq[1]) / bd * PR; }
+  return true;
+}
+
+// 円(プレイヤー) vs 壁セル(矩形 / 斜めブロック) の押し出し (生存者のみ。幽霊は呼ばれない)
 function resolveWalls(room, p) {
   for (let it = 0; it < 4; it++) {
     let moved = false;
@@ -190,8 +189,10 @@ function resolveWalls(room, p) {
     const r0 = Math.floor((p.y - PR) / CELL), r1 = Math.floor((p.y + PR) / CELL);
     for (let r = r0; r <= r1; r++) {
       for (let c = c0; c <= c1; c++) {
-        if (!isWall(room, c, r)) continue;
+        const v = cellAt(room, c, r);
+        if (v === false) continue;
         const rx = c * CELL, ry = r * CELL;
+        if (v !== true) { if (pushTri(p, triPts(v, rx, ry))) moved = true; continue; }
         const cx = Math.max(rx, Math.min(rx + CELL, p.x));
         const cy = Math.max(ry, Math.min(ry + CELL, p.y));
         const dx = p.x - cx, dy = p.y - cy;
@@ -305,7 +306,7 @@ function startGame(room) {
   if (part.length < MIN_PLAYERS) return;
   const now = Date.now();
   const start = now + REVEAL_MS;           // ロール発表アニメが終わるまで全員停止・タイマー停止
-  applyLayout(room);                       // 毎ゲーム新しいランダム迷路
+  applyLayout(room);                       // 固定の宇宙船マップを適用 (クライアントへ再送)
   emitRoom(room, 'map', mapPayload(room));
   g.phase = 'playing';
   g.progress = 0; g.result = null; g.bodies = []; g.meeting = null;
@@ -438,6 +439,7 @@ function tickMeeting(room, now) {
 }
 
 // ---------- アクション ----------
+// 注: 幽霊(alive=false)でも供給所での取得・スロット保持・運搬設置・ミニゲーム完了が可能 (緊急会議ボタンのみ生存者限定)
 function doAction(room, p) {
   const g = room.game;
   if (g.phase !== 'playing' || p.late || p.mini) return;
@@ -571,10 +573,11 @@ function tickRoom(room, now, dt) {
       p.moving = len > 0;
       if (len > 0) {
         const dx = p.input.x / len, dy = p.input.y / len;
-        const sp = hasItem(p, 'core') ? SPEED_CORE : SPEED;
+        const ghost = !p.alive;                       // 霊: 壁を通り抜け、移動速度1.5倍 (アイテム所持・運搬もOK)
+        const sp = (hasItem(p, 'core') ? SPEED_CORE : SPEED) * (ghost ? GHOST_MULT : 1);
         p.x += dx * sp * dt;
         p.y += dy * sp * dt;
-        resolveWalls(room, p);
+        if (!ghost) resolveWalls(room, p);
         p.x = clamp(p.x, PR, W - PR);
         p.y = clamp(p.y, PR, H - PR);
         if (dx !== 0) p.face = dx > 0 ? 1 : -1;
@@ -783,4 +786,4 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => console.log(`Destroy or Avoid v6 (cutscenes + accessories + compact maze) running on :${PORT}`));
+server.listen(PORT, () => console.log(`Destroy or Avoid v7 (fixed ship map + ghost carry + task markers) running on :${PORT}`));
