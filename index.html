@@ -85,11 +85,13 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 .ptick{position:absolute;top:0;bottom:0;width:2px;background:#fff6}
 #ptxt{position:absolute;inset:0;text-align:center;line-height:40px;font-size:24px;font-weight:900;letter-spacing:.06em;text-shadow:0 2px 4px #000,0 0 8px #000}
 #timer{font-size:36px;font-weight:900;text-shadow:0 2px 8px #000;min-width:100px}
-#tasks{position:absolute;top:84px;left:12px;background:#000a;border:1px solid #fff3;border-radius:12px;padding:10px 12px;min-width:240px;max-width:300px;font-size:14px;line-height:1.5}
-#tasks h4{font-size:12px;opacity:.7;margin-bottom:4px}
-.tk{padding:3px 0;border-top:1px solid #fff2}.tk:first-of-type{border-top:none}
-.tk small{display:block;opacity:.65;font-size:11px}
-#mm{position:absolute;top:84px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:220px;height:140px}
+#goals{position:absolute;top:240px;right:12px;width:220px;background:#000a;border:1px solid #fff3;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45}
+#goals h4{font-size:12px;opacity:.8;margin-bottom:6px}
+#goals ul{list-style:none}
+#goals li{padding:5px 0;border-top:1px solid #fff2}#goals li:first-child{border-top:none}
+#goals li small{display:block;opacity:.65;font-size:11px}
+#goals .leg{margin-top:6px;font-size:11px;opacity:.6}
+#mm{position:absolute;top:84px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:220px;height:145px}
 #hint{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:18px;font-weight:700;color:#ffd43b;text-shadow:0 2px 6px #000;white-space:nowrap}
 #slots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:flex-end}
 .slot{width:64px;height:64px;border-radius:12px;background:#000a;border:3px solid #fff3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;position:relative}
@@ -151,7 +153,7 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 #endscr{position:fixed;inset:0;z-index:35;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
 #endscr h2{font-size:clamp(34px,8vw,76px)}
 #roster{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:720px}
-@media(max-width:700px){#mMain{flex-direction:column}#tasks{min-width:0;max-width:56vw;font-size:12px}#mm{width:140px;height:89px}#timer{font-size:24px;min-width:70px}#ptxt{font-size:18px}#progWrap{height:40px}#titleBtns{left:16px;right:16px;bottom:16px}#titleBtns button{min-width:0}#titleKeys{display:none}#titleErr{right:16px;bottom:170px}.seqnum{width:46px;height:64px;font-size:32px}}
+@media(max-width:700px){#mMain{flex-direction:column}#goals{top:186px;width:44vw;font-size:12px}#mm{width:140px;height:92px}#timer{font-size:24px;min-width:70px}#ptxt{font-size:18px}#progWrap{height:40px}#titleBtns{left:16px;right:16px;bottom:16px}#titleBtns button{min-width:0}#titleKeys{display:none}#titleErr{right:16px;bottom:170px}.seqnum{width:46px;height:64px;font-size:32px}}
 </style>
 </head>
 <body>
@@ -231,8 +233,8 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
     <div id="progWrap"><div id="pfill"></div><div class="ptick" style="left:25%"></div><div class="ptick" style="left:50%"></div><div class="ptick" style="left:75%"></div><div id="ptxt">0%</div></div>
     <div id="timer">10:00</div>
   </div>
-  <div id="tasks"></div>
-  <canvas id="mm" width="220" height="140"></canvas>
+  <div id="goals"></div>
+  <canvas id="mm" width="220" height="145"></canvas>
   <div id="hint"></div>
   <div id="slots"></div>
   <div id="btns">
@@ -350,6 +352,14 @@ socket.on('map', d => {
       g.fillStyle = '#1c2231'; g.fillRect(c * C + 4, r * C + 9, C - 8, C - 15);
     } else {
       g.fillStyle = (r + c) % 2 ? '#1a2132' : '#1d2538'; g.fillRect(c * C, r * C, C, C);
+      const ch = d.rows[r][c];
+      if (ch !== '0') { // 斜めブロック (A=左上 B=右上 C=左下 D=右下 が壁)
+        const x = c * C, y = r * C, X = x + C, Y = y + C;
+        const P = ch === 'A' ? [[x, y], [X, y], [x, Y]] : ch === 'B' ? [[x, y], [X, y], [X, Y]] : ch === 'C' ? [[x, y], [x, Y], [X, Y]] : [[X, y], [X, Y], [x, Y]];
+        g.fillStyle = '#2b3345'; g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath(); g.fill();
+        const hy = ch === 'A' ? [P[1], P[2]] : [P[0], P[2]];
+        g.strokeStyle = '#4a5572'; g.lineWidth = 4; g.beginPath(); g.moveTo(hy[0][0], hy[0][1]); g.lineTo(hy[1][0], hy[1][1]); g.stroke();
+      }
     }
   }
   // 中央広場を赤っぽく強調
@@ -651,13 +661,17 @@ function renderHud(s) {
   $('timer').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
   $('timer').style.color = sec < 60 ? '#ff6b6b' : '#fff';
 
-  const tsig = me.tasks.join() + me.role + me.sl.join() + (map ? map.W : '');
+  const tsig = me.tasks.join() + me.role + me.sl.join() + (map ? map.W : '') + me.late;
   if (tsig !== taskSig) {
     taskSig = tsig;
-    $('tasks').innerHTML = me.late ? '<h4>観戦中</h4>' : `<h4>${me.role === 'imposter' ? 'タスク (偽装 ＋ 進捗にも貢献)' : 'あなたのタスク'}</h4>` +
-      me.tasks.map(id => { const d = TB[id]; if (!d) return '';
-        const sub = d.kind === 'carry' ? (me.sl.includes(d.item) ? '持っている → 設置場所へ' : `${init.ITEM_NAME[d.item]}を取りに行く`) : ({ weld: '溶接 (A/D)', seq: '数字の並びを順番に入力', alt: 'K / O 交互連打', space: 'SPACE連打' })[d.kind];
-        return `<div class="tk">${d.icon} ${d.name} <b style="color:#ffd43b">+${d.pct}%</b><small>${sub}</small></div>`; }).join('');
+    const keyHelp = { weld: 'A/D', seq: '数字キー', alt: 'K/O', space: 'SPACE' };
+    $('goals').innerHTML = me.late ? '<h4>観戦中</h4>' : '<h4>📋 次にやること</h4><ul>' + me.tasks.map(id => {
+      const d = TB[id]; if (!d) return '';
+      const sub = d.kind === 'carry'
+        ? (me.sl.includes(d.item) ? `✔ 持っている → ${d.loc}へ` : `${(map.SLOC || {})[d.item] || '供給所'}で受け取る → ${d.loc}`)
+        : `${d.loc} (${keyHelp[d.kind]})`;
+      return `<li>${d.icon} ${d.goal} <b style="color:#ffd43b">+${d.pct}%</b><small>${sub}</small></li>`;
+    }).join('') + '</ul><div class="leg">▲ キャラの周りの三角がタスクの方向</div>';
   }
   const ssig = me.sl.join() + selSlot;
   if (ssig !== slotSig) {
@@ -686,7 +700,7 @@ function renderHud(s) {
   $('roleTag').textContent = me.late ? '' : me.role === 'imposter' ? '🔪 インポスター' : '🧑‍🚀 クルー' + (me.alive ? '' : ' (霊)');
   $('roleTag').style.color = me.role === 'imposter' ? '#ff6b6b' : '#8ecbff';
   $('spec').classList.toggle('hidden', !(me.late || !me.alive));
-  $('spec').textContent = me.late ? '👀 ゲーム進行中のため観戦中 (次のロビーから参加)' : '👻 あなたは霊です — タスクは続けられます';
+  $('spec').textContent = me.late ? '👀 ゲーム進行中のため観戦中 (次のロビーから参加)' : '👻 あなたは霊です — 壁を通り抜け・1.5倍速。アイテム運搬もタスクも続けられます';
 }
 const press = (ev) => () => { if (!mini) { socket.emit(ev); if (document.activeElement) document.activeElement.blur(); } };
 $('bUse').onclick = press('action'); $('bRep').onclick = press('report');
@@ -1106,6 +1120,28 @@ addEventListener('keyup', e => {
 });
 addEventListener('blur', () => { for (const k in keysDown) keysDown[k] = false; sendInput(); });
 
+// ---------- タスク方向マーカー (自キャラの周囲に小さな三角矢印) ----------
+function drawTaskMarkers(me, mine) {
+  if (!mine || me.late || !me.tasks.length) return;
+  const t = performance.now() / 1000, R = 46;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.13)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 5]);
+  ctx.beginPath(); ctx.arc(mine.x, mine.y + 4, R, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  me.tasks.forEach((id, i) => {
+    const d = TB[id]; if (!d) return;
+    let tg = d, pickup = false;
+    if (d.kind === 'carry' && !me.sl.includes(d.item)) { tg = map.STATIONS[d.item]; pickup = true; } // 先に供給所へ
+    const dx = tg.x - mine.x, dy = tg.y - mine.y;
+    if (hyp(dx, dy) < 90) return;                                   // 近くに着いたら消える
+    const a = Math.atan2(dy, dx), rr2 = R + Math.sin(t * 5 + i) * 2.5;
+    ctx.save(); ctx.translate(mine.x + Math.cos(a) * rr2, mine.y + 4 + Math.sin(a) * rr2); ctx.rotate(a);
+    ctx.fillStyle = pickup ? '#ff922b' : '#ffd43b'; ctx.strokeStyle = '#000c'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-5, -6.5); ctx.lineTo(-5, 6.5); ctx.closePath(); ctx.stroke(); ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
 // ---------- 描画 ----------
 function drawGame(dt) {
   const w = cv.width, h = cv.height;
@@ -1152,6 +1188,7 @@ function drawGame(dt) {
   }
   for (const b of S.bodies) drawBody(b);
   [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => drawAstro(e, e.id === init.you));
+  drawTaskMarkers(me, mine);
   ctx.restore();
   // 視界 (生存者は周囲のみ)
   if (me.alive && !me.late) {
