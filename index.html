@@ -8,6 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#080b14;color:#e8ecf4;font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;user-select:none}
 #cv{position:fixed;inset:0;width:100%;height:100%}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:45;pointer-events:none}
 .hidden{display:none!important}
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 50% 30%,#1b2a4a,#080b14);z-index:20;padding:20px;text-align:center}
 h1{font-size:clamp(28px,6vw,56px);letter-spacing:.08em;color:#ff6b6b;text-shadow:0 0 24px rgba(255,80,80,.5)}
@@ -23,18 +24,35 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b3347}
 #plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;width:min(760px,95vw)}
 .pcard{background:#12192b;border:2px solid #2b3856;border-radius:14px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.pcard .avw{margin-top:10px}
+.avw{position:relative;display:inline-block;flex:none}
 .avatar{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;border:3px solid #fff3}
+.accd{position:absolute;left:50%;transform:translateX(-50%);line-height:1;pointer-events:none}
+.accd.halo{border:3px solid #ffd43b;border-radius:50%;box-shadow:0 0 8px #ffd43b}
 .tag{font-size:12px;padding:2px 10px;border-radius:99px;background:#334;}
 .tag.host{background:#ffd43b;color:#222}.tag.ready{background:#51cf66;color:#042}
 
+/* ---- スプラッシュ (Press Any Key) ---- */
+#splash{z-index:22;cursor:pointer;overflow:hidden}
+.logo{font-size:clamp(46px,12vw,150px);font-weight:900;line-height:1.02;letter-spacing:.06em;color:#ff5252;text-shadow:0 0 30px rgba(255,70,70,.6),0 6px 0 #7a1515;animation:logoIn 1s cubic-bezier(.2,1.4,.4,1) both}
+.logo span{display:block;font-size:.45em;color:#8ecbff;text-shadow:0 0 20px rgba(142,203,255,.6),0 4px 0 #1a4f80;letter-spacing:.3em}
+@keyframes logoIn{from{transform:scale(2.4);opacity:0}to{transform:scale(1);opacity:1}}
+#pressKey{font-size:clamp(16px,2.6vw,26px);font-weight:800;letter-spacing:.1em;color:#fff;animation:blink 1.1s infinite;margin-top:24px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.12}}
+.flt{position:absolute;font-size:44px;opacity:.55;animation:floaty 9s linear infinite;pointer-events:none}
+@keyframes floaty{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(40px,-60px) rotate(180deg)}100%{transform:translate(0,0) rotate(360deg)}}
+
 /* ---- タイトル画面 ---- */
-#title{justify-content:flex-start;padding-top:18px;gap:6px}
+#title{justify-content:flex-start;padding-top:14px;gap:6px;overflow-y:auto}
 #title .sub{max-width:640px}
-#avCv{height:min(46vh,430px);width:auto;aspect-ratio:360/430;flex:none;filter:drop-shadow(0 18px 28px rgba(0,0,0,.55))}
+#avCv{height:min(40vh,400px);width:auto;aspect-ratio:360/430;flex:none;filter:drop-shadow(0 18px 28px rgba(0,0,0,.55))}
 #nameBox{display:flex;flex-direction:column;align-items:center;gap:10px}
 #swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:340px}
 .sw{width:26px;height:26px;border-radius:50%;border:3px solid #fff3;cursor:pointer}
 .sw.sel{border-color:#fff;box-shadow:0 0 10px #fff9;transform:scale(1.15)}
+.accRow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:380px}
+.acc{width:42px;height:42px;border-radius:12px;background:#12192b;border:3px solid #2b3856;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer}
+.acc.sel{border-color:#ffd43b;box-shadow:0 0 10px #ffd43b88}
 #titleBtns{position:absolute;right:28px;bottom:28px;display:flex;flex-direction:column;gap:14px;align-items:stretch}
 #titleBtns button{font-size:22px;padding:16px 34px;min-width:260px}
 #titleKeys{position:absolute;left:24px;bottom:24px;text-align:left;font-size:12px;opacity:.6;line-height:1.8;max-width:42vw}
@@ -55,6 +73,8 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 #impNum{font-size:30px;font-weight:900;color:#ff6b6b;min-width:34px}
 #impBox button{padding:4px 16px;font-size:24px;line-height:1.2}
 #impNote{font-size:12px;opacity:.7}
+#lobbyAccBox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+#lobbyAccBox b{font-size:14px}
 
 /* ---- HUD ---- */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
@@ -69,7 +89,7 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 #tasks h4{font-size:12px;opacity:.7;margin-bottom:4px}
 .tk{padding:3px 0;border-top:1px solid #fff2}.tk:first-of-type{border-top:none}
 .tk small{display:block;opacity:.65;font-size:11px}
-#mm{position:absolute;top:84px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:220px;height:139px}
+#mm{position:absolute;top:84px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:220px;height:140px}
 #hint{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:18px;font-weight:700;color:#ffd43b;text-shadow:0 2px 6px #000;white-space:nowrap}
 #slots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:flex-end}
 .slot{width:64px;height:64px;border-radius:12px;background:#000a;border:3px solid #fff3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;position:relative}
@@ -85,9 +105,6 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 #spec{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:#000b;padding:6px 14px;border-radius:99px;font-size:14px}
 #toast{position:fixed;top:150px;left:50%;transform:translateX(-50%);z-index:50;font-size:18px;font-weight:700;padding:8px 18px;border-radius:99px;background:#000c;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}#toast.error{color:#ff8787}#toast.good{color:#8ce99a}
-#banner{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000b;pointer-events:none;animation:fade 3.2s forwards;text-align:center;padding:20px}
-#banner h2{font-size:clamp(34px,8vw,80px)}#banner p{font-size:18px;opacity:.85;margin-top:8px}
-@keyframes fade{0%,75%{opacity:1}100%{opacity:0}}
 
 /* ---- ミニゲーム ---- */
 #mini{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center}
@@ -117,9 +134,8 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 #mHead{text-align:center}#mTitle{font-size:24px;font-weight:800;color:#ff8787}#mTimer{font-size:18px;opacity:.9}
 #mMain{flex:1;display:flex;gap:12px;min-height:0}
 #mRoster{flex:1.2;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;align-content:start}
-.mcard{background:#141c30;border:2px solid #2b3856;border-radius:12px;padding:10px;display:flex;align-items:center;gap:10px;position:relative}
+.mcard{background:#141c30;border:2px solid #2b3856;border-radius:12px;padding:10px;padding-top:16px;display:flex;align-items:center;gap:10px;position:relative}
 .mcard.dead{opacity:.45}.mcard.my{border-color:#ffd43b}
-.mcard .avatar{width:40px;height:40px;font-size:22px;flex:none}
 .mcard .nm{flex:1;text-align:left;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mcard button{padding:6px 12px;font-size:14px;box-shadow:0 3px 0 #8f2323}
 .mcard .cnt{font-weight:800;color:#ffd43b}
@@ -135,21 +151,33 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 #endscr{position:fixed;inset:0;z-index:35;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
 #endscr h2{font-size:clamp(34px,8vw,76px)}
 #roster{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:720px}
-@media(max-width:700px){#mMain{flex-direction:column}#tasks{min-width:0;max-width:56vw;font-size:12px}#mm{width:140px;height:88px}#timer{font-size:24px;min-width:70px}#ptxt{font-size:18px}#progWrap{height:40px}#titleBtns{left:16px;right:16px;bottom:16px}#titleBtns button{min-width:0}#titleKeys{display:none}#titleErr{right:16px;bottom:170px}.seqnum{width:46px;height:64px;font-size:32px}}
+@media(max-width:700px){#mMain{flex-direction:column}#tasks{min-width:0;max-width:56vw;font-size:12px}#mm{width:140px;height:89px}#timer{font-size:24px;min-width:70px}#ptxt{font-size:18px}#progWrap{height:40px}#titleBtns{left:16px;right:16px;bottom:16px}#titleBtns button{min-width:0}#titleKeys{display:none}#titleErr{right:16px;bottom:170px}.seqnum{width:46px;height:64px;font-size:32px}}
 </style>
 </head>
 <body>
 
 <canvas id="cv"></canvas>
+<canvas id="fx" class="hidden"></canvas>
+
+<!-- スプラッシュ: Press Any Key -->
+<div id="splash" class="screen">
+  <span class="flt" style="left:12%;top:20%">🐥</span>
+  <span class="flt" style="left:80%;top:26%;animation-delay:-3s">💩</span>
+  <span class="flt" style="left:18%;top:70%;animation-delay:-5s">👑</span>
+  <span class="flt" style="left:76%;top:72%;animation-delay:-7s">😇</span>
+  <div class="logo">DESTROY<span>or</span>AVOID</div>
+  <p class="sub">宇宙船を修理して脱出せよ。だが、仲間の中に<b style="color:#ff6b6b">インポスター</b>が紛れている…</p>
+  <div id="pressKey">クリックまたはどれかのキーを押してください</div>
+</div>
 
 <!-- タイトル -->
-<div id="title" class="screen">
+<div id="title" class="screen hidden">
   <h1>DESTROY <span>or</span> AVOID</h1>
-  <p class="sub">宇宙船を修理して脱出せよ。だが、仲間の中に<b style="color:#ff6b6b">インポスター</b>が紛れている…</p>
   <canvas id="avCv" width="360" height="430"></canvas>
   <div id="nameBox">
     <input type="text" id="nameIn" maxlength="10" placeholder="なまえ (10文字まで)">
     <div id="swatches"></div>
+    <div class="accRow" id="titleAcc"></div>
   </div>
   <div id="titleErr"></div>
   <div id="titleBtns">
@@ -187,6 +215,7 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
     <button id="impPlus" class="gray">＋</button>
   </div>
   <div id="impNote"></div>
+  <div id="lobbyAccBox"><b>👒 アクセサリー</b><div class="accRow" id="lobbyAcc"></div></div>
   <div id="plist"></div>
   <div style="display:flex;gap:12px">
     <button id="btnLeave" class="gray">退出</button>
@@ -203,7 +232,7 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
     <div id="timer">10:00</div>
   </div>
   <div id="tasks"></div>
-  <canvas id="mm" width="220" height="139"></canvas>
+  <canvas id="mm" width="220" height="140"></canvas>
   <div id="hint"></div>
   <div id="slots"></div>
   <div id="btns">
@@ -243,16 +272,23 @@ button.gray{background:linear-gradient(#6b7794,#48526e);box-shadow:0 4px 0 #2b33
 const $ = id => document.getElementById(id);
 const socket = io();
 const cv = $('cv'), ctx = cv.getContext('2d');
+const fxCv = $('fx'), fxg = fxCv.getContext('2d');
 const mmc = $('mm'), mmx = mmc.getContext('2d');
 const ITEM_ICON = { fuse: '🔌', battery: '🔋', core: '⚛️' };
 const FALLBACK_COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac', '#a9e34b', '#c08457'];
+const EMO = { duck: '🐥', poop: '💩', crown: '👑', halo: '😇', tophat: '🎩', sprout: '🌱' };
+let ACC_LIST = ['none', 'duck', 'poop', 'crown', 'halo', 'tophat', 'sprout'];
 let init = null, map = null, S = null, joined = false, mapCv = null, prevPh = '', roomCode = '';
 let selSlot = 0, mini = null, meetSig = '', lastIn = '', taskSig = '', slotSig = '';
-let myColor = FALLBACK_COLORS[1];
+let myColor = FALLBACK_COLORS[1], myAcc = 'none', splash = true, ejectPlayed = false;
 const TB = {}, ents = new Map(), keysDown = {};
 const hyp = Math.hypot, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const cl01 = x => clamp(x, 0, 1);
+const ease = x => 1 - Math.pow(1 - x, 3);
+const back = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+try { myAcc = localStorage.getItem('doa_acc') || 'none'; } catch (e) {}
 
-function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+function resize() { cv.width = innerWidth; cv.height = innerHeight; fxCv.width = innerWidth; fxCv.height = innerHeight; }
 addEventListener('resize', resize); resize();
 
 // ---------- 効果音 ----------
@@ -276,6 +312,10 @@ const SFX = {
   start: () => [440, 554, 660].forEach((f, i) => beep(f, .2, 'triangle', .08, i * .15)),
   win: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, .25, 'triangle', .08, i * .15)),
   lose: () => [400, 300, 220].forEach((f, i) => beep(f, .3, 'sawtooth', .07, i * .2)),
+  thump: () => { beep(60, .18, 'sine', .22); beep(48, .2, 'sine', .2, .14); },
+  slam: () => { beep(70, .35, 'sawtooth', .16); beep(180, .2, 'square', .08); },
+  slash: () => { beep(900, .08, 'sawtooth', .08); beep(300, .15, 'sawtooth', .1, .06); },
+  whoosh: () => { for (let i = 0; i < 8; i++) beep(700 - i * 70, .12, 'sine', .04, i * .1); },
 };
 socket.on('sfx', n => SFX[n] && SFX[n]());
 
@@ -290,7 +330,10 @@ socket.on('toast', d => toast(d.text, d.kind));
 // ---------- 初期化 / マップ受信 ----------
 socket.on('init', d => {
   init = d;
+  if (d.ACCS && d.ACCS.length) ACC_LIST = d.ACCS;
+  if (!ACC_LIST.includes(myAcc)) myAcc = 'none';
   buildSwatches(d.COLORS || FALLBACK_COLORS);
+  renderAccRow($('titleAcc'), () => myAcc, id => { myAcc = id; saveAcc(); });
 });
 
 // サーバーがルームごとに生成したランダム迷路を受け取ってオフスクリーンに描画
@@ -309,8 +352,14 @@ socket.on('map', d => {
       g.fillStyle = (r + c) % 2 ? '#1a2132' : '#1d2538'; g.fillRect(c * C, r * C, C, C);
     }
   }
-  g.strokeStyle = 'rgba(255,90,90,.25)'; g.lineWidth = 4;
-  g.beginPath(); g.arc(d.BUTTON.x, d.BUTTON.y, 110, 0, 7); g.stroke();
+  // 中央広場を赤っぽく強調
+  const bc = Math.floor(d.BUTTON.x / C), br = Math.floor(d.BUTTON.y / C);
+  for (let r = br - 2; r <= br + 2; r++) for (let c = bc - 3; c <= bc + 3; c++) {
+    if (d.rows[r] && d.rows[r][c] === '0') { g.fillStyle = 'rgba(255,90,90,.07)'; g.fillRect(c * C, r * C, C, C); }
+  }
+  g.strokeStyle = 'rgba(255,90,90,.28)'; g.lineWidth = 4;
+  g.beginPath(); g.arc(d.BUTTON.x, d.BUTTON.y, 80, 0, 7); g.stroke();
+  g.beginPath(); g.arc(d.BUTTON.x, d.BUTTON.y, 48, 0, 7); g.stroke();
 });
 
 // ---------- アバター共通描画 ----------
@@ -318,11 +367,28 @@ function rr(g, x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y
 function el(g, x, y, rx, ry) { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); }
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16); return `rgb(${((n >> 16) * k) | 0},${((n >> 8 & 255) * k) | 0},${((n & 255) * k) | 0})`; }
 
+// 頭の上のアクセサリー (原点=腰。ヘルメット中心は(2*f, -24))。移動中は弾む。常に左右反転しない
+function drawAcc(g, e) {
+  if (!e.acc || e.acc === 'none') return;
+  const f = e.f || 1, bob = e.mv ? -Math.abs(Math.sin(e.ph)) * 1.4 : 0, sway = e.mv ? Math.sin(e.ph) * .08 : 0;
+  g.save(); g.translate(2 * f, -24 + bob); g.rotate(sway);
+  if (e.acc === 'halo') {
+    const y = -19 + Math.sin(performance.now() / 350);
+    g.strokeStyle = '#ffd43b'; g.lineWidth = 2.6; g.shadowColor = '#ffd43b'; g.shadowBlur = 6;
+    el(g, 0, y, 9, 3); g.stroke(); g.shadowBlur = 0;
+  } else if (EMO[e.acc]) {
+    g.font = '15px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+    g.fillText(EMO[e.acc], 0, -15);
+  }
+  g.restore();
+}
+
 // 宇宙飛行士風の人型 (頭・胴体・腕・脚。歩行アニメ付き) — (0,0)が腰付近、足元は約y=+20
 function drawAstroBody(g, e) {
   g.save();
   g.globalAlpha = e.a ? 1 : .45;
   g.fillStyle = 'rgba(0,0,0,.35)'; el(g, 0, 19, 14, 5); g.fill();
+  g.save();
   g.scale(e.f || 1, 1);
   const sw = e.mv ? Math.sin(e.ph) * .75 : 0, dark = shade(e.c, .62), mid = shade(e.c, .82);
   const limb = (x, y, ang, col, len, glove) => {
@@ -341,6 +407,8 @@ function drawAstroBody(g, e) {
   g.fillStyle = '#17324f'; el(g, 6, -24, 7.5, 5.5); g.fill();                   // バイザー
   g.fillStyle = 'rgba(255,255,255,.7)'; el(g, 8, -26, 2.8, 1.5); g.fill();
   g.restore();
+  drawAcc(g, e);                                                                 // アクセサリー (反転なし)
+  g.restore();
 }
 function drawAstro(e, isMe) {
   ctx.save(); ctx.translate(e.x, e.y);
@@ -349,32 +417,37 @@ function drawAstro(e, isMe) {
   ctx.save(); ctx.globalAlpha = e.a ? 1 : .6;
   ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000b';
   ctx.fillStyle = (isMe && S.me.role === 'imposter') || e.i ? '#ff6b6b' : '#fff';
-  ctx.strokeText(e.name, e.x, e.y - 42); ctx.fillText(e.name, e.x, e.y - 42); ctx.restore();
+  const ny = e.y - (e.acc && e.acc !== 'none' ? 58 : 44);
+  ctx.strokeText(e.name, e.x, ny); ctx.fillText(e.name, e.x, ny); ctx.restore();
 }
-function drawBody(b) {
-  ctx.save(); ctx.translate(b.x, b.y);
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; el(ctx, 0, 10, 24, 7); ctx.fill();
-  ctx.fillStyle = b.c; rr(ctx, -14, -9, 30, 20, 9); ctx.fill(); ctx.strokeStyle = shade(b.c, .6); ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = '#f1f3f5'; el(ctx, -18, 0, 10, 9); ctx.fill();
-  ctx.strokeStyle = '#17324f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-23, -3); ctx.lineTo(-17, 3); ctx.moveTo(-17, -3); ctx.lineTo(-23, 3); ctx.stroke();
-  ctx.fillStyle = '#fff'; rr(ctx, 10, -15, 4, 14, 2); ctx.fill(); el(ctx, 12, -16, 4, 3); ctx.fill();
-  ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.fillText('💀', 0, -22 + Math.sin(performance.now() / 300) * 3);
-  ctx.restore();
+function drawBodyG(g, b) {
+  g.save();
+  g.fillStyle = 'rgba(0,0,0,.35)'; el(g, 0, 10, 24, 7); g.fill();
+  g.fillStyle = b.c; rr(g, -14, -9, 30, 20, 9); g.fill(); g.strokeStyle = shade(b.c, .6); g.lineWidth = 2; g.stroke();
+  g.fillStyle = '#f1f3f5'; el(g, -18, 0, 10, 9); g.fill();
+  g.strokeStyle = '#17324f'; g.lineWidth = 2; g.beginPath(); g.moveTo(-23, -3); g.lineTo(-17, 3); g.moveTo(-17, -3); g.lineTo(-23, 3); g.stroke();
+  g.fillStyle = '#fff'; rr(g, 10, -15, 4, 14, 2); g.fill(); el(g, 12, -16, 4, 3); g.fill();
+  if (b.ac && b.ac !== 'none') {   // 倒れた頭の「上」側(左)にアクセサリー
+    g.save(); g.translate(-18, 0); g.rotate(-Math.PI / 2); g.translate(-2, 24);
+    drawAcc(g, { acc: b.ac, f: 1, mv: false, ph: 0 }); g.restore();
+  }
+  g.font = '20px serif'; g.textAlign = 'center'; g.fillText('💀', 0, -22 + Math.sin(performance.now() / 300) * 3);
+  g.restore();
 }
+function drawBody(b) { ctx.save(); ctx.translate(b.x, b.y); drawBodyG(ctx, b); ctx.restore(); }
 
 // ---------- タイトル画面 (等身大アバター) ----------
 const avCv = $('avCv'), avx = avCv.getContext('2d');
-const avE = { x: 0, y: 0, ph: 0, mv: true, f: 1, a: true, c: myColor };
+const avE = { x: 0, y: 0, ph: 0, mv: true, f: 1, a: true, c: myColor, acc: 'none' };
 function drawTitleAvatar(dt) {
   avx.clearRect(0, 0, 360, 430);
-  avE.c = myColor; avE.ph += dt * 5;
-  // 足元のスポットライト
-  const g = avx.createRadialGradient(180, 392, 10, 180, 392, 150);
+  avE.c = myColor; avE.acc = myAcc; avE.ph += dt * 5;
+  const g = avx.createRadialGradient(180, 372, 10, 180, 372, 150);
   g.addColorStop(0, 'rgba(142,203,255,.35)'); g.addColorStop(1, 'rgba(142,203,255,0)');
-  avx.fillStyle = g; avx.fillRect(0, 300, 360, 130);
+  avx.fillStyle = g; avx.fillRect(0, 290, 360, 140);
   avx.save();
-  avx.translate(188, 238 + Math.sin(avE.ph * 2) * 2);
-  avx.scale(6, 6);
+  avx.translate(188, 262 + Math.sin(avE.ph * 2) * 2);
+  avx.scale(5.2, 5.2);
   drawAstroBody(avx, avE);
   avx.restore();
 }
@@ -392,6 +465,28 @@ function buildSwatches(cols) {
     box.appendChild(d);
   });
 }
+// アクセサリー選択ボタン列 (タイトル / ロビー共用)
+const ACC_LABEL = { none: '✖', duck: '🐥', poop: '💩', crown: '👑', halo: '😇', tophat: '🎩', sprout: '🌱' };
+function saveAcc() { try { localStorage.setItem('doa_acc', myAcc); } catch (e) {} }
+function renderAccRow(box, cur, pick) {
+  box.innerHTML = '';
+  ACC_LIST.forEach(id => {
+    const b = document.createElement('div');
+    b.className = 'acc' + (id === cur() ? ' sel' : ''); b.textContent = ACC_LABEL[id] || id;
+    b.onclick = () => { pick(id); SFX.click(); renderAccRow(box, cur, pick); };
+    box.appendChild(b);
+  });
+}
+
+// ---------- スプラッシュ → タイトル ----------
+function dismissSplash() {
+  if (!splash) return;
+  splash = false;
+  $('splash').classList.add('hidden'); $('title').classList.remove('hidden');
+  SFX.click();
+}
+$('splash').addEventListener('click', dismissSplash);
+addEventListener('keydown', e => { if (splash) { e.preventDefault(); dismissSplash(); } }, true);
 
 // ---------- タイトル → ロビー作成 / 参加 ----------
 try { $('nameIn').value = localStorage.getItem('doa_name') || ''; } catch (e) {}
@@ -404,7 +499,7 @@ function titleErr(t) { $('titleErr').textContent = t || ''; }
 $('btnCreate').onclick = () => {
   if (!init) return;
   SFX.click(); titleErr('');
-  socket.emit('createLobby', { name: myName(), color: myColor });
+  socket.emit('createLobby', { name: myName(), color: myColor, acc: myAcc });
 };
 $('btnJoin').onclick = () => {
   if (!init) return;
@@ -418,7 +513,7 @@ function submitJoin() {
   const code = $('codeIn').value.trim();
   if (!/^\d{5}$/.test(code)) { $('joinErr').textContent = '5桁の数字を入力してください'; SFX.error(); return; }
   $('joinErr').textContent = '';
-  socket.emit('joinLobby', { name: myName(), color: myColor, code });
+  socket.emit('joinLobby', { name: myName(), color: myColor, acc: myAcc, code });
 }
 $('btnJoinOk').onclick = submitJoin;
 $('codeIn').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5); });
@@ -446,8 +541,19 @@ $('btnCopy').onclick = () => {
 };
 socket.on('disconnect', () => { joined = false; S = null; location.reload(); });
 
-function avatar(c, size) { return `<div class="avatar" style="background:${c};${size ? `width:${size}px;height:${size}px` : ''}">🧑‍🚀</div>`; }
 const esc = s => String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+// DOM用アバター (頭上アクセサリー付き)
+function avatar(c, size, acc) {
+  size = size || 54;
+  let a = '';
+  if (acc && acc !== 'none') {
+    const fs = Math.round(size * .5);
+    a = acc === 'halo'
+      ? `<span class="accd halo" style="width:${Math.round(size * .5)}px;height:${Math.round(size * .16)}px;top:-${Math.round(size * .14)}px"></span>`
+      : `<span class="accd" style="font-size:${fs}px;top:-${Math.round(fs * .7)}px">${EMO[acc] || ''}</span>`;
+  }
+  return `<div class="avw"><div class="avatar" style="background:${c};width:${size}px;height:${size}px;font-size:${Math.round(size * .55)}px">🧑‍🚀</div>${a}</div>`;
+}
 
 let impCur = 1, impMaxCur = 1;
 $('impMinus').onclick = () => { if (S && S.me.host) { socket.emit('setImp', impCur - 1); SFX.click(); } };
@@ -457,10 +563,10 @@ function renderLobby(s) {
   const L = s.lobby, me = s.me, cfg = s.cfg;
   impCur = cfg.imp; impMaxCur = cfg.impMax;
   $('roomCode').textContent = s.code;
-  const sig = L.map(p => p.id + p.ready + p.host + p.name).join('|');
+  const sig = L.map(p => p.id + p.ready + p.host + p.name + p.ac + p.c).join('|');
   if (sig !== renderLobby.sig) {
     renderLobby.sig = sig;
-    $('plist').innerHTML = L.map(p => `<div class="pcard">${avatar(p.c)}<b>${esc(p.name)}${p.id === init.you ? ' (あなた)' : ''}</b>${p.host ? '<span class="tag host">HOST</span>' : p.ready ? '<span class="tag ready">READY</span>' : '<span class="tag">待機中</span>'}</div>`).join('');
+    $('plist').innerHTML = L.map(p => `<div class="pcard">${avatar(p.c, 54, p.ac)}<b>${esc(p.name)}${p.id === init.you ? ' (あなた)' : ''}</b>${p.host ? '<span class="tag host">HOST</span>' : p.ready ? '<span class="tag ready">READY</span>' : '<span class="tag">待機中</span>'}</div>`).join('');
   }
   $('impNum').textContent = cfg.imp;
   $('impMinus').disabled = !me.host || cfg.imp <= 1;
@@ -473,29 +579,26 @@ function renderLobby(s) {
   $('btnGo').disabled = !ok;
   $('lobbyMsg').textContent = `参加人数 ${L.length}人 ` + (me.host ? (ok ? '— スタートできます!' : '— 全員の準備完了を待っています (最低2人)') : '— ホストの開始を待っています');
 }
+function buildLobbyAcc() {
+  renderAccRow($('lobbyAcc'), () => myAcc, id => { myAcc = id; saveAcc(); socket.emit('setAcc', id); });
+}
 
 // ---------- フェーズ切替 ----------
 function onPhase(old, now) {
   const hide = (...ids) => ids.forEach(i => $(i).classList.add('hidden'));
   const show = (...ids) => ids.forEach(i => $(i).classList.remove('hidden'));
-  if (now === 'lobby') { hide('hud', 'meeting', 'endscr', 'mini'); show('lobby'); mini = null; ents.clear(); renderLobby.sig = ''; return; }
+  if (fx && fx.type === 'kill' && now !== 'playing') stopFx();
+  if (fx && fx.type === 'eject' && now !== 'meeting') stopFx();
+  if (now === 'lobby') { hide('hud', 'meeting', 'endscr', 'mini'); show('lobby'); mini = null; ents.clear(); renderLobby.sig = ''; buildLobbyAcc(); return; }
   hide('lobby');
   show('hud');
   if (now === 'playing') {
     hide('meeting', 'endscr');
-    if (old === 'lobby' && S.me.role) showBanner(S.me.role);
     if (old === 'meeting') meetSig = '';
   }
-  if (now === 'meeting') { closeMini(); show('meeting'); $('chatLog').innerHTML = ''; meetSig = ''; $('mRes').textContent = ''; }
+  if (now === 'meeting') { closeMini(); show('meeting'); $('chatLog').innerHTML = ''; meetSig = ''; $('mRes').textContent = ''; ejectPlayed = false; }
   if (now === 'end') { closeMini(); hide('meeting'); show('endscr'); }
   sendInput(true);
-}
-function showBanner(role) {
-  const b = document.createElement('div'); b.id = 'banner';
-  b.innerHTML = role === 'imposter'
-    ? '<h2 style="color:#ff4d4d">あなたは インポスター</h2><p>正体を隠してクルーを排除しろ (E:キル / F:妨害)。タスクをこなすと全体の進捗も進む(偽装＋貢献)ので注意!</p>'
-    : '<h2 style="color:#8ecbff">あなたは クルー</h2><p>タスクをこなして進捗100%を目指せ。インポスターを見抜け!</p>';
-  document.body.appendChild(b); setTimeout(() => b.remove(), 3300);
 }
 
 socket.on('state', s => {
@@ -516,7 +619,7 @@ function updateEnts(s) {
     let e = ents.get(p.id);
     if (!e) { e = { x: p.x, y: p.y, ph: 0 }; ents.set(p.id, e); }
     if (hyp(p.x - e.x, p.y - e.y) > 160) { e.x = p.x; e.y = p.y; }
-    Object.assign(e, { id: p.id, tx: p.x, ty: p.y, mv: p.mv, f: p.f, a: p.a, name: p.name, c: p.c, i: p.i });
+    Object.assign(e, { id: p.id, tx: p.x, ty: p.y, mv: p.mv, f: p.f, a: p.a, name: p.name, c: p.c, acc: p.ac, i: p.i });
   }
   for (const id of [...ents.keys()]) if (!seen.has(id)) ents.delete(id);
 }
@@ -599,12 +702,17 @@ function renderMeeting(s) {
   if (sig !== meetSig) {
     meetSig = sig;
     const tally = {}; if (m.res) m.res.tally.forEach(([id, n]) => tally[id] = n);
-    $('mRoster').innerHTML = m.roster.map(r => `<div class="mcard ${r.a ? '' : 'dead'} ${m.my === r.id ? 'my' : ''}">${avatar(r.c)}<div class="nm">${esc(r.name)}${r.id === init.you ? ' (あなた)' : ''}${r.a ? '' : ' ☠'}</div>${r.voted && m.mode !== 'result' ? '✔' : ''}${m.res && tally[r.id] ? `<span class="cnt">${tally[r.id]}票</span>` : ''}${canVote && r.a ? `<button data-v="${r.id}">投票</button>` : ''}</div>`).join('');
+    $('mRoster').innerHTML = m.roster.map(r => `<div class="mcard ${r.a ? '' : 'dead'} ${m.my === r.id ? 'my' : ''}">${avatar(r.c, 40, r.ac)}<div class="nm">${esc(r.name)}${r.id === init.you ? ' (あなた)' : ''}${r.a ? '' : ' ☠'}</div>${r.voted && m.mode !== 'result' ? '✔' : ''}${m.res && tally[r.id] ? `<span class="cnt">${tally[r.id]}票</span>` : ''}${canVote && r.a ? `<button data-v="${r.id}">投票</button>` : ''}</div>`).join('');
     $('mRoster').querySelectorAll('button[data-v]').forEach(b => b.onclick = () => socket.emit('vote', b.dataset.v));
     if (m.res) {
       const ej = m.res.ej;
       $('mRes').textContent = ej ? `${ej.name} が追放された… ${ej.imp ? 'インポスターだった!' : 'インポスターではなかった'}` : `誰も追放されなかった (スキップ ${m.res.skip}票)`;
     } else $('mRes').textContent = m.my ? `投票済み: ${m.my === 'skip' ? 'スキップ' : (m.roster.find(r => r.id === m.my) || {}).name}` : '';
+  }
+  // 追放決定 → 投票結果を約3秒見せたあと宇宙追放アニメーション
+  if (m.mode === 'result' && m.res && m.res.ej && !ejectPlayed) {
+    const el3 = (m.dur - m.t) / 1000;
+    if (el3 >= 3) { ejectPlayed = true; startFx('eject', 6, m.res.ej, el3 - 3); SFX.whoosh(); }
   }
   $('bSkip').classList.toggle('hidden', !canVote);
   const canChat = me.alive && !me.late && m.mode !== 'result';
@@ -625,7 +733,215 @@ function renderEnd(s) {
   $('endTitle').textContent = w === 'crew' ? 'CREW WIN!' : 'IMPOSTER WIN!';
   $('endTitle').style.color = w === 'crew' ? '#8ecbff' : '#ff4d4d';
   $('endReason').textContent = (won === null ? '' : won ? '🎉 あなたの勝利! ' : '💀 あなたの敗北… ') + s.result.reason;
-  $('roster').innerHTML = s.roster.map(r => `<div class="pcard">${avatar(r.c)}<b>${esc(r.name)}</b><span class="tag" style="background:${r.role === 'imposter' ? '#fa5252' : '#4dabf7'}">${r.role === 'imposter' ? 'インポスター' : 'クルー'}</span></div>`).join('');
+  $('roster').innerHTML = s.roster.map(r => `<div class="pcard">${avatar(r.c, 54, r.ac)}<b>${esc(r.name)}</b><span class="tag" style="background:${r.role === 'imposter' ? '#fa5252' : '#4dabf7'}">${r.role === 'imposter' ? 'インポスター' : 'クルー'}</span></div>`).join('');
+}
+
+// ============================================================
+//  演出 (カットシーン): ロール発表 / 宇宙追放 / キル
+// ============================================================
+let fx = null;
+function startFx(type, dur, data, off) { fx = { type, dur, data, t0: performance.now() - (off || 0) * 1000 }; fxCv.classList.remove('hidden'); }
+function stopFx() { fx = null; fxCv.classList.add('hidden'); fxg.clearRect(0, 0, fxCv.width, fxCv.height); }
+function fxText(g, s, x, y, size, color, stroke) {
+  g.font = `900 ${size}px "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineJoin = 'round'; g.lineWidth = size * .09; g.strokeStyle = stroke || '#000';
+  g.strokeText(s, x, y); g.fillStyle = color; g.fillText(s, x, y);
+}
+function fxAv(g, x, y, s, rot, e) {
+  g.save(); g.translate(x, y); g.rotate(rot || 0); g.scale(s, s);
+  drawAstroBody(g, e); g.restore();
+}
+// 斜めのカットインバンド (translate済みで描く)
+function fxBand(g, w, by, bh, cols, t) {
+  const sk = bh * .22, L = -sk * 2, R = w + sk * 2;
+  g.save();
+  g.beginPath(); g.moveTo(L + sk, by); g.lineTo(R + sk, by); g.lineTo(R - sk, by + bh); g.lineTo(L - sk, by + bh); g.closePath();
+  const gr = g.createLinearGradient(0, 0, w, 0);
+  gr.addColorStop(0, cols[0]); gr.addColorStop(.5, cols[1]); gr.addColorStop(1, cols[0]);
+  g.fillStyle = gr; g.fill();
+  g.save(); g.clip();
+  g.fillStyle = 'rgba(255,255,255,.14)';
+  for (let i = 0; i < 14; i++) {
+    const x = ((i * 211 + t * 1400) % (w + 500)) - 250, y = by + ((i * 53) % Math.max(1, bh - 8));
+    g.fillRect(x, y, 220 + (i % 3) * 80, 4);
+  }
+  g.restore();
+  g.strokeStyle = '#fff'; g.lineWidth = 6;
+  g.beginPath(); g.moveTo(L + sk, by); g.lineTo(R + sk, by); g.moveTo(R - sk, by + bh); g.lineTo(L - sk, by + bh); g.stroke();
+  g.restore();
+}
+
+// ---- ① ロール発表 (Among Us風) ----
+function fxRole(g, w, h, t, d) {
+  const imp = d.role === 'imposter';
+  const bg = t < 4.5 ? 1 : 1 - cl01((t - 4.5) / 1.3);
+  g.fillStyle = `rgba(0,0,0,${bg})`; g.fillRect(0, 0, w, h);
+  // SHHH...
+  if (t < 1.9) {
+    const a = cl01(t / .3) * (t < 1.4 ? 1 : cl01(1 - (t - 1.4) / .5));
+    const beat = 1 + Math.sin(t * 9) * .04 + (Math.sin(t * 9) > .9 ? .05 : 0);
+    g.save(); g.globalAlpha = a; g.translate(w / 2, h / 2); g.scale(beat, beat);
+    fxText(g, 'SHHH...', 0, 0, Math.min(w * .17, h * .3), '#e9ecef', '#300');
+    fxText(g, '…この中に、嘘つきがいる', 0, Math.min(w * .1, h * .2), Math.min(w * .035, h * .05), '#ff8787', '#000');
+    g.restore();
+    const vg = g.createRadialGradient(w / 2, h / 2, h * .2, w / 2, h / 2, h * .9);
+    vg.addColorStop(0, 'rgba(120,0,0,0)'); vg.addColorStop(1, `rgba(150,0,0,${.35 * a * (.6 + .4 * Math.sin(t * 9))})`);
+    g.fillStyle = vg; g.fillRect(0, 0, w, h);
+  }
+  if (t < 1.9 && Math.sin(t * 9) > .98) { /* 心音は sfx 側 */ }
+  if (t < 1.5) return;
+  // カットイン / カットアウト
+  const pin = ease(cl01((t - 1.5) / .35)), pout = t > 4.5 ? ease(cl01((t - 4.5) / .6)) : 0;
+  const bx = -w + w * pin + w * pout;
+  const bh = h * .46, by = h * .5 - bh / 2 - h * .04;
+  const shake = (t > 1.95 && t < 2.35) ? (Math.random() - .5) * 12 : 0;
+  g.save(); g.translate(bx + shake, shake);
+  fxBand(g, w, by, bh, imp ? ['#4a0000', '#e01818'] : ['#0b3d91', '#2a8cff'], t);
+  const sc = h / 95, cx = w / 2, cy = by + bh / 2 + 8 * sc;
+  const pop = t > 1.95 ? back(cl01((t - 1.95) / .45)) : 0;
+  const sz = sc * (1 + pout * 1.4) * pop;
+  const alpha = 1 - pout;
+  g.globalAlpha = alpha;
+  if (pop > 0) {
+    // 仲間のインポスター (後ろ)
+    d.team.forEach((m, i) => {
+      const side = i % 2 ? 1 : -1, k = Math.floor(i / 2) + 1;
+      fxAv(g, cx + side * k * sc * 36, cy + 4 * sc, sz * .62, 0, { c: m.c, acc: m.ac, a: true, mv: false, f: side, ph: 0 });
+    });
+    fxAv(g, cx, cy + Math.sin(t * 3) * 3, sz, 0, { c: d.me.c, acc: d.me.ac, a: true, mv: true, f: 1, ph: t * 2 });
+  }
+  g.restore();
+  // 役職テキスト
+  const ty = by + bh + h * .1;
+  if (t > 1.7) {
+    g.save(); g.globalAlpha = cl01((t - 1.7) / .2) * (1 - pout);
+    fxText(g, 'あなたの役職は…', w / 2, by - h * .045, h * .04, '#fff', '#000');
+    g.restore();
+  }
+  if (t > 2.1) {
+    const k = 1 + (1 - ease(cl01((t - 2.1) / .25))) * 2.2;
+    g.save(); g.globalAlpha = cl01((t - 2.1) / .12) * (1 - pout);
+    g.translate(w / 2, ty); g.scale(k, k);
+    fxText(g, imp ? 'IMPOSTER' : 'CREW', 0, 0, h * .14, imp ? '#ff4040' : '#7cc4ff', '#000');
+    g.restore();
+  }
+  if (t > 2.5) {
+    g.save(); g.globalAlpha = cl01((t - 2.5) / .3) * (1 - pout);
+    const sub = imp
+      ? (d.team.length ? `仲間: ${d.team.map(m => m.name).join(' / ')}` : '仲間はいない… 一人でやり遂げろ')
+      : `この中に ${d.nImp}人のインポスターがいる…`;
+    fxText(g, sub, w / 2, ty + h * .095, Math.min(h * .04, w * .04), '#fff', '#000');
+    g.restore();
+  }
+  // 衝撃フラッシュ
+  if (t > 1.95 && t < 2.2) { g.fillStyle = `rgba(255,255,255,${.5 * (1 - (t - 1.95) / .25)})`; g.fillRect(0, 0, w, h); }
+}
+socket.on('roleReveal', d => {
+  startFx('role', (d.ms || 5800) / 1000, d);
+  [.2, .55, 1.0, 1.35].forEach(s => setTimeout(SFX.thump, s * 1000));
+  setTimeout(() => { SFX.slam(); d.role === 'imposter' ? SFX.alarm() : SFX.start(); }, 1950);
+});
+
+// ---- ② 宇宙追放 ----
+const STARS = Array.from({ length: 150 }, (_, i) => { const r = (n) => { const x = Math.sin(i * 91.7 + n * 13.3) * 43758.5453; return x - Math.floor(x); }; return { x: r(1), y: r(2), z: .2 + r(3) * 1.4, s: .6 + r(4) * 2 }; });
+function fxEject(g, w, h, t, d) {
+  g.fillStyle = '#02030a'; g.fillRect(0, 0, w, h);
+  const ng = g.createRadialGradient(w * .7, h * .3, 10, w * .7, h * .3, w * .6);
+  ng.addColorStop(0, 'rgba(90,40,160,.25)'); ng.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = ng; g.fillRect(0, 0, w, h);
+  // 流れる星
+  for (const s of STARS) {
+    const x = (((s.x * w + t * s.z * w * .22) % w) + w) % w, y = s.y * h;
+    g.fillStyle = `rgba(255,255,255,${.35 + s.z * .3})`;
+    if (s.z > 1.1) g.fillRect(x - 14 * s.z, y, 28 * s.z, 1.5); else g.fillRect(x, y, s.s, s.s);
+  }
+  // 回転しながら流れていく
+  const p = cl01((t - .4) / 4.4);
+  const x = -w * .12 + (w * 1.24) * p, y = h * .42 + Math.sin(t * 1.4) * h * .06 - p * h * .06;
+  const sc = (h / 105) * (1 - p * .6);
+  g.save(); g.globalAlpha = p > .92 ? 1 - (p - .92) / .08 : 1;
+  fxAv(g, x, y, sc, t * 4.5, { c: d.c, acc: d.ac, a: true, mv: true, f: 1, ph: t * 11 });
+  g.restore();
+  // テキスト (タイプライター)
+  if (t > 1) {
+    const s1 = `${d.name} は${d.imp ? 'インポスターだった' : 'インポスターではなかった'}`;
+    const n = Math.min(s1.length, Math.floor((t - 1) * 14));
+    fxText(g, s1.slice(0, n), w / 2, h * .78, Math.min(h * .07, w * .05), d.imp ? '#ff6b6b' : '#e9ecef', '#000');
+  }
+  if (t > 3.2) {
+    g.save(); g.globalAlpha = cl01((t - 3.2) / .4);
+    fxText(g, d.left > 0 ? `インポスターは残り ${d.left}人` : 'インポスターはもういない', w / 2, h * .78 + Math.min(h * .08, w * .06), Math.min(h * .04, w * .03), '#ffd43b', '#000');
+    g.restore();
+  }
+  // フェード
+  const fi = 1 - cl01(t / .35), fo = cl01((t - 5.4) / .6);
+  const a = Math.max(fi, fo);
+  if (a > 0) { g.fillStyle = `rgba(0,0,0,${a})`; g.fillRect(0, 0, w, h); }
+}
+
+// ---- ③ キル演出 ----
+function fxKill(g, w, h, t, d) {
+  const youK = d.you === 'killer', fade = t > 1.7 ? cl01(1 - (t - 1.7) / .3) : 1;
+  g.save(); g.globalAlpha = fade;
+  g.fillStyle = 'rgba(30,0,0,.6)'; g.fillRect(0, 0, w, h);
+  if (t < .18) { g.fillStyle = `rgba(255,40,40,${.8 * (1 - t / .18)})`; g.fillRect(0, 0, w, h); }
+  const pin = ease(cl01(t / .22)), pout = t > 1.75 ? ease(cl01((t - 1.75) / .25)) : 0;
+  const bx = -w + w * pin + w * pout;
+  const bh = h * .42, by = h * .5 - bh / 2 - h * .05;
+  const shake = (t > .55 && t < .8) ? (Math.random() - .5) * 14 : 0;
+  g.save(); g.translate(bx + shake, shake);
+  fxBand(g, w, by, bh, ['#6a0000', '#ff1d1d'], t);
+  const sc = h / 120, cy = by + bh / 2 + 10 * sc;
+  // 加害者: 左から走り込み → 斬りつけ
+  const kp = ease(cl01((t - .1) / .4)), lunge = ease(cl01((t - .5) / .08));
+  const kx = -w * .15 + (w * .33) * kp + lunge * sc * 18;
+  const vx0 = w * .66;
+  fxAv(g, kx, cy, sc, 0, { c: d.killer.c, acc: d.killer.ac, a: true, mv: t < .5, f: 1, ph: t * 22 });
+  // ナイフ
+  const sw = cl01((t - .42) / .16), ang = -1.1 + sw * 2.0;
+  g.save(); g.translate(kx + 12 * sc, cy - 6 * sc); g.rotate(ang);
+  g.font = `${sc * 14}px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🔪', sc * 8, -sc * 6); g.restore();
+  // 被害者: 斬られて吹き飛び倒れる
+  const hit = cl01((t - .55) / .35);
+  const vx = vx0 + ease(hit) * sc * 22, vrot = ease(hit) * (Math.PI / 2);
+  fxAv(g, vx, cy + ease(hit) * sc * 12, sc, vrot, { c: d.victim.c, acc: d.victim.ac, a: true, mv: false, f: -1, ph: 0 });
+  if (t > .9) { g.font = `${sc * 16}px serif`; g.textAlign = 'center'; g.fillText('💀', vx, cy - sc * 30 - (t - .9) * sc * 14); }
+  // 斬撃エフェクト & 血しぶき
+  if (t > .5 && t < .75) {
+    g.save(); g.globalAlpha = 1 - (t - .5) / .25; g.strokeStyle = '#fff'; g.lineWidth = 12 * (1 - (t - .5) / .25) + 2;
+    g.beginPath(); g.moveTo(vx0 - sc * 34, cy - sc * 46); g.lineTo(vx0 + sc * 34, cy + sc * 30); g.stroke(); g.restore();
+  }
+  if (t > .55) {
+    const k = t - .55;
+    for (let i = 0; i < 16; i++) {
+      const a = i * 2.399, sp = 120 + (i % 5) * 60;
+      g.fillStyle = '#b30000'; g.beginPath();
+      g.arc(vx0 + Math.cos(a) * sp * k * sc / 6, cy - sc * 10 + Math.sin(a) * sp * k * sc / 6 + k * k * 200, Math.max(1, (5 - i % 4) * (1 - k)), 0, 7); g.fill();
+    }
+  }
+  g.restore();
+  // テキスト
+  if (t > .55) {
+    const k = 1 + (1 - ease(cl01((t - .55) / .2))) * 1.6;
+    g.save(); g.translate(w / 2, by + bh + h * .09); g.scale(k, k);
+    fxText(g, youK ? 'ELIMINATED' : 'YOU DIED', 0, 0, h * .1, '#ff3b3b', '#000'); g.restore();
+    fxText(g, youK ? `${d.victim.name} を排除した` : `${d.killer.name} にキルされた…`, w / 2, by + bh + h * .17, h * .038, '#fff', '#000');
+  }
+  g.restore();
+}
+socket.on('killCut', d => {
+  startFx('kill', (d.ms || 2000) / 1000, d);
+  SFX.kill(); setTimeout(SFX.slash, 500);
+});
+
+const FX_FN = { role: fxRole, eject: fxEject, kill: fxKill };
+function drawFx() {
+  if (!fx) return;
+  const t = (performance.now() - fx.t0) / 1000;
+  if (t >= fx.dur) { stopFx(); return; }
+  fxg.clearRect(0, 0, fxCv.width, fxCv.height);
+  fxg.save(); FX_FN[fx.type](fxg, fxCv.width, fxCv.height, t, fx.data); fxg.restore();
 }
 
 // ---------- ミニゲーム ----------
@@ -804,7 +1120,7 @@ function drawGame(dt) {
   const sc = Math.max(1.5, h / 430);                    // 高ズーム
   ctx.fillStyle = '#05070d'; ctx.fillRect(0, 0, w, h);
   ctx.save(); ctx.translate(w / 2, h / 2); ctx.scale(sc, sc); ctx.translate(-cam.x, -cam.y);
-  // 巨大マップなので、画面に見えている範囲だけ転送する
+  // 画面に見えている範囲だけ転送する
   const vw = w / sc, vh = h / sc;
   const x0 = Math.max(0, cam.x - vw / 2), y0 = Math.max(0, cam.y - vh / 2);
   const x1 = Math.min(map.W, cam.x + vw / 2), y1 = Math.min(map.H, cam.y + vh / 2);
@@ -822,7 +1138,7 @@ function drawGame(dt) {
   // 緊急会議ボタン
   const B = map.BUTTON;
   ctx.fillStyle = '#4a1f1f'; el(ctx, B.x, B.y, 30, 22); ctx.fill();
-  ctx.fillStyle = '#ff3b3b'; el(ctx, B.x, B.y - 4, 22, 15); ctx.fill();
+  ctx.fillStyle = me.em ? '#7a3a3a' : '#ff3b3b'; el(ctx, B.x, B.y - 4, 22, 15); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('EMERGENCY', B.x, B.y - 4);
   // タスク拠点
   for (const d of map.TASKS) {
@@ -857,10 +1173,11 @@ function drawGame(dt) {
 let lastT = performance.now();
 function frame(t) {
   const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
-  if (!joined) { ctx.clearRect(0, 0, cv.width, cv.height); drawTitleAvatar(dt); }
+  if (!joined) { ctx.clearRect(0, 0, cv.width, cv.height); if (!splash) drawTitleAvatar(dt); }
   else if (S && S.ph !== 'lobby' && init && map) drawGame(dt);
   else ctx.clearRect(0, 0, cv.width, cv.height);
   if (mini && mini.kind === 'weld') updateWeld(dt);
+  drawFx();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
