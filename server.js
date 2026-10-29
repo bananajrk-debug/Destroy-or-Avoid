@@ -502,6 +502,13 @@ function doAction(R, p) {
   const now = Date.now();
   if (now - p.lastAct < ACTION_MIN) return;
   p.lastAct = now;
+  // 運搬中: 届け先に着いたら設置。それ以外のミニゲーム系タスクは手がふさがっていて行えない
+  if (p.item) {
+    const dest = p.tasks.find(id => defOf(id).item === p.item && near(p, tpos(R, id), REACH));
+    if (dest) { removeItem(p, p.item); completeTask(R, p, dest); return; }
+    const other = p.tasks.find(id => defOf(id).kind !== 'carry' && near(p, tpos(R, id), REACH));
+    if (other) { toast(p, `${ITEM_NAME[p.item]}を運搬中は他の作業ができない (Q長押しで運搬をやめる)`, 'error'); return; }
+  }
   for (const id of p.tasks) {
     const d = defOf(id);
     if (!near(p, tpos(R, id), REACH)) continue;
@@ -616,11 +623,11 @@ function broadcast(R, now) {
   if (R.phase === 'lobby') {
     lobby = {
       list: [...R.players.values()].sort((a, b) => a.joinOrder - b.joinOrder).map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, ready: p.ready, host: p.id === host,
-        x: Math.round(p.x), y: Math.round(p.y), mv: p.moving, f: p.face, a: true })),
+        x: Math.round(p.x), y: Math.round(p.y), mv: p.moving, f: p.face, a: true, pid: p.pid })),
       imp: R.impCount, max: maxImp(R.players.size), map: R.mapIdx,
     };
   }
-  const pv = R.phase === 'lobby' ? null : part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face, item: p.item || null }));
+  const pv = R.phase === 'lobby' ? null : part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face, item: p.item || null, pid: p.pid }));
   for (const v of R.players.values()) {
     const ghost = !v.alive || v.late || R.phase === 'end';
     const msg = {
@@ -661,6 +668,9 @@ setInterval(() => {
 }, 1000 / TICK_RATE);
 
 // ---------- Socket.io ----------
+const presence = new Map(); // pid -> { sid, name, known:Set<pid> }
+const validPid = (v) => typeof v === 'string' && /^[a-z0-9]{8,40}$/i.test(v);
+const cleanName = (v) => String(v || '').replace(/[<>]/g, '').trim().slice(0, 10);
 function addPlayer(socket, R, d) {
   R.joinCounter += 1;
   const used = new Set([...R.players.values()].map(p => p.color));
@@ -668,7 +678,7 @@ function addPlayer(socket, R, d) {
   const name = String((d && d.name) || '').replace(/[<>]/g, '').trim().slice(0, 10) || ('P' + R.joinCounter);
   const late = R.phase !== 'lobby';
   const p = {
-    id: socket.id, joinOrder: R.joinCounter, name, color, acc: ACCS.includes(d && d.acc) ? d.acc : '',
+    id: socket.id, pid: socket.data.pid || null, joinOrder: R.joinCounter, name, color, acc: ACCS.includes(d && d.acc) ? d.acc : '',
     x: 0, y: 0, face: 1, moving: false, ready: false, late, role: null, alive: !late,
     tasks: [], doneTasks: new Set(), item: null, mini: null,
     input: { x: 0, y: 0 }, lastAct: 0, lastDisc: 0, lastChat: 0, killReady: 0, sabReady: 0, emUsed: false,
@@ -702,6 +712,58 @@ io.on('connection', (socket) => {
 
   const C = () => { const R = sockRoom.get(socket.id); return R ? { R, p: R.players.get(socket.id) } : {}; };
 
+  // ---------- フレンド (端末ごとの永続ID = pid。コード入力なしで参加・招待) ----------
+  socket.on('hello', (d) => {
+    if (!d || !validPid(d.pid)) return;
+    const old = presence.get(d.pid);
+    socket.data.pid = d.pid;
+    presence.set(d.pid, { sid: socket.id, name: cleanName(d.name), known: new Set((Array.isArray(d.known) ? d.known : []).filter(validPid).slice(0, 300)) });
+    const { p } = C(); if (p) p.pid = d.pid;
+    if (old && old.sid !== socket.id) { /* 別タブ/再接続: 新しい接続を優先 */ }
+  });
+  socket.on('known', (arr) => { const e = presence.get(socket.data.pid); if (e && e.sid === socket.id && Array.isArray(arr)) e.known = new Set(arr.filter(validPid).slice(0, 300)); });
+  socket.on('friendStatus', (pids, ack) => {
+    if (typeof ack !== 'function' || !Array.isArray(pids)) return;
+    const myR = sockRoom.get(socket.id);
+    ack(pids.filter(validPid).slice(0, 80).map(pid => {
+      const e = presence.get(pid), s = e && io.sockets.sockets.get(e.sid);
+      if (!s) return { pid, st: 'off' };
+      const R = sockRoom.get(e.sid);
+      return { pid, name: e.name, st: !R ? 'title' : R.phase === 'lobby' ? 'lobby' : 'playing', same: !!R && R === myR, full: !!R && R.players.size >= MAX_PLAYERS, mutual: e.known.has(socket.data.pid) };
+    }));
+  });
+  socket.on('joinFriend', (d) => {
+    if (sockRoom.has(socket.id) || !d || !validPid(d.pid)) return;
+    const e = presence.get(d.pid), R = e && sockRoom.get(e.sid);
+    if (!e || !io.sockets.sockets.get(e.sid)) { socket.emit('joinError', 'そのフレンドはオフラインです'); return; }
+    if (!e.known.has(socket.data.pid)) { socket.emit('joinError', '相手のフレンドリストにまだ登録されていません (一度コードで一緒に遊ぶか、招待してもらおう)'); return; }
+    if (!R) { socket.emit('joinError', `${e.name || 'フレンド'}さんはまだロビーにいません`); return; }
+    if (R.players.size >= MAX_PLAYERS) { socket.emit('joinError', 'ロビーが満員です'); return; }
+    addPlayer(socket, R, d);
+  });
+  socket.on('invite', (pid) => {
+    const { R, p } = C(); if (!p || !validPid(pid)) return;
+    const e = presence.get(pid), s = e && io.sockets.sockets.get(e.sid);
+    if (!s) { toast(p, 'そのフレンドはオフラインです', 'error'); return; }
+    if (sockRoom.has(e.sid)) { toast(p, `${e.name}さんは別のロビーにいます`, 'error'); return; }
+    if (!e.known.has(p.pid)) { toast(p, `${e.name}さんのフレンドリストにあなたがいません`, 'error'); return; }
+    io.to(e.sid).emit('invited', { from: p.name, fromPid: p.pid, code: R.code, map: (LAYOUTS[R.mapIdx] || {}).name });
+    toast(p, `${e.name}さんを招待しました`, 'good');
+  });
+  // 前回いたロビーがまだあるか (リロード後の復帰用)
+  socket.on('roomInfo', (code, ack) => {
+    if (typeof ack !== 'function') return;
+    const R = rooms.get(String(code || '').replace(/\D/g, '').slice(0, 5));
+    ack(R ? { ok: true, phase: R.phase, n: R.players.size, full: R.players.size >= MAX_PLAYERS } : { ok: false });
+  });
+  // 運搬のキャンセル (Q長押し): アイテムだけ手放し、ミッションはそのまま残す
+  socket.on('dropItem', () => {
+    const { R, p } = C(); if (!p || R.phase !== 'playing' || !p.item) return;
+    const name = ITEM_NAME[p.item]; p.item = null;
+    toast(p, `${name}の運搬をやめた (ミッションはそのまま。置き場からもう一度取れる)`, 'info');
+    io.to(p.id).emit('sfx', 'click');
+  });
+
   socket.on('input', (d) => {
     const { R, p } = C(); if (!p) return;
     if (!d || typeof d !== 'object' || p.mini || (R.phase !== 'playing' && R.phase !== 'lobby')) { p.input = { x: 0, y: 0 }; return; }
@@ -717,8 +779,9 @@ io.on('connection', (socket) => {
   if (process.env.DOA_TEST === '1') socket.on('__tp', (d) => {
     const { R, p } = C(); if (!p || R.phase !== 'playing' || !d) return;
     const pos = d.station ? R.map.stations[d.station] : R.map.tasks[d.task];
-    if (d.task && !p.tasks.includes(d.task)) p.tasks[0] = d.task;
-    if (d.station) { const t = TASK_DEFS.find(x => x.item === d.station); if (t && !p.tasks.includes(t.id)) p.tasks[0] = t.id; }
+    const slot = () => { const i = p.tasks.findIndex(t => defOf(t).kind !== 'carry'); return i >= 0 ? i : p.tasks.length - 1; };
+    if (d.task && !p.tasks.includes(d.task)) p.tasks[slot()] = d.task;
+    if (d.station) { const t = TASK_DEFS.find(x => x.item === d.station); if (t && !p.tasks.includes(t.id)) p.tasks[slot()] = t.id; }
     if (pos) { p.x = pos.x; p.y = pos.y; }
   });
   socket.on('miniEnd', (d) => {
@@ -782,6 +845,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    const pe = presence.get(socket.data.pid); if (pe && pe.sid === socket.id) presence.delete(socket.data.pid);
     const { R, p } = C();
     sockRoom.delete(socket.id);
     if (!p) return;
