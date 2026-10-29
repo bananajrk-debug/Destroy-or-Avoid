@@ -10,25 +10,26 @@ html,body{height:100%;overflow:hidden;background:#080b14;color:#e8ecf4;font-fami
 #cv{position:fixed;inset:0;width:100%;height:100%}
 #fx{position:fixed;inset:0;width:100%;height:100%;z-index:60;pointer-events:none}
 .hidden{display:none!important}
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(circle at 50% 40%,#1b2a4a,#080b14);z-index:20;padding:16px;text-align:center}
-h1{font-size:clamp(26px,5vw,48px);letter-spacing:.08em;color:#ff6b6b;text-shadow:0 0 24px rgba(255,80,80,.5)}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:10px;background:radial-gradient(circle at 50% 40%,#1b2a4a,#080b14);z-index:20;padding:16px 16px 110px;text-align:center;overflow-y:auto;overflow-x:hidden}
+h1{font-size:clamp(22px,4.2vw,42px);letter-spacing:.08em;color:#ff6b6b;text-shadow:0 0 24px rgba(255,80,80,.5);flex:none}
 h1 span{color:#8ecbff}
-.sub{opacity:.75;font-size:13px;max-width:560px;line-height:1.7}
-input[type=text]{padding:10px 14px;font-size:18px;border-radius:10px;border:2px solid #3b4a6b;background:#10172a;color:#fff;text-align:center;width:240px;outline:none;user-select:text}
+.sub{opacity:.75;font-size:13px;max-width:560px;line-height:1.6;flex:none}
+input[type=text]{padding:9px 14px;font-size:17px;border-radius:10px;border:2px solid #3b4a6b;background:#10172a;color:#fff;text-align:center;width:240px;outline:none;user-select:text;flex:none}
 input[type=text]:focus{border-color:#8ecbff}
 button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 26px;font-size:18px;font-weight:700;color:#fff;background:linear-gradient(#ff6b6b,#d63e3e);box-shadow:0 4px 0 #8f2323}
 button:active{transform:translateY(2px);box-shadow:0 2px 0 #8f2323}
 button:disabled,button.cd{filter:grayscale(.9) brightness(.6);cursor:not-allowed}
 button.blue{background:linear-gradient(#4dabf7,#2b7fc9);box-shadow:0 4px 0 #1a4f80}
 button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6b2d}
-#pv{width:min(300px,60vw);height:auto;filter:drop-shadow(0 10px 24px #0008)}
-.row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:520px}
-.chip{width:40px;height:40px;border-radius:10px;padding:0;font-size:22px;background:#12192b;border:2px solid #2b3856;box-shadow:none;display:flex;align-items:center;justify-content:center}
+#pv{width:min(220px,42vw);max-height:38vh;height:auto;display:block;flex:none;filter:drop-shadow(0 10px 24px #0008)}
+.row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:min(540px,92vw);flex:none}
+.chip{width:38px;height:38px;border-radius:10px;padding:0;font-size:20px;background:#12192b;border:2px solid #2b3856;box-shadow:none;display:flex;align-items:center;justify-content:center}
 .chip.sel{border-color:#ffd43b;box-shadow:0 0 12px #ffd43b88}
-.sw{width:30px;height:30px;border-radius:50%;padding:0;border:3px solid #fff3;box-shadow:none}
+.sw{width:28px;height:28px;border-radius:50%;padding:0;border:3px solid #fff3;box-shadow:none}
 .sw.sel{border-color:#fff}
-#titleBtns{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:12px;z-index:21}
-#titleBtns button{font-size:22px;padding:16px 30px;min-width:220px}
+#titleBtns{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:row;gap:12px;z-index:21;padding:10px 14px;background:rgba(8,11,20,.78);border-radius:18px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 6px 24px #000a}
+#titleBtns button{font-size:18px;padding:12px 22px;min-width:160px}
+@media(max-height:620px){#pv{width:min(170px,34vw);max-height:30vh}.chip{width:34px;height:34px;font-size:18px}.sw{width:26px;height:26px}h1{font-size:clamp(20px,3.6vw,32px)}}
 #joinModal{position:fixed;inset:0;z-index:40;background:#000a;display:flex;align-items:center;justify-content:center}
 #joinBox{background:#161d30;border:3px solid #4b5b83;border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:12px;align-items:center}
 #codeIn{font-size:38px;letter-spacing:.35em;width:300px;padding-left:.35em}
