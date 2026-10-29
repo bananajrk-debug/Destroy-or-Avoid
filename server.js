@@ -26,6 +26,14 @@ const ACTIVE_TASKS = 3, ACTION_MIN = 60;
 const MIN_MINI = { weld: 6000, seq: 1000, alt: 1200, space: 800 };
 const MINI_TIMEOUT = 90000;
 const THEME_COUNT = 12;
+// ロビー: 正方形の床 (640x640) + 奥(上)の壁にクローゼット
+const LOBBY = { x0: 60, y0: 120, x1: 700, y1: 760 };
+const CLOSET = { x: 380, y: 92, range: 130 };
+const LOBBY_C = { x: (LOBBY.x0 + LOBBY.x1) / 2, y: (LOBBY.y0 + LOBBY.y1) / 2 + 40 };
+function lobbySpawn(i, n) {
+  const a = (i / Math.max(1, n)) * Math.PI * 2 + Math.random() * 0.3;
+  return { x: LOBBY_C.x + Math.cos(a) * 120, y: LOBBY_C.y + Math.sin(a) * 120 };
+}
 
 const cp = (c, r) => ({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 });
 const ITEM_NAME = { fuse: 'ヒューズ', battery: 'バッテリー', core: 'プラズマコア' };
@@ -370,10 +378,12 @@ function endGame(R, winner, reason) {
 function toLobby(R) {
   R.phase = 'lobby'; R.meeting = null; R.bodies = []; R.result = null; R.remainAtEnd = GAME_MS; R.progress = 0;
   R.map = null; R.mapMsg = null;
-  for (const p of R.players.values()) {
+  const all = [...R.players.values()];
+  all.forEach((p, i) => {
     p.late = false; p.ready = false; p.role = null; p.alive = true;
     p.item = null; p.tasks = []; p.mini = null; p.input = { x: 0, y: 0 }; p.moving = false;
-  }
+    const s = lobbySpawn(i, all.length); p.x = s.x; p.y = s.y;
+  });
 }
 
 function checkWin(R) {
@@ -515,20 +525,21 @@ function doSabotage(R, p) {
   rEmit(R, 'toast', { text: `⚠ 妨害工作! 進捗が${SAB_PCT}%低下`, kind: 'error' });
 }
 
-function doDiscard(R, p, idx) {
-  if (R.phase !== 'playing' || p.mini) return;
-  const now = Date.now();
-  if (now - p.lastDisc < 150) return;
-  p.lastDisc = now;
-  const s = p.slots[idx | 0];
-  if (!s) return;
-  p.slots = p.slots.filter(x => x.t !== s.t);
-  toast(p, `${ITEM_NAME[s.t]}を捨てた`, 'info');
-}
-
 // ---------- ループ ----------
+function tickLobby(R, dt) {
+  for (const p of R.players.values()) {
+    const len = Math.hypot(p.input.x, p.input.y);
+    p.moving = len > 0;
+    if (!len) continue;
+    const dx = p.input.x / len, dy = p.input.y / len;
+    p.x = clamp(p.x + dx * SPEED * dt, LOBBY.x0 + PR, LOBBY.x1 - PR);
+    p.y = clamp(p.y + dy * SPEED * dt, LOBBY.y0 + PR, LOBBY.y1 - PR);
+    if (dx !== 0) p.face = dx > 0 ? 1 : -1;
+  }
+}
 function tickRoom(R, now, dt) {
-  if (R.phase === 'playing') {
+  if (R.phase === 'lobby') tickLobby(R, dt);
+  else if (R.phase === 'playing') {
     for (const p of R.players.values()) {
       if (p.late) continue;
       if (p.mini && now - p.mini.start > MINI_TIMEOUT) cancelMini(p);
@@ -561,7 +572,8 @@ function broadcast(R, now) {
   let lobby = null;
   if (R.phase === 'lobby') {
     lobby = {
-      list: [...R.players.values()].sort((a, b) => a.joinOrder - b.joinOrder).map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, ready: p.ready, host: p.id === host })),
+      list: [...R.players.values()].sort((a, b) => a.joinOrder - b.joinOrder).map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, ready: p.ready, host: p.id === host,
+        x: Math.round(p.x), y: Math.round(p.y), mv: p.moving, f: p.face, a: true })),
       imp: R.impCount, max: maxImp(R.players.size),
     };
   }
@@ -616,6 +628,7 @@ function addPlayer(socket, R, d) {
     tasks: [], doneTasks: new Set(), item: null, mini: null,
     input: { x: 0, y: 0 }, lastAct: 0, lastDisc: 0, lastChat: 0, killReady: 0, sabReady: 0, emUsed: false,
   };
+  if (!late) { const s = lobbySpawn(R.players.size, R.players.size + 1); p.x = s.x; p.y = s.y; }
   R.players.set(socket.id, p);
   sockRoom.set(socket.id, R);
   socket.join('r' + R.code);
@@ -625,7 +638,7 @@ function addPlayer(socket, R, d) {
 
 io.on('connection', (socket) => {
   socket.emit('init', {
-    you: socket.id, W, H, CELL, COLS, ROWS, REACH, GAME_MS, ITEM_NAME, ACCS, COLORS,
+    you: socket.id, W, H, CELL, COLS, ROWS, REACH, GAME_MS, ITEM_NAME, ACCS, COLORS, LOBBY, CLOSET,
     TASKS: TASK_DEFS.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon })),
   });
 
@@ -646,7 +659,7 @@ io.on('connection', (socket) => {
 
   socket.on('input', (d) => {
     const { R, p } = C(); if (!p) return;
-    if (!d || typeof d !== 'object' || p.mini || R.phase !== 'playing') { p.input = { x: 0, y: 0 }; return; }
+    if (!d || typeof d !== 'object' || p.mini || (R.phase !== 'playing' && R.phase !== 'lobby')) { p.input = { x: 0, y: 0 }; return; }
     p.input = { x: (d.right ? 1 : 0) - (d.left ? 1 : 0), y: (d.down ? 1 : 0) - (d.up ? 1 : 0) };
   });
   socket.on('action', () => { const { R, p } = C(); if (p) doAction(R, p); });
@@ -665,6 +678,17 @@ io.on('connection', (socket) => {
     completeTask(R, p, m.taskId);
   });
 
+  // クローゼットでの着替え (ロビー内・クローゼット付近のみ)
+  socket.on('setLook', (d) => {
+    const { R, p } = C();
+    if (!p || R.phase !== 'lobby' || !d) return;
+    if (dist(p, CLOSET) > CLOSET.range + 30) { toast(p, 'クローゼットに近づこう', 'error'); return; }
+    if (typeof d.acc === 'string' && ACCS.includes(d.acc)) p.acc = d.acc;
+    if (typeof d.color === 'string' && COLORS.includes(d.color) && d.color !== p.color) {
+      const taken = [...R.players.values()].some(x => x !== p && x.color === d.color);
+      if (taken) toast(p, 'その色は他の人が使っています', 'error'); else p.color = d.color;
+    }
+  });
   socket.on('ready', () => { const { R, p } = C(); if (p && R.phase === 'lobby' && p.id !== hostId(R)) p.ready = !p.ready; });
   socket.on('setImp', (n) => {
     const { R, p } = C();
