@@ -23,9 +23,8 @@ const KILL_CD = 20000, FIRST_KILL_CD = 15000, SAB_CD = 45000, SAB_PCT = 5;
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
 const DISCUSS_MS = 20000, VOTE_MS = 30000, RESULT_MS = 6500, END_AUTO_MS = 25000;
 const ACTIVE_TASKS = 3, ACTION_MIN = 60;
-const MIN_MINI = { weld: 6000, seq: 1000, alt: 1200, space: 800 };
+const MIN_MINI = { weld: 6000, seq: 1000, alt: 1200, space: 800, fire: 1800, vine: 2000, compass: 1500 };
 const MINI_TIMEOUT = 90000;
-const THEME_COUNT = 12;
 // ロビー: 正方形の床 (640x640) + 奥(上)の壁にクローゼット
 const LOBBY = { x0: 60, y0: 120, x1: 700, y1: 760 };
 const CLOSET = { x: 380, y: 92, range: 130 };
@@ -36,27 +35,29 @@ function lobbySpawn(i, n) {
 }
 
 const cp = (c, r) => ({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 });
-const ITEM_NAME = { fuse: 'ヒューズ', battery: 'バッテリー', core: 'プラズマコア' };
+// 運搬アイテム (孤島サバイバル)
+const ITEM_NAME = { wood: '薪', nut: '木の実', sos: 'SOS信号機', scrap: '漂流資材' };
 const COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac', '#a9e34b', '#c08457'];
 const ACCS = ['', '🐥', '💩', '👑', '🎩', '😎', '🌸', '🔥', '🎀', '🍕'];
 
 // ---------- タスクプール（全15個。位置はマップ生成時に決まる） ----------
+// kind: carry=運搬 / fire=火おこし(連打) / vine=蔓切り(長押し) / compass=方位合わせ(角度) / weld=ノコギリ(なぞり) / seq=番号入力 / alt=K・O交互 / space=SPACE連打
 const TASK_DEFS = [
-  { id: 1,  name: 'プラズマコアの搬入',   pct: 20, kind: 'carry', item: 'core',    icon: '⚛️' },
-  { id: 2,  name: 'ヒューズの装着',       pct: 10, kind: 'carry', item: 'fuse',    icon: '🔌' },
-  { id: 3,  name: '予備バッテリーの装着', pct: 10, kind: 'carry', item: 'battery', icon: '🔋' },
-  { id: 4,  name: '外壁フレーム溶接',     pct: 10, kind: 'weld',  icon: '🔥' },
-  { id: 5,  name: '駆動アームの溶接',     pct: 10, kind: 'weld',  icon: '🦾' },
-  { id: 6,  name: '配電盤の番号入力',     pct: 5,  kind: 'seq',   n: 5, icon: '🔢' },
-  { id: 7,  name: 'パスコード解除',       pct: 5,  kind: 'seq',   n: 6, icon: '🔐' },
-  { id: 8,  name: '配線の接続コード入力', pct: 5,  kind: 'seq',   n: 5, icon: '🧵' },
-  { id: 9,  name: '冷却ファンの回転',     pct: 5,  kind: 'alt',   n: 20, icon: '🌀' },
-  { id: 10, name: '発電機のクランク',     pct: 10, kind: 'alt',   n: 30, icon: '⚙️' },
-  { id: 11, name: 'ポンプの加圧',         pct: 5,  kind: 'alt',   n: 16, icon: '🛢️' },
-  { id: 12, name: 'コンテナの封印',       pct: 5,  kind: 'space', n: 6, icon: '📦' },
-  { id: 13, name: 'バルブの調整',         pct: 5,  kind: 'space', n: 8, icon: '🎛️' },
-  { id: 14, name: 'アンテナの調整',       pct: 5,  kind: 'space', n: 6, icon: '📡' },
-  { id: 15, name: '点火システムの調整',   pct: 5,  kind: 'space', n: 10, icon: '🚀' },
+  { id: 1,  name: '薪を拠点へ運ぶ',           pct: 15, kind: 'carry',   item: 'wood',  icon: '🪵' },
+  { id: 2,  name: '木の実を拠点へ運ぶ',       pct: 10, kind: 'carry',   item: 'nut',   icon: '🌰' },
+  { id: 3,  name: 'SOS信号機を灯台に設置',    pct: 15, kind: 'carry',   item: 'sos',   icon: '📡' },
+  { id: 4,  name: '漂流資材で見張り台を補修', pct: 10, kind: 'carry',   item: 'scrap', icon: '🧰' },
+  { id: 5,  name: 'キャンプファイアの火おこし', pct: 10, kind: 'fire',  icon: '🔥' },
+  { id: 6,  name: '絡まった蔓を切り払う',     pct: 5,  kind: 'vine',    n: 4, icon: '🌿' },
+  { id: 7,  name: '茂みの道を切り開く',       pct: 5,  kind: 'vine',    n: 5, icon: '🎋' },
+  { id: 8,  name: '方位磁針の調整',           pct: 5,  kind: 'compass', n: 3, icon: '🧭' },
+  { id: 9,  name: '現在地の方角を測る',       pct: 5,  kind: 'compass', n: 2, icon: '🗺️' },
+  { id: 10, name: '丸太をノコギリで切る',     pct: 10, kind: 'weld',    icon: '🪚' },
+  { id: 11, name: '無線機の周波数合わせ',     pct: 5,  kind: 'seq',     n: 5, icon: '📻' },
+  { id: 12, name: '宝箱のダイヤル錠',         pct: 5,  kind: 'seq',     n: 6, icon: '🔐' },
+  { id: 13, name: '井戸のポンプを漕ぐ',       pct: 10, kind: 'alt',     n: 24, icon: '💧' },
+  { id: 14, name: '魚を釣り上げる',           pct: 5,  kind: 'space',   n: 8, icon: '🎣' },
+  { id: 15, name: 'ヤシの実を割る',           pct: 5,  kind: 'space',   n: 6, icon: '🥥' },
 ];
 const defOf = (id) => TASK_DEFS.find(d => d.id === id);
 
@@ -70,71 +71,110 @@ function mulberry32(a) {
   };
 }
 
-// ===== 宇宙船レイアウト（コンパクト版・11部屋: 大2 中4 小5）=====
-// COLS=64 x ROWS=40。th: 0エンジン 1貯蔵庫 2医務室 3操舵室 4食堂 5ラボ 6電気室 7格納庫 8居住区 9通信室 10酸素室 11武器庫
-// 大部屋: hall(食堂), storage(貯蔵庫)
-// 中部屋: engine(エンジン), reactor(武器庫), hangar(格納庫), nav(操舵室)
-// 小部屋: medbay(医務室), security(居住区), electric(電気室), oxygen(酸素室), comms(通信室)
-const ROOMS = {
-  hall:    { x: 22, y: 2,  w: 14, h: 10, th: 4 },  // 【大】中央ホール(緊急会議ボタン)
-  engine:  { x: 2,  y: 2,  w: 10, h: 8,  th: 0 },  // 【中】左上エンジン
-  reactor: { x: 2,  y: 16, w: 9,  h: 9,  th: 11 }, // 【中】武器庫(左端)
-  hangar:  { x: 2,  y: 29, w: 11, h: 9,  th: 7 },  // 【中】格納庫(左下)
-  medbay:  { x: 14, y: 11, w: 7,  h: 6,  th: 2 },  // 【小】医務室(行き止まり)
-  security:{ x: 12, y: 20, w: 6,  h: 5,  th: 8 },  // 【小】居住区(行き止まり)
-  electric:{ x: 16, y: 27, w: 8,  h: 7,  th: 6 },  // 【小】電気室(袋小路=キルスポット)
-  storage: { x: 28, y: 22, w: 12, h: 12, th: 1 },  // 【大】貯蔵庫(下中央)
-  oxygen:  { x: 37, y: 2,  w: 7,  h: 6,  th: 10 }, // 【小】酸素室(右上)
-  nav:     { x: 44, y: 10, w: 10, h: 10, th: 3 },  // 【中】操舵室(右中)
-  comms:   { x: 38, y: 28, w: 8,  h: 7,  th: 9 },  // 【小】通信室(右下)
-};
-
-const CORRIDORS = [
-  [[22, 5], [11, 5]],                         // ホール ⇔ エンジン
-  [[17, 5], [17, 11]],                        // 上廊下 → 医務室
-  [[6, 9], [6, 16]],                          // エンジン ⇔ 武器庫
-  [[5, 24], [5, 29]],                         // 武器庫 ⇔ 格納庫
-  [[8, 21], [12, 21]],                        // 武器庫 → 居住区
-  [[11, 33], [28, 33]],                       // 格納庫 ⇔ 貯蔵庫(下廊下)
-  [[20, 31], [20, 33]],                       // 下廊下 → 電気室(唯一の入口)
-  [[30, 11], [30, 22]],                       // ホール ⇔ 貯蔵庫(中央スパイン)
-  [[36, 5], [44, 5], [44, 10]],              // ホール ⇔ 酸素室 ⇔ 操舵室(L字)
-  [[53, 15], [53, 30], [45, 30]],            // 操舵室 ⇔ 通信室(L字)
-  [[38, 30], [39, 30]],                      // 通信室 ⇔ 貯蔵庫
+// ===== 孤島レイアウト (3種・どれも11部屋: 大2 中4 小5) =====
+// 部屋のテーマ番号 th (クライアントの THEMES と対応) とゾーン
+//  0 キャンプ(拠点)[camp] 1 大きな浜辺[beach] 2 深い森[forest] 3 竹林[forest] 4 滝つぼ[forest]
+//  5 難破船[beach] 6 灯台[beach] 7 岩場の入り江[beach] 8 マングローブ[forest] 9 見張り台[forest] 10 漂着物の浜[beach]
+// 大: camp, beach / 中: forest, bamboo, wreck, light / 小: falls, mangrove, tower, rocks, drift
+const ROOM_TH = { camp: 0, beach: 1, forest: 2, bamboo: 3, falls: 4, wreck: 5, light: 6, rocks: 7, mangrove: 8, tower: 9, drift: 10 };
+const LAYOUTS = [
+  {
+    name: 'ヤシの入り江', desc: '拠点が北にある基本の島。南に大きな浜辺、西に灯台と難破船。',
+    rooms: {
+      camp:     { x: 22, y: 2,  w: 14, h: 10 }, // 【大】拠点 (集合の鐘)
+      beach:    { x: 28, y: 22, w: 12, h: 12 }, // 【大】大きな浜辺
+      wreck:    { x: 2,  y: 2,  w: 10, h: 8 },  // 【中】難破船
+      forest:   { x: 2,  y: 16, w: 9,  h: 9 },  // 【中】深い森
+      light:    { x: 2,  y: 29, w: 11, h: 9 },  // 【中】灯台
+      bamboo:   { x: 44, y: 10, w: 10, h: 10 }, // 【中】竹林
+      falls:    { x: 14, y: 11, w: 7,  h: 6 },  // 【小】滝つぼ (行き止まり)
+      mangrove: { x: 12, y: 20, w: 6,  h: 5 },  // 【小】マングローブ (行き止まり)
+      tower:    { x: 16, y: 27, w: 8,  h: 7 },  // 【小】見張り台 (袋小路)
+      rocks:    { x: 37, y: 2,  w: 7,  h: 6 },  // 【小】岩場の入り江
+      drift:    { x: 38, y: 28, w: 8,  h: 7 },  // 【小】漂着物の浜
+    },
+    corridors: [
+      [[22, 5], [11, 5]], [[17, 5], [17, 11]], [[6, 9], [6, 16]], [[5, 24], [5, 29]], [[8, 21], [12, 21]],
+      [[11, 33], [28, 33]], [[20, 31], [20, 33]], [[30, 11], [30, 22]], [[36, 5], [44, 5], [44, 10]],
+      [[53, 15], [53, 30], [45, 30]], [[38, 30], [39, 30]],
+    ],
+    optional: [
+      [[20, 16], [20, 24]], [[18, 16], [18, 20]], [[30, 16], [37, 16], [37, 10]], [[49, 17], [49, 28]],
+      [[7, 17], [12, 17], [12, 15], [14, 15]], [[37, 28], [37, 33]],
+    ],
+    pillars: [[31, 26, 1, 4], [34, 29, 2, 2], [5, 18, 2, 2], [46, 14, 2, 1], [18, 30, 1, 2], [26, 8, 1, 2], [33, 8, 1, 2]],
+  },
+  {
+    name: '双子の浜', desc: '拠点が島の真ん中。北東の灯台と南東の浜辺、2つの海岸を結ぶ環状ルート。',
+    rooms: {
+      camp:     { x: 25, y: 14, w: 14, h: 11 },
+      beach:    { x: 46, y: 27, w: 15, h: 11 },
+      wreck:    { x: 2,  y: 2,  w: 11, h: 9 },
+      forest:   { x: 4,  y: 16, w: 10, h: 10 },
+      light:    { x: 51, y: 2,  w: 11, h: 9 },
+      bamboo:   { x: 48, y: 14, w: 10, h: 9 },
+      falls:    { x: 17, y: 3,  w: 7,  h: 6 },
+      tower:    { x: 36, y: 3,  w: 7,  h: 6 },
+      mangrove: { x: 16, y: 30, w: 8,  h: 6 },
+      rocks:    { x: 2,  y: 31, w: 8,  h: 7 },
+      drift:    { x: 33, y: 31, w: 8,  h: 6 },
+    },
+    corridors: [
+      [[25, 19], [13, 19]], [[8, 16], [8, 10]], [[12, 5], [17, 5]], [[20, 8], [20, 12], [28, 12], [28, 14]],
+      [[36, 14], [36, 11], [39, 11], [39, 8]], [[42, 5], [51, 5]], [[55, 10], [55, 14]], [[48, 18], [38, 18]],
+      [[52, 22], [52, 27]], [[46, 33], [40, 33]], [[36, 31], [36, 24]], [[6, 25], [6, 31]], [[9, 33], [16, 33]],
+    ],
+    optional: [
+      [[23, 33], [33, 33]], [[23, 4], [36, 4]], [[28, 24], [28, 28], [20, 28], [20, 30]], [[60, 10], [60, 27]],
+      [[11, 16], [11, 12], [19, 12], [19, 9]],
+    ],
+    pillars: [[29, 16, 1, 2], [35, 22, 1, 2], [50, 31, 2, 2], [56, 29, 1, 3], [8, 20, 2, 2], [55, 5, 2, 1], [6, 5, 1, 2]],
+  },
+  {
+    name: '霧の密林', desc: '西半分が深い森。道が細く曲がりくねり、見通しの悪い行き止まりが多い。',
+    rooms: {
+      camp:     { x: 25, y: 15, w: 14, h: 10 },
+      beach:    { x: 44, y: 27, w: 17, h: 11 },
+      forest:   { x: 3,  y: 14, w: 11, h: 11 },
+      bamboo:   { x: 22, y: 2,  w: 11, h: 9 },
+      wreck:    { x: 50, y: 3,  w: 11, h: 9 },
+      light:    { x: 20, y: 29, w: 11, h: 9 },
+      falls:    { x: 5,  y: 3,  w: 8,  h: 7 },
+      tower:    { x: 38, y: 3,  w: 7,  h: 6 },
+      mangrove: { x: 44, y: 15, w: 7,  h: 7 },
+      drift:    { x: 54, y: 16, w: 7,  h: 6 },
+      rocks:    { x: 4,  y: 30, w: 8,  h: 7 },
+    },
+    corridors: [
+      [[25, 20], [13, 20]], [[8, 14], [8, 9]], [[12, 6], [22, 6]], [[28, 10], [28, 15]], [[32, 5], [38, 5]],
+      [[44, 6], [50, 6]], [[57, 11], [57, 16]], [[57, 21], [57, 27]], [[44, 33], [30, 33]], [[20, 33], [11, 33]],
+      [[7, 30], [7, 24]], [[38, 18], [44, 18]],
+    ],
+    optional: [
+      [[50, 18], [54, 18]], [[30, 24], [30, 29]], [[41, 8], [41, 12], [47, 12], [47, 15]],
+      [[13, 23], [17, 23], [17, 31], [20, 31]], [[48, 21], [48, 27]],
+    ],
+    pillars: [[27, 6, 1, 1], [30, 4, 1, 2], [48, 31, 2, 2], [55, 34, 2, 1], [7, 18, 2, 2], [54, 6, 1, 2], [24, 32, 1, 1]],
+  },
 ];
 
-const OPTIONAL_CORRIDORS = [
-  [[20, 16], [20, 24]],                       // 医務室 ⇔ 電気室
-  [[18, 16], [18, 20]],                       // 医務室 ⇔ 居住区
-  [[30, 16], [37, 16], [37, 10]],             // スパイン → 酸素室(裏道)
-  [[49, 17], [49, 28]],                       // 操舵室 ⇔ 通信室(近道)
-  [[7, 17], [12, 17], [12, 15], [14, 15]],   // 武器庫 ⇔ 医務室(クランク)
-  [[37, 28], [37, 33]],                       // 貯蔵庫 ⇔ 通信室(裏道)
-];
-
-const PILLARS = [
-  [31, 26, 1, 4],   // 貯蔵庫の中仕切り
-  [34, 29, 2, 2],   // 貯蔵庫のコンテナ
-  [5, 18, 2, 2],    // 武器庫の炉心
-  [46, 14, 2, 1],   // 操舵室のコンソール
-  [18, 30, 1, 2],   // 電気室の配電盤
-  [26, 8, 1, 2], [33, 8, 1, 2], // ホールのテーブル脚
-];
-
+// タスク・置き場をどの部屋に置くか (森ゾーン: forest/bamboo/falls/mangrove/tower)
 const TASK_ROOMS = {
-  stations: { fuse: 'electric', battery: 'hangar', core: 'reactor' },
-  1: 'nav', 2: 'nav', 3: 'oxygen', 4: 'engine', 5: 'storage', 6: 'electric', 7: 'comms', 8: 'security',
-  9: 'medbay', 10: 'engine', 11: 'oxygen', 12: 'storage', 13: 'reactor', 14: 'comms', 15: 'hangar',
+  stations: { wood: 'forest', nut: 'falls', sos: 'wreck', scrap: 'drift' }, // 拾う場所
+  1: 'camp', 2: 'camp',       // 薪・木の実は中央の拠点へ届ける
+  3: 'light', 4: 'tower',
+  5: 'forest', 6: 'forest', 7: 'bamboo', 8: 'tower', 9: 'mangrove', 10: 'bamboo', 13: 'falls',
+  11: 'wreck', 12: 'rocks', 14: 'rocks', 15: 'beach',
 };
 
-function genMap() {
-  const seed = Math.floor(Math.random() * 2147483647);
+function genMap(layoutIdx, seedIn) {
+  const L = LAYOUTS[layoutIdx] || LAYOUTS[0];
+  const seed = seedIn != null ? seedIn : Math.floor(Math.random() * 2147483647);
   const rng = mulberry32(seed);
   const ri = (a, b) => a + Math.floor(rng() * (b - a + 1));
-  // 毎試合 左右/上下反転をランダム適用 (非対称なので反転すると別マップとして遊べる)
-  const fx = rng() < 0.5, fy = rng() < 0.5;
-  const tc = c => fx ? COLS - 1 - c : c, tr = r => fy ? ROWS - 1 - r : r;
-  const trect = ([x, y, w, h]) => [fx ? COLS - x - w : x, fy ? ROWS - y - h : y, w, h];
+  // プレビューと一致させるため反転はしない (通路と部屋サイズだけ毎試合少し変わる)
+  const tc = c => c, tr = r => r;
+  const trect = ([x, y, w, h]) => [x, y, w, h];
 
   const g = Array.from({ length: ROWS }, () => Array(COLS).fill(true));
   const wall = (c, r) => c < 0 || r < 0 || c >= COLS || r >= ROWS || g[r][c];
@@ -151,26 +191,27 @@ function genMap() {
 
   // 部屋 (サイズを ±1 セル揺らして毎回少し違う形に)
   const R = {};
-  for (const key in ROOMS) {
-    const o = ROOMS[key];
-    const jx = key === 'hall' ? 0 : ri(-1, 0), jw = key === 'hall' ? 0 : ri(0, 1);
-    const jy = key === 'hall' ? 0 : ri(-1, 0), jh = key === 'hall' ? 0 : ri(0, 1);
+  for (const key in L.rooms) {
+    const o = L.rooms[key];
+    const fixed = key === 'camp';
+    const jx = fixed ? 0 : ri(-1, 0), jw = fixed ? 0 : ri(0, 1);
+    const jy = fixed ? 0 : ri(-1, 0), jh = fixed ? 0 : ri(0, 1);
     const [x, y, w, h] = trect([o.x + jx, o.y + jy, o.w + jw - jx, o.h + jh - jy]);
-    R[key] = { key, x, y, w, h, th: o.th };
+    R[key] = { key, x, y, w, h, th: ROOM_TH[key] };
     carve(x, y, x + w - 1, y + h - 1);
   }
-  for (const p of CORRIDORS) carvePath(p);
+  for (const p of L.corridors) carvePath(p);
   // 抜け道は 2〜4 本をランダムに開通
-  const opt = OPTIONAL_CORRIDORS.slice().sort(() => rng() - 0.5).slice(0, ri(2, 4));
+  const opt = L.optional.slice().sort(() => rng() - 0.5).slice(0, ri(2, 4));
   for (const p of opt) carvePath(p);
 
   // 柱・仕切り
-  for (const pr of PILLARS) {
+  for (const pr of L.pillars) {
     const [x, y, w, h] = trect(pr);
     for (let r = y; r < y + h; r++) for (let c = x; c < x + w; c++) if (r > 0 && c > 0 && r < ROWS - 1 && c < COLS - 1) g[r][c] = true;
   }
   // 大部屋にランダムな木箱 (1x1) を少し
-  for (const key of ['storage', 'engine', 'hangar', 'comms']) {
+  for (const key of ['beach', 'forest', 'light', 'drift']) {
     const rm = R[key];
     for (let n = ri(0, 2); n > 0; n--) {
       const c = ri(rm.x + 2, rm.x + rm.w - 3), r = ri(rm.y + 2, rm.y + rm.h - 3);
@@ -178,7 +219,7 @@ function genMap() {
     }
   }
 
-  const hall = R.hall;
+  const hall = R.camp;
   const bc = { c: hall.x + (hall.w >> 1), r: hall.y + (hall.h >> 1) };
   // 会議ルーム中央のクリアゾーン (ボタンとスポーンリング用)
   for (let r = hall.y; r < hall.y + hall.h; r++) for (let c = hall.x; c < hall.x + hall.w; c++)
@@ -248,14 +289,16 @@ function genMap() {
   for (const d of TASK_DEFS) tasks[d.id] = spot(TASK_ROOMS[d.id]);
 
   return {
-    seed, grid: g, rows: g.map(row => row.map(v => (v ? '1' : '0')).join('')),
+    seed, layout: layoutIdx, name: L.name, grid: g, rows: g.map(row => row.map(v => (v ? '1' : '0')).join('')),
     rooms: Object.values(R).map(r => [r.x, r.y, r.w, r.h, r.th]),
     button: cp(bc.c, bc.r), stations, tasks,
   };
 }
 // GENMAP>>
 
-const mapPayload = (m) => ({ seed: m.seed, rows: m.rows, rooms: m.rooms, BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
+// ロビーのプレビュー用 (固定シードで1回だけ生成)
+let MAP_PREVIEWS = null;
+const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, rows: m.rows, rooms: m.rooms, BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
 
 function resolveWalls(grid, p) {
   const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : grid[r][c];
@@ -288,7 +331,7 @@ function newRoom() {
   let code;
   do { code = String(Math.floor(Math.random() * 90000) + 10000); } while (rooms.has(code));
   const R = {
-    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1,
+    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1, mapIdx: 0,
     phase: 'lobby', endsAt: 0, remainAtEnd: GAME_MS, endedAt: 0, progress: 0, crewTotal: 1,
     result: null, bodies: [], nextBody: 1, meeting: null, noMeetingUntil: 0, freezeUntil: 0, map: null, mapMsg: null,
   };
@@ -347,7 +390,7 @@ function startGame(R) {
   const part = participants(R);
   if (part.length < MIN_PLAYERS) return;
   const now = Date.now();
-  R.map = genMap();
+  R.map = genMap(R.mapIdx);
   R.mapMsg = mapPayload(R.map);
   rEmit(R, 'map', R.mapMsg);
   R.phase = 'playing'; R.progress = 0; R.result = null; R.bodies = []; R.meeting = null;
@@ -574,7 +617,7 @@ function broadcast(R, now) {
     lobby = {
       list: [...R.players.values()].sort((a, b) => a.joinOrder - b.joinOrder).map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, ready: p.ready, host: p.id === host,
         x: Math.round(p.x), y: Math.round(p.y), mv: p.moving, f: p.face, a: true })),
-      imp: R.impCount, max: maxImp(R.players.size),
+      imp: R.impCount, max: maxImp(R.players.size), map: R.mapIdx,
     };
   }
   const pv = R.phase === 'lobby' ? null : part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face, item: p.item || null }));
@@ -608,6 +651,8 @@ function broadcast(R, now) {
   }
 }
 
+MAP_PREVIEWS = LAYOUTS.map((L, i) => ({ name: L.name, desc: L.desc, ...mapPayload(genMap(i, 12345 + i)) }));
+
 let lastTick = Date.now();
 setInterval(() => {
   const now = Date.now(), dt = Math.min(0.1, (now - lastTick) / 1000);
@@ -638,7 +683,7 @@ function addPlayer(socket, R, d) {
 
 io.on('connection', (socket) => {
   socket.emit('init', {
-    you: socket.id, W, H, CELL, COLS, ROWS, REACH, GAME_MS, ITEM_NAME, ACCS, COLORS, LOBBY, CLOSET,
+    you: socket.id, W, H, CELL, COLS, ROWS, REACH, GAME_MS, ITEM_NAME, ACCS, COLORS, LOBBY, CLOSET, MAPS: MAP_PREVIEWS,
     TASKS: TASK_DEFS.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon })),
   });
 
@@ -668,6 +713,14 @@ io.on('connection', (socket) => {
   socket.on('sabotage', () => { const { R, p } = C(); if (p) doSabotage(R, p); });
   // discard廃止（スロットシステム廃止）
 
+  // 自動テスト専用 (DOA_TEST=1 のときだけ有効): 指定タスク/置き場へワープ
+  if (process.env.DOA_TEST === '1') socket.on('__tp', (d) => {
+    const { R, p } = C(); if (!p || R.phase !== 'playing' || !d) return;
+    const pos = d.station ? R.map.stations[d.station] : R.map.tasks[d.task];
+    if (d.task && !p.tasks.includes(d.task)) p.tasks[0] = d.task;
+    if (d.station) { const t = TASK_DEFS.find(x => x.item === d.station); if (t && !p.tasks.includes(t.id)) p.tasks[0] = t.id; }
+    if (pos) { p.x = pos.x; p.y = pos.y; }
+  });
   socket.on('miniEnd', (d) => {
     const { R, p } = C(); if (!p || !p.mini) return;
     const m = p.mini; p.mini = null;
@@ -690,6 +743,12 @@ io.on('connection', (socket) => {
     }
   });
   socket.on('ready', () => { const { R, p } = C(); if (p && R.phase === 'lobby' && p.id !== hostId(R)) p.ready = !p.ready; });
+  socket.on('setMap', (i) => { // ホストだけがマップを切り替えられる (全員に同期)
+    const { R, p } = C();
+    if (!p || R.phase !== 'lobby' || p.id !== hostId(R)) return;
+    const n = LAYOUTS.length; R.mapIdx = (((parseInt(i, 10) || 0) % n) + n) % n;
+    rEmit(R, 'sfx', 'click');
+  });
   socket.on('setImp', (n) => {
     const { R, p } = C();
     if (!p || R.phase !== 'lobby' || p.id !== hostId(R)) return;
@@ -737,4 +796,4 @@ io.on('connection', (socket) => {
 });
 
 if (require.main === module) server.listen(PORT, () => console.log(`Destroy or Avoid v7.1 running on :${PORT}`));
-module.exports = { genMap };
+module.exports = { genMap, LAYOUTS, TASK_ROOMS, TASK_DEFS, COLS, ROWS, CELL };
