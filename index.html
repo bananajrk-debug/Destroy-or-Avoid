@@ -29,7 +29,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 .sw{width:28px;height:28px;border-radius:50%;padding:0;border:3px solid #fff3;box-shadow:none}
 .sw.sel{border-color:#fff}
 #titleBtns{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:row;gap:12px;z-index:21;padding:10px 14px;background:rgba(8,11,20,.78);border-radius:18px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 6px 24px #000a}
-#titleBtns button{font-size:18px;padding:12px 22px;min-width:160px}
+#titleBtns button{font-size:17px;padding:12px 18px;min-width:140px}
 @media(max-height:620px){#pv{width:min(170px,34vw);max-height:30vh}.chip{width:34px;height:34px;font-size:18px}.sw{width:26px;height:26px}h1{font-size:clamp(20px,3.6vw,32px)}}
 #joinModal{position:fixed;inset:0;z-index:40;background:#000a;display:flex;align-items:center;justify-content:center}
 #joinBox{background:#161d30;border:3px solid #4b5b83;border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:12px;align-items:center}
@@ -57,6 +57,25 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 #mpDesc{font-size:13px;min-height:2.6em;max-width:560px}
 #mpNote{font-size:12px;color:#8ecbff}
 #mapPanel #impBox{font-size:15px;padding:6px 12px}
+button.fr{background:linear-gradient(#f59f00,#d9480f);box-shadow:0 4px 0 #8a3c0a;position:relative}
+#frBadge{position:absolute;top:-8px;right:-8px;background:#51cf66;color:#042;font-size:12px;border-radius:99px;padding:2px 8px;font-weight:900}
+#bRejoin{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);z-index:21;font-size:15px;padding:8px 18px;background:linear-gradient(#22b8cf,#1098ad);box-shadow:0 4px 0 #0b7285}
+#friends{position:fixed;inset:0;z-index:44;background:#000b;display:flex;align-items:center;justify-content:center}
+#frBox{background:#14212b;border:3px solid #f59f00;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;width:min(560px,94vw);max-height:88vh}
+#frBox h2{text-align:center;color:#ffd8a8}
+#frList{overflow:auto;display:flex;flex-direction:column;gap:6px;min-height:80px}
+.frSec{font-size:12px;font-weight:800;opacity:.7;margin-top:6px}
+.frRow{display:flex;align-items:center;gap:10px;background:#0d1720;border:2px solid #2b3856;border-radius:12px;padding:6px 10px}
+.frRow .avatar{width:38px;height:38px;font-size:20px;flex:none}
+.frRow .avatar i{top:-12px;font-size:16px}
+.frInfo{flex:1;min-width:0;text-align:left}
+.frInfo b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frSt{font-size:12px;opacity:.8}.frSt.on{color:#8ce99a;opacity:1}.frSt.lobby{color:#ffd43b;opacity:1}
+.frRow button{padding:6px 12px;font-size:14px;box-shadow:0 3px 0 #1d6b2d}
+.frRow .ic{background:none;box-shadow:none;padding:4px 6px;font-size:20px}
+.frEmpty{opacity:.6;text-align:center;padding:16px;font-size:14px}
+#invitePop{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:48;background:#14212b;border:3px solid #51cf66;border-radius:16px;padding:12px 18px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 30px #000a;animation:popIn .2s ease-out;text-align:center;font-weight:700}
+#invitePop button{padding:8px 18px;font-size:16px}
 #gearBtn{position:fixed;top:12px;right:16px;z-index:41;width:46px;height:46px;padding:0;border-radius:50%;font-size:24px;background:#000a;border:2px solid #fff5;box-shadow:none}
 body[data-ph=lobby] #gearBtn{right:100px}
 body[data-ph=playing] #gearBtn{right:226px}
@@ -107,6 +126,9 @@ body[data-ph=playing] #gearBtn{right:226px}
 #hint{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:18px;font-weight:700;color:#ffd43b;text-shadow:0 2px 6px #000;white-space:nowrap}
 #itemHud{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#000a;border:3px solid #ffd43b;border-radius:14px;padding:6px 16px;font-size:26px;display:flex;align-items:center;gap:8px;min-width:80px;justify-content:center}
 #itemHud.empty{border-color:#fff3;opacity:.5}
+#itemHud.carry{flex-direction:column;gap:0;padding:6px 18px 10px;pointer-events:auto;cursor:pointer;overflow:hidden;-webkit-tap-highlight-color:transparent}
+#itemHud .qtip{font-size:11px;opacity:.75;font-weight:700}
+#qBar{position:absolute;left:0;bottom:0;height:5px;width:0;background:#ff6b6b}
 #mapOverlay{position:fixed;inset:0;z-index:45;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px}
 #mapOverlay canvas{display:block;flex:none;min-width:0;border:3px solid #4b5b83;border-radius:10px;background:#06080d}
 #mapHead{font-size:18px;font-weight:800;color:#ffd43b}
@@ -162,7 +184,7 @@ body[data-ph=playing] #gearBtn{right:226px}
 #endscr{position:fixed;inset:0;z-index:35;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
 #endscr h2{font-size:clamp(34px,8vw,76px)}
 #roster{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:720px}
-@media(max-width:700px){body[data-ph=playing] #gearBtn{right:156px}#tasks{max-width:56vw;font-size:12px}#mm{width:130px;height:81px}#mmTip{top:98px}#mMain{flex-direction:column}#lobbyBar button{min-width:150px;padding:12px 22px;font-size:18px}#lobbyTop{left:50%;max-width:94vw}#lobbyHint{left:50%;bottom:auto;top:132px}#mapPanel{top:auto;left:10px;right:10px;bottom:84px;width:auto;flex-direction:row;flex-wrap:wrap;gap:6px;padding:8px}#mapPrev{width:38%}#mpDesc,.mpHead{display:none}#mpName{min-width:0;font-size:16px}#mpRow button{padding:6px 12px;font-size:16px}}
+@media(max-width:700px){#titleBtns{flex-wrap:wrap;justify-content:center;width:94vw}#titleBtns button{min-width:0;flex:1}body[data-ph=playing] #gearBtn{right:156px}#tasks{max-width:56vw;font-size:12px}#mm{width:130px;height:81px}#mmTip{top:98px}#mMain{flex-direction:column}#lobbyBar button{min-width:150px;padding:12px 22px;font-size:18px}#lobbyTop{left:50%;max-width:94vw}#lobbyHint{left:50%;bottom:auto;top:132px}#mapPanel{top:auto;left:10px;right:10px;bottom:84px;width:auto;flex-direction:row;flex-wrap:wrap;gap:6px;padding:8px}#mapPrev{width:38%}#mpDesc,.mpHead{display:none}#mpName{min-width:0;font-size:16px}#mpRow button{padding:6px 12px;font-size:16px}}
 </style>
 </head>
 <body data-ph="title">
@@ -180,8 +202,18 @@ body[data-ph=playing] #gearBtn{right:226px}
 </div>
 <div id="titleBtns">
   <button id="bCreate" class="green">ロビーを作成</button>
-  <button id="bJoin" class="blue">ロビーに参加</button>
+  <button id="bJoin" class="blue">コードで参加</button>
+  <button id="bFriends" class="fr">👥 フレンド<span id="frBadge" class="hidden"></span></button>
 </div>
+<button id="bRejoin" class="hidden"></button>
+<div id="friends" class="hidden"><div id="frBox">
+  <h2>👥 フレンド</h2>
+  <div class="sub" id="frSub"></div>
+  <div id="frList"></div>
+  <div class="sub" style="font-size:11px">一緒にロビーに入った人は自動で「最近遊んだ人」に追加されます。⭐でフレンド登録。データはこの端末に保存されます。</div>
+  <button id="frClose" class="blue">閉じる</button>
+</div></div>
+<div id="invitePop" class="hidden"><div id="invTxt"></div><div style="display:flex;gap:8px;justify-content:center"><button id="invOk" class="green">参加する</button><button id="invNo" style="background:#555;box-shadow:0 4px 0 #333">あとで</button></div></div>
 <div id="joinModal" class="hidden"><div id="joinBox">
   <h2>ロビーに参加</h2><p class="sub">5桁の数字コードを入力</p>
   <input type="text" id="codeIn" maxlength="5" inputmode="numeric" placeholder="00000" autocomplete="off">
@@ -194,6 +226,7 @@ body[data-ph=playing] #gearBtn{right:226px}
     <div class="sub" style="font-size:11px">ルームコード (友達に教えよう) — タップで拡大</div>
     <div id="codeBox" title="タップで拡大">-----</div>
     <div id="lobbyMsg" class="sub"></div>
+    <button id="bInvite" class="fr" style="margin-top:4px;padding:6px 14px;font-size:14px">👥 フレンドを招待</button>
   </div>
   <div id="mapPanel" class="lbPanel">
     <div class="mpHead">🏝 ゲーム設定</div>
@@ -412,6 +445,7 @@ function buildTitleUi() {
 function profile() {
   const name = $('nameIn').value.trim();
   try { localStorage.setItem('doa_name', name); localStorage.setItem('doa_acc', myAcc); localStorage.setItem('doa_col', myColor); } catch (e) {}
+  sendHello(name);
   return { name, acc: myAcc, color: myColor };
 }
 $('bCreate').onclick = () => { if (init) socket.emit('createRoom', profile()); };
@@ -422,11 +456,97 @@ $('bJoinGo').onclick = doJoin;
 $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') doJoin(); });
 $('codeIn').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
 socket.on('joinError', m => { $('joinErr').textContent = m; SFX.error(); });
-socket.on('joined', () => { joined = true; releaseFocus(); $('title').classList.add('hidden'); $('titleBtns').classList.add('hidden'); $('joinModal').classList.add('hidden'); });
+socket.on('joined', (d) => { joined = true; releaseFocus(); $('title').classList.add('hidden'); $('titleBtns').classList.add('hidden'); $('joinModal').classList.add('hidden');
+  $('bRejoin').classList.add('hidden'); $('invitePop').classList.add('hidden'); openFriends(false);
+  try { if (d && d.code) localStorage.setItem('doa_lastRoom', JSON.stringify({ code: d.code, t: Date.now() })); } catch (e) {} });
 socket.on('disconnect', () => location.reload());
 
+// ---------- フレンド (この端末のID + フレンド一覧を localStorage に永続保存) ----------
+const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+let myPid = LS.get('doa_pid', null);
+if (!myPid || !/^[a-z0-9]{8,40}$/i.test(myPid)) { myPid = 'p' + Array.from(crypto.getRandomValues(new Uint8Array(10)), b => b.toString(16).padStart(2, '0')).join(''); LS.set('doa_pid', myPid); }
+let friends = LS.get('doa_friends', []); if (!Array.isArray(friends)) friends = [];
+let frStatus = {}, frOpen = false, frTimer = 0;
+const knownPids = () => friends.map(f => f.pid);
+function saveFriends() { LS.set('doa_friends', friends); socket.emit('known', knownPids()); }
+function sendHello(name) { socket.emit('hello', { pid: myPid, name: name != null ? name : ($('nameIn').value.trim() || LS.get('doa_name_cache', '')), known: knownPids() }); }
+// 同じロビーに入った人を「最近遊んだ人」に記録 (フレンド登録済みならプロフィールだけ更新)
+function noteRecent(list) {
+  let changed = false, added = false;
+  for (const p of list) {
+    if (!p.pid || p.pid === myPid) continue;
+    let f = friends.find(x => x.pid === p.pid);
+    if (!f) { f = { pid: p.pid, fav: false }; friends.push(f); added = true; }
+    if (f.name !== p.name || f.c !== p.c || f.acc !== p.acc || Date.now() - (f.seen || 0) > 60000) { Object.assign(f, { name: p.name, c: p.c, acc: p.acc, seen: Date.now() }); changed = true; }
+  }
+  if (!changed && !added) return;
+  // 最近遊んだ人 (未登録) は新しい順に30人まで
+  const rec = friends.filter(f => !f.fav).sort((a, b) => (b.seen || 0) - (a.seen || 0)), drop = new Set(rec.slice(30).map(f => f.pid));
+  friends = friends.filter(f => !drop.has(f.pid));
+  added ? saveFriends() : LS.set('doa_friends', friends);
+}
+function pollFriends() {
+  clearTimeout(frTimer);
+  const pids = knownPids();
+  if (pids.length && socket.connected) socket.emit('friendStatus', pids, res => {
+    frStatus = {}; for (const r of res) frStatus[r.pid] = r;
+    const on = res.filter(r => r.st !== 'off').length;
+    $('frBadge').textContent = on + '人'; $('frBadge').classList.toggle('hidden', !on);
+    if (frOpen) renderFriends();
+  });
+  frTimer = setTimeout(pollFriends, frOpen ? 2500 : 8000);
+}
+const ST_TXT = { off: 'オフライン', title: 'オンライン (タイトル画面)', lobby: 'ロビーで待機中', playing: 'ゲーム中' };
+function renderFriends() {
+  const inRoom = joined && S && S.code;
+  $('frSub').textContent = inRoom ? 'タイトル画面にいるフレンドを、このロビーに招待できます' : 'ロビーにいるフレンドには、コードなしでそのまま参加できます';
+  const st = f => frStatus[f.pid] || { st: 'off' };
+  const order = { lobby: 0, playing: 1, title: 2, off: 3 };
+  const sorted = list => list.slice().sort((a, b) => order[st(a).st] - order[st(b).st] || (b.seen || 0) - (a.seen || 0));
+  const row = f => {
+    const s = st(f); let act = '';
+    if (inRoom) act = s.same ? '<span class="frSt on">同じロビー</span>' : s.st === 'title' ? `<button class="green" data-inv="${f.pid}">招待</button>` : '';
+    else if ((s.st === 'lobby' || s.st === 'playing') && !s.full) act = `<button class="green" data-join="${f.pid}">${s.st === 'lobby' ? '参加' : '観戦で参加'}</button>`;
+    const txt = ST_TXT[s.st] + (s.full ? ' (満員)' : '') + (s.st !== 'off' && s.mutual === false ? ' ・相手の一覧に未登録' : '');
+    return `<div class="frRow">${avatar(f.c || '#888', f.acc || '')}<div class="frInfo"><b>${esc(f.name || '???')}</b><span class="frSt ${s.st === 'lobby' ? 'lobby' : s.st !== 'off' ? 'on' : ''}">${txt}</span></div>${act}
+      <button class="ic" data-fav="${f.pid}" title="フレンド登録">${f.fav ? '⭐' : '☆'}</button><button class="ic" data-del="${f.pid}" title="一覧から削除">🗑</button></div>`;
+  };
+  const fav = sorted(friends.filter(f => f.fav)), rec = sorted(friends.filter(f => !f.fav));
+  $('frList').innerHTML = (fav.length ? '<div class="frSec">⭐ フレンド</div>' + fav.map(row).join('') : '') + (rec.length ? '<div class="frSec">🕘 最近遊んだ人</div>' + rec.map(row).join('') : '')
+    || '<div class="frEmpty">まだ誰もいません。<br>一度コードで一緒にロビーに入ると、ここに表示されて次からはコード不要で参加・招待できます。</div>';
+  $('frList').querySelectorAll('[data-join]').forEach(b => b.onclick = () => { socket.emit('joinFriend', { ...profile(), pid: b.dataset.join }); SFX.click(); });
+  $('frList').querySelectorAll('[data-inv]').forEach(b => b.onclick = () => { socket.emit('invite', b.dataset.inv); b.disabled = true; b.textContent = '招待済み'; });
+  $('frList').querySelectorAll('[data-fav]').forEach(b => b.onclick = () => { const f = friends.find(x => x.pid === b.dataset.fav); if (f) { f.fav = !f.fav; saveFriends(); renderFriends(); SFX.click(); } });
+  $('frList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => { friends = friends.filter(x => x.pid !== b.dataset.del); saveFriends(); renderFriends(); });
+}
+function openFriends(v) { frOpen = v; $('friends').classList.toggle('hidden', !v); if (v) { $('frErr') && ($('frErr').textContent = ''); renderFriends(); pollFriends(); releaseFocus(); } }
+$('bFriends').onclick = () => openFriends(true);
+$('bInvite').onclick = () => { openFriends(true); $('bInvite').blur(); };
+$('frClose').onclick = () => openFriends(false);
+$('friends').onclick = e => { if (e.target.id === 'friends') openFriends(false); };
+socket.on('joinError', m => { if (frOpen) toast(m, 'error'); });
+// 招待を受け取った (タイトル画面にいるときだけ)
+let invData = null, invT = 0;
+socket.on('invited', d => {
+  if (joined) return; invData = d; SFX.meeting();
+  $('invTxt').innerHTML = `📨 <b>${esc(d.from)}</b> さんからロビーへの招待<br><span class="sub">${esc(d.map || '')}</span>`;
+  $('invitePop').classList.remove('hidden'); clearTimeout(invT); invT = setTimeout(() => $('invitePop').classList.add('hidden'), 25000);
+});
+$('invOk').onclick = () => { if (invData) socket.emit('joinRoom', { ...profile(), code: invData.code }); $('invitePop').classList.add('hidden'); };
+$('invNo').onclick = () => $('invitePop').classList.add('hidden');
+// リロード後: 前回のロビーがまだあれば戻るボタンを出す
+function checkRejoin() {
+  const lr = LS.get('doa_lastRoom', null); if (!lr || !lr.code || Date.now() - lr.t > 3 * 3600e3) return;
+  socket.emit('roomInfo', lr.code, r => {
+    if (!r || !r.ok || r.full || joined) return;
+    $('bRejoin').textContent = `↩ 前回のロビー (${lr.code}) に戻る ・ ${r.n}人 ${r.phase === 'lobby' ? '待機中' : 'ゲーム中'}`;
+    $('bRejoin').classList.remove('hidden');
+    $('bRejoin').onclick = () => socket.emit('joinRoom', { ...profile(), code: lr.code });
+  });
+}
+
 // ---------- 初期化 / マップ ----------
-socket.on('init', d => { init = d; d.TASKS.forEach(t => TB[t.id] = t); buildTitleUi(); });
+socket.on('init', d => { init = d; d.TASKS.forEach(t => TB[t.id] = t); buildTitleUi(); sendHello(); checkRejoin(); pollFriends(); });
 const THEMES = [{ n: 'キャンプ(拠点)', z: 'camp' }, { n: '大きな浜辺', z: 'beach' }, { n: '深い森', z: 'forest' }, { n: '竹林', z: 'forest' }, { n: '滝つぼ', z: 'forest' }, { n: '難破船', z: 'beach' },
   { n: '灯台', z: 'beach' }, { n: '岩場の入り江', z: 'beach' }, { n: 'マングローブ', z: 'forest' }, { n: '見張り台', z: 'forest' }, { n: '漂着物の浜', z: 'beach' }, { n: 'キノコの谷', z: 'forest' }];
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -439,6 +559,114 @@ socket.on('map', m => {
 });
 
 // 孤島マップを描く。部屋はゾーン(拠点/海岸/森)ごとに床を塗り分け、通れない部分は 海岸側=海、森側=密林 として描く
+// タスク地点・置き場のまわりに、内容に合った小道具を描く (床の上の飾り。当たり判定はなし)
+// 中央 (x,y) には作業用の看板が毎フレーム描かれるので、小道具はその周囲 (半径70px以内) に置く
+function drawTaskProps(g, m) {
+  const E = (x, y, rx, ry, col) => { g.fillStyle = col; elg(g, x, y, rx, ry); g.fill(); };
+  const shadow = (x, y, rx, ry) => E(x, y, rx, ry, 'rgba(0,0,0,.28)');
+  const log = (x, y, len, rot, col) => { g.save(); g.translate(x, y); g.rotate(rot || 0); g.fillStyle = col || '#7c4f2a'; rrg(g, -len / 2, -7, len, 14, 6); g.fill(); g.strokeStyle = 'rgba(40,20,5,.5)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-len / 2 + 6, -2); g.lineTo(len / 2 - 8, -2); g.stroke(); E(len / 2, 0, 5, 7, '#c69463'); g.strokeStyle = '#8a6239'; g.lineWidth = 1; g.beginPath(); g.ellipse(len / 2, 0, 2.5, 4, 0, 0, 7); g.stroke(); g.restore(); };
+  const stone = (x, y, r) => { E(x + 2, y + 3, r, r * .75, 'rgba(0,0,0,.25)'); E(x, y, r, r * .8, '#7d878c'); E(x - r * .3, y - r * .3, r * .45, r * .35, '#9fa9ae'); };
+  const crate = (x, y, s) => { shadow(x + 3, y + s * .55, s * .6, s * .2); g.fillStyle = '#9a7442'; g.fillRect(x - s / 2, y - s / 2, s, s); g.strokeStyle = '#5b4220'; g.lineWidth = 2; g.strokeRect(x - s / 2 + 1, y - s / 2 + 1, s - 2, s - 2); g.beginPath(); g.moveTo(x - s / 2, y - s / 2); g.lineTo(x + s / 2, y + s / 2); g.moveTo(x + s / 2, y - s / 2); g.lineTo(x - s / 2, y + s / 2); g.stroke(); };
+  const vine = (x0, y0, x1, y1, w) => { g.strokeStyle = '#3f7a2a'; g.lineWidth = w || 4; g.lineCap = 'round'; g.beginPath(); g.moveTo(x0, y0); g.bezierCurveTo(x0 + 30, y0 - 25, x1 - 30, y1 + 25, x1, y1); g.stroke();
+    for (let t = .15; t < 1; t += .2) { const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; E(x + 5, y - 4, 6, 3, '#5fa83a'); } };
+  const bamboo = (x, y, h) => { g.fillStyle = '#7fae3f'; g.fillRect(x - 4, y - h, 8, h); g.fillStyle = '#5c8a2a'; for (let k = 10; k < h; k += 16) g.fillRect(x - 5, y - k, 10, 2); E(x + 8, y - h + 4, 9, 3, '#8fc04f'); };
+  const props = {
+    1: (x, y) => { // 薪の届け先: 拠点の薪置き場 (積んだ丸太と柵)
+      shadow(x - 50, y + 16, 26, 8); for (let r = 0; r < 3; r++) for (let k = 0; k < 3 - r; k++) log(x - 50 + (k - (2 - r) / 2) * 13, y + 8 - r * 11, 34, Math.PI / 2 * 0, '#7c4f2a');
+      g.fillStyle = '#5c3d22'; g.fillRect(x - 72, y - 22, 4, 40); g.fillRect(x - 30, y - 22, 4, 40); g.fillRect(x - 74, y - 24, 50, 4);
+      g.fillStyle = '#ffd43b'; g.font = 'bold 10px sans-serif'; g.textAlign = 'center'; g.fillText('薪置き場', x - 50, y - 30);
+    },
+    2: (x, y) => { // 木の実の届け先: 干し棚と食料かご
+      g.fillStyle = '#5c3d22'; g.fillRect(x + 32, y - 26, 4, 44); g.fillRect(x + 70, y - 26, 4, 44); for (let k = 0; k < 3; k++) g.fillRect(x + 30, y - 22 + k * 14, 46, 3);
+      for (let k = 0; k < 6; k++) E(x + 37 + (k % 3) * 14, y - 26 + Math.floor(k / 3) * 14, 5, 4, k % 2 ? '#8f5b2a' : '#b5762e');
+      shadow(x - 46, y + 16, 18, 6); g.fillStyle = '#b08a52'; rrg(g, -62 + x, y - 4, 32, 20, 6); g.fill(); for (let k = 0; k < 5; k++) E(x - 56 + k * 5, y - 4, 4, 4, '#6b4a2b');
+    },
+    3: (x, y) => { // SOS信号機の設置先: アンテナ柱と配線ボックス
+      shadow(x + 50, y + 22, 14, 5); g.strokeStyle = '#868e96'; g.lineWidth = 3; g.beginPath(); g.moveTo(x + 44, y + 20); g.lineTo(x + 50, y - 50); g.lineTo(x + 56, y + 20); g.moveTo(x + 46, y - 4); g.lineTo(x + 54, y - 4); g.moveTo(x + 47, y - 26); g.lineTo(x + 53, y - 26); g.stroke();
+      E(x + 50, y - 52, 5, 5, '#ff3b3b'); E(x + 50, y - 52, 11, 11, 'rgba(255,60,60,.25)');
+      g.fillStyle = '#495057'; rrg(g, x - 66, y - 10, 26, 22, 3); g.fill(); g.fillStyle = '#ffd43b'; g.fillRect(x - 62, y - 6, 18, 3);
+      g.strokeStyle = '#e03131'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 40, y + 4); g.quadraticCurveTo(x - 10, y + 30, x + 46, y + 14); g.stroke();
+      g.font = 'bold 11px sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('SOS', x - 53, y + 26);
+    },
+    4: (x, y) => { // 漂流資材で補修: 壊れた板・はしご・金づち
+      g.save(); g.translate(x - 52, y + 2); g.rotate(-.3); g.fillStyle = '#8a6a48'; g.fillRect(-22, -5, 44, 10); g.fillStyle = '#6b4f32'; g.fillRect(-6, -5, 4, 10); g.restore();
+      g.save(); g.translate(x - 44, y + 20); g.rotate(.5); g.fillStyle = '#a5845e'; g.fillRect(-18, -4, 30, 8); g.restore();
+      g.strokeStyle = '#7c5532'; g.lineWidth = 4; g.beginPath(); g.moveTo(x + 40, y + 24); g.lineTo(x + 52, y - 40); g.moveTo(x + 62, y + 24); g.lineTo(x + 74, y - 40); g.stroke();
+      g.lineWidth = 3; for (let k = 0; k < 4; k++) { const t = k / 4 + .1; g.beginPath(); g.moveTo(x + 40 + 12 * t * 5.3 / 5.3, y + 24 - 64 * t); g.lineTo(x + 62 + 12 * t, y + 24 - 64 * t); g.stroke(); }
+      g.fillStyle = '#495057'; g.fillRect(x - 30, y - 34, 14, 7); g.fillStyle = '#8a6239'; g.fillRect(x - 25, y - 28, 4, 16);
+    },
+    5: (x, y) => { // 火おこし: 石で囲んだたき火の跡
+      E(x, y + 40, 40, 14, 'rgba(40,30,25,.55)');
+      for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2; stone(x + Math.cos(a) * 38, y + 40 + Math.sin(a) * 13, 6); }
+      log(x - 10, y + 40, 34, .5, '#3b2a1e'); log(x + 10, y + 40, 34, -.5, '#3b2a1e'); E(x, y + 40, 9, 4, 'rgba(255,120,40,.5)');
+      log(x + 58, y - 8, 40, 1.3); log(x + 66, y - 4, 36, 1.4);
+    },
+    6: (x, y) => { // 蔓を切る: 地面に絡まった蔓と茂み
+      for (const [a, b, c, d] of [[-70, -20, -20, 30], [-60, 30, -10, -26], [20, -30, 70, 24], [24, 28, 66, -18]]) vine(x + a, y + b, x + c, y + d, 4);
+      for (const [dx, dy] of [[-62, -34], [60, -36], [-58, 40], [62, 40]]) { E(x + dx, y + dy, 16, 12, '#2d6633'); E(x + dx - 4, y + dy - 4, 9, 7, '#3f8f35'); }
+    },
+    7: (x, y) => { // 茂みの道: 竹の群生と切り株
+      for (const [dx, h] of [[-66, 60], [-54, 48], [-44, 70], [50, 56], [62, 72], [72, 44]]) bamboo(x + dx, y + 26, h);
+      for (const dx of [-24, 28]) { E(x + dx, y + 34, 6, 4, '#c9d77a'); E(x + dx, y + 34, 3, 2, '#7fae3f'); }
+    },
+    8: (x, y) => { // 方位磁針: 地面に刻んだ方位盤
+      E(x, y + 38, 46, 16, 'rgba(120,110,95,.75)'); g.strokeStyle = 'rgba(60,50,40,.8)'; g.lineWidth = 2; g.beginPath(); g.ellipse(x, y + 38, 38, 12, 0, 0, 7); g.stroke();
+      g.beginPath(); g.moveTo(x - 44, y + 38); g.lineTo(x + 44, y + 38); g.moveTo(x, y + 24); g.lineTo(x, y + 52); g.stroke();
+      g.fillStyle = '#c92a2a'; g.beginPath(); g.moveTo(x, y + 22); g.lineTo(x - 5, y + 36); g.lineTo(x + 5, y + 36); g.fill();
+      g.font = 'bold 10px sans-serif'; g.fillStyle = '#c92a2a'; g.textAlign = 'center'; g.fillText('N', x, y + 18);
+    },
+    9: (x, y) => { // 方角を測る: 平たい岩に広げた地図と杭
+      stone(x - 56, y + 10, 18); g.save(); g.translate(x - 56, y + 6); g.rotate(-.15); g.fillStyle = '#f1e3b8'; g.fillRect(-14, -9, 28, 18); g.strokeStyle = '#c92a2a'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-8, 4); g.lineTo(0, -2); g.lineTo(8, 3); g.stroke(); g.restore();
+      for (const [dx, dy] of [[48, -20], [62, 10], [44, 30]]) { g.fillStyle = '#7c5532'; g.fillRect(x + dx - 2, y + dy - 14, 4, 16); g.fillStyle = '#e03131'; g.fillRect(x + dx - 2, y + dy - 14, 8, 5); }
+    },
+    10: (x, y) => { // ノコギリ: 木挽き台に乗せた丸太とおがくず
+      g.strokeStyle = '#5c3d22'; g.lineWidth = 4; for (const dx of [-70, -34]) { g.beginPath(); g.moveTo(x + dx - 8, y + 22); g.lineTo(x + dx + 8, y - 6); g.moveTo(x + dx + 8, y + 22); g.lineTo(x + dx - 8, y - 6); g.stroke(); }
+      log(x - 52, y - 8, 64, 0, '#8a5a30'); for (let k = 0; k < 14; k++) E(x - 52 + (k * 37 % 40) - 20, y + 26 + (k * 13 % 10), 2, 1.5, '#e0b98a');
+      g.save(); g.translate(x + 56, y + 14); g.rotate(-.4); g.fillStyle = '#c9ced6'; g.fillRect(-24, -4, 40, 9); g.fillStyle = '#8a5a30'; g.fillRect(14, -6, 12, 13); g.restore();
+    },
+    11: (x, y) => { // 無線機: 木箱の上の無線機と配線ボックス
+      crate(x - 54, y + 6, 30); g.fillStyle = '#343a40'; rrg(g, x - 66, y - 22, 24, 16, 3); g.fill(); E(x - 60, y - 14, 3, 3, '#ffd43b'); g.fillStyle = '#69db7c'; g.fillRect(x - 54, y - 18, 8, 3);
+      g.strokeStyle = '#adb5bd'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 46, y - 22); g.lineTo(x - 40, y - 44); g.stroke();
+      g.fillStyle = '#495057'; rrg(g, x + 44, y - 12, 24, 30, 3); g.fill(); g.strokeStyle = '#212529'; g.lineWidth = 1; g.strokeRect(x + 46, y - 10, 20, 26);
+      for (const [c, oy] of [['#ff6b6b', 0], ['#4dabf7', 6], ['#ffd43b', 12]]) { g.strokeStyle = c; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 44, y - 4 + oy); g.quadraticCurveTo(x - 10, y + 30 + oy, x - 40, y + 4); g.stroke(); }
+    },
+    12: (x, y) => { // 宝箱
+      shadow(x + 54, y + 22, 22, 6); g.fillStyle = '#8a5a30'; rrg(g, x + 34, y - 4, 40, 24, 3); g.fill(); g.fillStyle = '#a0672f'; g.beginPath(); g.moveTo(x + 34, y - 4); g.quadraticCurveTo(x + 54, y - 22, x + 74, y - 4); g.fill();
+      g.fillStyle = '#f2c94c'; g.fillRect(x + 34, y + 2, 40, 3); g.fillRect(x + 52, y - 10, 4, 30); g.fillStyle = '#343a40'; g.fillRect(x + 51, y + 4, 6, 7);
+      for (let k = 0; k < 4; k++) E(x - 50 + k * 9, y + 24 - (k % 2) * 3, 4, 3, '#f2c94c');
+    },
+    13: (x, y) => { // 井戸と手押しポンプ
+      shadow(x - 50, y + 24, 26, 8); g.fillStyle = '#6c757d'; E(x - 50, y + 10, 24, 12, '#6c757d'); E(x - 50, y + 8, 18, 8, '#1c4a63'); E(x - 54, y + 6, 6, 3, 'rgba(255,255,255,.4)');
+      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; stone(x - 50 + Math.cos(a) * 22, y + 10 + Math.sin(a) * 11, 4); }
+      g.fillStyle = '#495057'; g.fillRect(x + 50, y - 26, 8, 44); g.strokeStyle = '#343a40'; g.lineWidth = 4; g.beginPath(); g.moveTo(x + 54, y - 22); g.lineTo(x + 74, y - 36); g.stroke(); g.fillRect(x + 42, y - 12, 10, 4);
+      E(x + 46, y + 22, 8, 3, 'rgba(80,160,220,.6)');
+    },
+    14: (x, y) => { // 釣り: 釣り竿・バケツ・魚
+      g.strokeStyle = '#8a6239'; g.lineWidth = 3; g.beginPath(); g.moveTo(x + 34, y + 24); g.lineTo(x + 78, y - 40); g.stroke(); g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x + 78, y - 40); g.quadraticCurveTo(x + 86, y, x + 70, y + 30); g.stroke();
+      g.fillStyle = '#4dabf7'; g.beginPath(); g.moveTo(x - 64, y - 4); g.lineTo(x - 40, y - 4); g.lineTo(x - 44, y + 20); g.lineTo(x - 60, y + 20); g.fill(); E(x - 52, y - 4, 12, 4, '#1c7ed6');
+      g.fillStyle = '#ffa94d'; E(x - 50, y + 32, 10, 5, '#ffa94d'); g.beginPath(); g.moveTo(x - 40, y + 32); g.lineTo(x - 33, y + 27); g.lineTo(x - 33, y + 37); g.fill();
+    },
+    15: (x, y) => { // ヤシの実割り: 実の山と切り株・なた
+      E(x - 52, y + 16, 16, 11, '#7c5532'); E(x - 52, y + 14, 13, 8, '#c9a06d');
+      g.save(); g.translate(x - 50, y + 4); g.rotate(-.6); g.fillStyle = '#c9ced6'; g.fillRect(-4, -18, 8, 20); g.fillStyle = '#5c3d22'; g.fillRect(-3, 2, 6, 10); g.restore();
+      for (const [dx, dy] of [[44, 10], [58, 12], [51, 0], [66, 22], [40, 26]]) { E(x + dx, y + dy, 8, 7, '#6b4a2b'); E(x + dx - 2, y + dy - 2, 2, 2, '#3b2614'); }
+      E(x + 74, y - 6, 8, 5, '#f8f9fa'); g.strokeStyle = '#6b4a2b'; g.lineWidth = 2; g.beginPath(); g.ellipse(x + 74, y - 6, 8, 5, 0, 0, 7); g.stroke();
+    },
+  };
+  const stations = {
+    wood: (x, y) => { log(x - 54, y + 4, 40, .2); log(x - 50, y + 18, 40, -.1); log(x + 54, y + 10, 36, 1.4); E(x + 54, y + 34, 10, 6, '#7c5532'); E(x + 54, y + 32, 8, 4, '#c9a06d');
+      g.save(); g.translate(x + 54, y + 22); g.rotate(.5); g.fillStyle = '#c9ced6'; g.beginPath(); g.moveTo(0, -14); g.lineTo(10, -10); g.lineTo(2, -2); g.fill(); g.fillStyle = '#5c3d22'; g.fillRect(-2, -14, 4, 22); g.restore(); },
+    nut: (x, y) => { E(x - 52, y - 10, 24, 20, '#2b5d27'); E(x - 58, y - 16, 14, 11, '#3f8f35'); for (let k = 0; k < 5; k++) E(x - 60 + k * 5, y - 4 + (k % 2) * 6, 3.5, 3.5, '#b5762e');
+      for (let k = 0; k < 6; k++) E(x + 46 + (k % 3) * 9, y + 18 - Math.floor(k / 3) * 7, 4, 4, '#8f5b2a'); },
+    sos: (x, y) => { crate(x - 54, y + 8, 28); crate(x + 54, y + 4, 24); g.save(); g.translate(x + 50, y + 30); g.rotate(.4); g.fillStyle = '#e03131'; g.fillRect(-14, -3, 28, 6); g.fillStyle = '#fff'; g.fillRect(-6, -3, 4, 6); g.restore(); },
+    scrap: (x, y) => { crate(x - 56, y + 4, 26); g.fillStyle = '#4c6ef5'; E(x - 46, y + 28, 10, 7, '#4c6ef5'); g.fillStyle = '#868e96'; g.save(); g.translate(x + 52, y + 8); g.rotate(-.3); g.fillRect(-20, -4, 40, 8); g.fillRect(-14, 6, 34, 6); g.restore();
+      g.strokeStyle = '#ced4da'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 36, y + 28); g.quadraticCurveTo(x + 52, y + 20, x + 70, y + 30); g.stroke(); },
+  };
+  g.save(); g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (m.TPOS) for (const id in m.TPOS) { const p = m.TPOS[id], f = props[id]; if (p && f) { g.save(); f(p.x, p.y); g.restore(); } }
+  if (m.STATIONS) for (const it in m.STATIONS) { const p = m.STATIONS[it], f = stations[it]; if (p && f) { g.save(); f(p.x, p.y); g.restore(); } }
+  g.restore();
+}
 function buildMap(m) { mapCv = buildMapCanvas(m); }
 function buildMapCanvas(m) {
   const C = init.CELL, rows = m.rows, NR = rows.length, NC = rows[0].length;
@@ -589,6 +817,8 @@ function buildMapCanvas(m) {
     let adj = false; for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!wall(c + dc, r + dr)) adj = true;
     if (adj) palm(c * C + C / 2, r * C + C / 2);
   }
+  // タスク地点・置き場の小道具
+  drawTaskProps(g, m);
   // 7) 部屋名
   g.textAlign = 'center'; g.textBaseline = 'middle';
   for (const [rx, ry, rw, rh, t] of m.rooms) {
@@ -613,7 +843,7 @@ function nearCloset() { const e = myEnt(); return !!(e && init && hyp(e.x - init
 function renderLobby(s) {
   const L = s.lobby, me = s.me;
   $('codeBox').textContent = s.code;
-  updateEnts({ players: L.list });
+  updateEnts({ players: L.list }); noteRecent(L.list);
   const mine = L.list.find(p => p.id === init.you);
   if (mine) { myColor = mine.c; myAcc = mine.acc; }
   $('lobbyHint').classList.toggle('hidden', !nearCloset() || closetOpen);
@@ -786,8 +1016,11 @@ function nearHint(me, e) {
   let text = '';
   if (body) text = 'R: 死体を報告';
   else {
-    for (const id of me.tasks) { const d = TB[id]; if (hyp(d.x - e.x, d.y - e.y) <= init.REACH) { text = d.kind === 'carry' ? (me.item === d.item ? 'SPACE: 設置する' : `${init.ITEM_NAME[d.item]}が必要`) : `SPACE: ${d.name}`; break; } }
-    if (!text) for (const id of me.tasks) { const d = TB[id]; if (d.kind !== 'carry') continue; const st = MAP.STATIONS[d.item]; if (hyp(st.x - e.x, st.y - e.y) <= init.REACH) { text = `SPACE: ${init.ITEM_NAME[d.item]}を取る`; break; } }
+    const dest = me.item && me.tasks.map(id => TB[id]).find(d => d.item === me.item && hyp(d.x - e.x, d.y - e.y) <= init.REACH);
+    if (dest) text = `SPACE: ${init.ITEM_NAME[me.item]}を設置する`;
+    else for (const id of me.tasks) { const d = TB[id]; if (hyp(d.x - e.x, d.y - e.y) <= init.REACH) {
+      text = d.kind === 'carry' ? `${init.ITEM_NAME[d.item]}が必要` : me.item ? `${init.ITEM_NAME[me.item]}を運搬中は作業できない (Q長押しで運搬をやめる)` : `SPACE: ${d.name}`; break; } }
+    if (!text) for (const id of me.tasks) { const d = TB[id]; if (d.kind !== 'carry') continue; const st = MAP.STATIONS[d.item]; if (hyp(st.x - e.x, st.y - e.y) <= init.REACH) { text = me.item ? '手がふさがっている (先に設置するか、Q長押しで運搬をやめる)' : `SPACE: ${init.ITEM_NAME[d.item]}を取る`; break; } }
     if (!text && me.alive && hyp(MAP.BUTTON.x - e.x, MAP.BUTTON.y - e.y) <= 90) text = me.em ? '' : (me.emLock > 0 ? `集合の鐘 (あと${Math.ceil(me.emLock / 1000)}秒)` : 'SPACE: 集合の鐘を鳴らす (緊急会議)');
   }
   return { text, body, tgt };
@@ -804,7 +1037,9 @@ function renderHud(s) {
       const sub = d.kind === 'carry' ? (me.item === d.item ? '→設置' : '→取りに行く') : '';
       return `<div class="tk">${d.icon} ${d.name}<b>+${d.pct}%</b><small>${sub}</small></div>`; }).join('');
   }
-  { const t = me.item; const el = $('itemHud'); el.textContent = t ? ITEM_ICON[t] + ' ' + init.ITEM_NAME[t] : '✋'; el.className = t ? '' : 'empty'; }
+  { const t = me.item, el = $('itemHud'), sig = (t || '') + (me.late ? 'L' : '');
+    if (el.dataset.sig !== sig) { el.dataset.sig = sig; el.innerHTML = t ? `<span>${ITEM_ICON[t]} ${init.ITEM_NAME[t]}</span><small class="qtip">Q長押しでやめる</small><i id="qBar"></i>` : '✋'; }
+    el.className = t ? 'carry' : 'empty'; }
   const h = nearHint(me, e);
   $('hint').textContent = h.text;
   $('bRep').classList.toggle('rdy', h.body); $('bRep').classList.toggle('hidden', !me.alive || me.late); $('bUse').classList.toggle('hidden', me.late);
@@ -1252,6 +1487,17 @@ function onKeyUp(e) {
   if (joined && !typing() && (mini || (S && (S.ph === 'playing' || S.ph === 'lobby'))) && GAMEKEYS.includes(k)) e.preventDefault(); // keyupでのボタン活性化も阻止
   sendInput();
 }
+// 運搬キャンセル: Q (またはアイテム欄) を 0.8秒 長押し。ミッションは変わらない
+const Q_HOLD = 800; let qT0 = 0, qFired = false, qTouch = false;
+function updateQHold(now) {
+  const holding = !!(S && S.ph === 'playing' && S.me.item && !mini && (keysDown.q || qTouch));
+  if (!holding) { qT0 = 0; qFired = false; const b = $('qBar'); if (b) b.style.width = '0'; return; }
+  if (!qT0) qT0 = now;
+  const r = Math.min(1, (now - qT0) / Q_HOLD), b = $('qBar'); if (b) b.style.width = (r * 100) + '%';
+  if (r >= 1 && !qFired) { qFired = true; socket.emit('dropItem'); }
+}
+$('itemHud').addEventListener('pointerdown', e => { if (S && S.me.item) { qTouch = true; e.preventDefault(); } });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('itemHud').addEventListener(ev, () => { qTouch = false; });
 // capture フェーズで受けて、フォーカス位置に関係なく確実に拾う
 addEventListener('keydown', onKeyDown, true);
 addEventListener('keyup', onKeyUp, true);
@@ -1308,7 +1554,10 @@ function drawGame(dt, now) {
   }
   for (const d of init.TASKS) {
     const act = !me.late && me.tasks.includes(d.id);
-    if (act) { ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(d.x, d.y, 30 * pulse, 0, 7); ctx.stroke(); ctx.fillStyle = 'rgba(255,212,59,.15)'; ctx.fill(); }
+    const dest = act && me.item && d.item === me.item, dim = act && me.item && !dest; // 運搬中は届け先だけを強調
+    if (dest) { ctx.strokeStyle = '#ff922b'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(d.x, d.y, 38 * pulse, 0, 7); ctx.stroke(); ctx.fillStyle = 'rgba(255,146,43,.22)'; ctx.fill();
+      ctx.font = 'bold 13px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`${ITEM_ICON[me.item]} ここに設置`, d.x, d.y - 48); ctx.fillStyle = '#ffd8a8'; ctx.fillText(`${ITEM_ICON[me.item]} ここに設置`, d.x, d.y - 48); }
+    else if (act && !dim) { ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(d.x, d.y, 30 * pulse, 0, 7); ctx.stroke(); ctx.fillStyle = 'rgba(255,212,59,.15)'; ctx.fill(); }
     drawMachine(d, act || me.late, now);
   }
   for (const b of S.bodies) drawBody(b);
@@ -1320,18 +1569,22 @@ function drawGame(dt, now) {
   // タスク方向インジケーター (三角マーカー)
   if (!me.late) {
     const R = Math.min(w, h) * .38;
-    for (const id of me.tasks) {
+    const carryDest = me.item ? me.tasks.filter(id => TB[id].item === me.item) : null; // 運搬中は届け先だけを指す
+    for (const id of (carryDest && carryDest.length ? carryDest : me.tasks)) {
       const d = TB[id]; let tg = d; if (d.kind === 'carry' && me.item !== d.item) tg = MAP.STATIONS[d.item];
+      const isDest = !!(carryDest && carryDest.length);
       const dx = tg.x - cam.x, dy = tg.y - cam.y, dd = hyp(dx, dy); if (dd * sc < R) continue;
       const a = Math.atan2(dy, dx), px = w / 2 + Math.cos(a) * R, py = h / 2 + Math.sin(a) * R;
-      ctx.save(); ctx.translate(px, py); ctx.rotate(a); ctx.fillStyle = '#ffd43b'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+      const k = isDest ? 1.5 : 1;
+      ctx.save(); ctx.translate(px, py); ctx.rotate(a); ctx.scale(k, k); ctx.fillStyle = isDest ? '#ff922b' : '#ffd43b'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-8, -11); ctx.lineTo(-8, 11); ctx.closePath(); ctx.stroke(); ctx.fill(); ctx.restore();
-      ctx.font = '16px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.icon, px - Math.cos(a) * 26, py - Math.sin(a) * 26);
+      ctx.font = isDest ? '22px serif' : '16px serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(isDest ? ITEM_ICON[me.item] : d.icon, px - Math.cos(a) * 26 * k, py - Math.sin(a) * 26 * k);
+      if (isDest) { ctx.font = 'bold 12px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; const lx = px - Math.cos(a) * 52, ly = py - Math.sin(a) * 52; ctx.strokeText('届け先', lx, ly); ctx.fillStyle = '#ffd8a8'; ctx.fillText('届け先', lx, ly); }
     }
   }
   mmx.clearRect(0, 0, 200, 125); mmx.drawImage(mapCv, 0, 0, 200, 125);
   const kx = 200 / mapCv.width, ky = 125 / mapCv.height;
-  if (!me.late) for (const id of me.tasks) { const d = TB[id]; mmx.fillStyle = '#ffd43b'; mmx.beginPath(); mmx.arc(d.x * kx, d.y * ky, 3, 0, 7); mmx.fill(); }
+  if (!me.late) for (const id of me.tasks) { const d = TB[id], dest = me.item && d.item === me.item; if (me.item && !dest) continue; mmx.fillStyle = dest ? '#ff922b' : '#ffd43b'; mmx.beginPath(); mmx.arc(d.x * kx, d.y * ky, dest ? 5 : 3, 0, 7); mmx.fill(); }
   mmx.fillStyle = '#ff3b3b'; mmx.fillRect(B.x * kx - 2, B.y * ky - 2, 4, 4);
   for (const b of S.bodies) { mmx.fillStyle = '#f33'; mmx.fillRect(b.x * kx - 3, b.y * ky - 3, 6, 6); }
   if (mine) { mmx.fillStyle = '#fff'; mmx.beginPath(); mmx.arc(mine.x * kx, mine.y * ky, 3, 0, 7); mmx.fill(); }
@@ -1342,6 +1595,7 @@ function frame(t) {
   if (joined && S && init && S.ph === 'lobby' && S.lobby) drawLobby(dt, t);
   else if (joined && S && S.ph !== 'lobby' && init) drawGame(dt, t); else ctx.clearRect(0, 0, cv.width, cv.height);
   if (mapOpen && mapCv && MAP && S && t - (frame.mt || 0) > 100) { frame.mt = t; drawBigMap(t); } // マップは10fpsで更新
+  updateQHold(t);
   if (closetOpen) { clPvG.clearRect(0, 0, 150, 180); drawAstro(clPvG, { x: 75, y: 125, f: 1, ph: t / 140, mv: true, a: true, c: myColor, acc: myAcc }, 3, null); }
   if (mini && mini.kind === 'weld') updateWeld(dt);
   else if (mini && mini.kind === 'fire') updateFire(dt);
