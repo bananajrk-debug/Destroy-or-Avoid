@@ -16,8 +16,8 @@ const CELL = 50, COLS = 64, ROWS = 40;
 const W = COLS * CELL, H = ROWS * CELL;
 const TICK_RATE = 30;
 const GAME_MS = 10 * 60 * 1000;
-const SPEED = 250, SPEED_CORE = 140, GHOST_MULT = 1.5, PR = 16, REACH = 70;
-const SLOT_MAX = 3, MIN_PLAYERS = 2, MAX_PLAYERS = 10, MAX_IMP = 3;
+const SPEED = 250, GHOST_MULT = 1.5, PR = 16, REACH = 70;
+const MIN_PLAYERS = 2, MAX_PLAYERS = 10, MAX_IMP = 3;
 const KILL_RANGE = 95, REPORT_RANGE = 110, BTN_RANGE = 90;
 const KILL_CD = 20000, FIRST_KILL_CD = 15000, SAB_CD = 45000, SAB_PCT = 5;
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
@@ -62,66 +62,61 @@ function mulberry32(a) {
   };
 }
 
-// ===== 宇宙船レイアウト（Among Us / The Skeld 風・左右非対称の手設計） =====
-// 座標はセル単位 (COLS=64 x ROWS=40)。th は index.html の THEMES のインデックス。
-// 0エンジン 1貯蔵庫 2医務室 3操舵室 4食堂(=中央ホール) 5ラボ 6電気室 7格納庫 8居住区 9通信室 10酸素室 11武器庫
+// ===== 宇宙船レイアウト（コンパクト版・11部屋: 大2 中4 小5）=====
+// COLS=64 x ROWS=40。th: 0エンジン 1貯蔵庫 2医務室 3操舵室 4食堂 5ラボ 6電気室 7格納庫 8居住区 9通信室 10酸素室 11武器庫
+// 大部屋: hall(食堂), storage(貯蔵庫)
+// 中部屋: engine(エンジン), reactor(武器庫), hangar(格納庫), nav(操舵室)
+// 小部屋: medbay(医務室), security(居住区), electric(電気室), oxygen(酸素室), comms(通信室)
 const ROOMS = {
-  hall:    { x: 26, y: 2,  w: 13, h: 10, th: 4 },  // 中央ホール(緊急会議ボタン) ※上寄り・中心から外す
-  engine:  { x: 2,  y: 2,  w: 10, h: 7,  th: 0 },  // 左上エンジン
-  reactor: { x: 2,  y: 15, w: 8,  h: 9,  th: 11 }, // 左端・武器庫(リアクター枠)
-  hangar:  { x: 3,  y: 29, w: 10, h: 8,  th: 7 },  // 左下・格納庫
-  medbay:  { x: 16, y: 10, w: 8,  h: 7,  th: 2 },  // 医務室 (基本は行き止まり)
-  security:{ x: 13, y: 19, w: 6,  h: 5,  th: 8 },  // 居住区 (小部屋・行き止まり)
-  electric:{ x: 18, y: 25, w: 9,  h: 8,  th: 6 },  // 電気室 (入口1つの袋小路＝キルスポット)
-  storage: { x: 29, y: 24, w: 11, h: 11, th: 1 },  // 貯蔵庫 (大部屋・下中央)
-  lab:     { x: 40, y: 14, w: 9,  h: 7,  th: 5 },  // ラボ (アドミン枠)
-  oxygen:  { x: 44, y: 3,  w: 7,  h: 6,  th: 10 }, // 酸素室
-  nav:     { x: 55, y: 12, w: 7,  h: 11, th: 3 },  // 操舵室 (右端に突き出す)
-  comms:   { x: 45, y: 29, w: 9,  h: 7,  th: 9 },  // 通信室
+  hall:    { x: 22, y: 2,  w: 14, h: 10, th: 4 },  // 【大】中央ホール(緊急会議ボタン)
+  engine:  { x: 2,  y: 2,  w: 10, h: 8,  th: 0 },  // 【中】左上エンジン
+  reactor: { x: 2,  y: 16, w: 9,  h: 9,  th: 11 }, // 【中】武器庫(左端)
+  hangar:  { x: 2,  y: 29, w: 11, h: 9,  th: 7 },  // 【中】格納庫(左下)
+  medbay:  { x: 14, y: 11, w: 7,  h: 6,  th: 2 },  // 【小】医務室(行き止まり)
+  security:{ x: 12, y: 20, w: 6,  h: 5,  th: 8 },  // 【小】居住区(行き止まり)
+  electric:{ x: 16, y: 27, w: 8,  h: 7,  th: 6 },  // 【小】電気室(袋小路=キルスポット)
+  storage: { x: 28, y: 22, w: 12, h: 12, th: 1 },  // 【大】貯蔵庫(下中央)
+  oxygen:  { x: 37, y: 2,  w: 7,  h: 6,  th: 10 }, // 【小】酸素室(右上)
+  nav:     { x: 44, y: 10, w: 10, h: 10, th: 3 },  // 【中】操舵室(右中)
+  comms:   { x: 38, y: 28, w: 8,  h: 7,  th: 9 },  // 【小】通信室(右下)
 };
 
-// 幅3の通路。セル中心のウェイポイント列 (直角で折れる)
 const CORRIDORS = [
-  [[26, 5], [11, 5]],                         // ホール ⇔ エンジン (上の長廊下)
-  [[19, 5], [19, 10]],                        // 上の長廊下 → 医務室 (枝)
-  [[6, 8], [6, 15]],                          // エンジン ⇔ 武器庫
-  [[5, 23], [5, 29]],                         // 武器庫 ⇔ 格納庫
-  [[9, 20], [13, 20]],                        // 武器庫 → 居住区 (袋小路)
-  [[12, 34], [29, 34]],                       // 格納庫 ⇔ 貯蔵庫 (下の長廊下)
-  [[22, 32], [22, 34]],                       // 下の長廊下 → 電気室 (唯一の入口)
-  [[33, 11], [33, 24]],                       // ホール ⇔ 貯蔵庫 (中央スパイン)
-  [[33, 17], [40, 17]],                       // スパイン → ラボ (枝)
-  [[38, 6], [44, 6]],                         // ホール ⇔ 酸素室
-  [[50, 5], [58, 5], [58, 12]],               // 酸素室 ⇔ 操舵室 (L字)
-  [[58, 22], [58, 32], [53, 32]],             // 操舵室 ⇔ 通信室 (L字)
-  [[45, 32], [39, 32]],                       // 通信室 ⇔ 貯蔵庫
+  [[22, 5], [11, 5]],                         // ホール ⇔ エンジン
+  [[17, 5], [17, 11]],                        // 上廊下 → 医務室
+  [[6, 9], [6, 16]],                          // エンジン ⇔ 武器庫
+  [[5, 24], [5, 29]],                         // 武器庫 ⇔ 格納庫
+  [[8, 21], [12, 21]],                        // 武器庫 → 居住区
+  [[11, 33], [28, 33]],                       // 格納庫 ⇔ 貯蔵庫(下廊下)
+  [[20, 31], [20, 33]],                       // 下廊下 → 電気室(唯一の入口)
+  [[30, 11], [30, 22]],                       // ホール ⇔ 貯蔵庫(中央スパイン)
+  [[36, 5], [44, 5], [44, 10]],              // ホール ⇔ 酸素室 ⇔ 操舵室(L字)
+  [[53, 15], [53, 30], [45, 30]],            // 操舵室 ⇔ 通信室(L字)
+  [[38, 30], [39, 30]],                      // 通信室 ⇔ 貯蔵庫
 ];
 
-// 毎試合ランダムで一部だけ開通する抜け道 (迂回路・逃走ルートのバリエーション)
 const OPTIONAL_CORRIDORS = [
-  [[21, 16], [21, 25]],                       // 医務室 ⇔ 電気室
-  [[48, 18], [55, 18]],                       // ラボ ⇔ 操舵室
-  [[16, 16], [16, 19]],                       // 医務室 ⇔ 居住区
-  [[46, 20], [46, 29]],                       // ラボ ⇔ 通信室
-  [[9, 16], [14, 16], [14, 14], [16, 14]],    // 武器庫 ⇔ 医務室 (クランク)
-  [[39, 27], [44, 27], [44, 22]],             // 貯蔵庫 ⇔ ラボ (裏道)
+  [[20, 16], [20, 24]],                       // 医務室 ⇔ 電気室
+  [[18, 16], [18, 20]],                       // 医務室 ⇔ 居住区
+  [[30, 16], [37, 16], [37, 10]],             // スパイン → 酸素室(裏道)
+  [[49, 17], [49, 28]],                       // 操舵室 ⇔ 通信室(近道)
+  [[7, 17], [12, 17], [12, 15], [14, 15]],   // 武器庫 ⇔ 医務室(クランク)
+  [[37, 28], [37, 33]],                       // 貯蔵庫 ⇔ 通信室(裏道)
 ];
 
-// 固定の柱・仕切り壁 [x, y, w, h]。部屋を「ただの箱」にしない
 const PILLARS = [
-  [33, 27, 1, 4],   // 貯蔵庫の中仕切り (左右に回り込める)
-  [36, 30, 2, 2],   // 貯蔵庫のコンテナ
-  [6, 18, 2, 2],    // 武器庫の炉心
-  [57, 16, 2, 1],   // 操舵室のコンソール
-  [21, 28, 1, 3],   // 電気室の配電盤 (死角を作る)
-  [28, 9, 1, 2], [37, 9, 1, 2], // ホールのテーブル脚
+  [31, 26, 1, 4],   // 貯蔵庫の中仕切り
+  [34, 29, 2, 2],   // 貯蔵庫のコンテナ
+  [5, 18, 2, 2],    // 武器庫の炉心
+  [46, 14, 2, 1],   // 操舵室のコンソール
+  [18, 30, 1, 2],   // 電気室の配電盤
+  [26, 8, 1, 2], [33, 8, 1, 2], // ホールのテーブル脚
 ];
 
-// タスク/供給所を置く優先部屋 (部屋内の具体位置はシードでランダム)
 const TASK_ROOMS = {
   stations: { fuse: 'electric', battery: 'hangar', core: 'reactor' },
-  1: 'nav', 2: 'lab', 3: 'oxygen', 4: 'engine', 5: 'storage', 6: 'electric', 7: 'comms', 8: 'security',
-  9: 'medbay', 10: 'engine', 11: 'oxygen', 12: 'storage', 13: 'reactor', 14: 'comms', 15: 'nav',
+  1: 'nav', 2: 'nav', 3: 'oxygen', 4: 'engine', 5: 'storage', 6: 'electric', 7: 'comms', 8: 'security',
+  9: 'medbay', 10: 'engine', 11: 'oxygen', 12: 'storage', 13: 'reactor', 14: 'comms', 15: 'hangar',
 };
 
 function genMap() {
@@ -301,8 +296,8 @@ const toast = (p, text, kind) => io.to(p.id).emit('toast', { text, kind: kind ||
 const participants = (R) => [...R.players.values()].filter(p => !p.late);
 const hostId = (R) => { let h = null; for (const p of R.players.values()) if (!h || p.joinOrder < h.joinOrder) h = p; return h ? h.id : null; };
 const maxImp = (n) => Math.min(MAX_IMP, Math.max(1, Math.floor((n - 1) / 2)));
-const hasItem = (p, t) => p.slots.some(s => s.t === t);
-const removeItem = (p, t) => { if (!hasItem(p, t)) return false; p.slots = p.slots.filter(s => s.t !== t); return true; };
+const hasItem = (p, t) => p.item === t;
+const removeItem = (p, t) => { if (!hasItem(p, t)) return false; p.item = null; return true; };
 function cancelMini(p) { if (p.mini) { p.mini = null; io.to(p.id).emit('miniCancel'); } }
 const tpos = (R, id) => R.map.tasks[id];
 
@@ -336,7 +331,7 @@ function completeTask(R, p, id) {
 function resetPlayer(R, p, i, n) {
   const pos = ringPos(R, i, n, 100);
   p.x = pos.x; p.y = pos.y;
-  p.alive = true; p.slots = []; p.mini = null; p.input = { x: 0, y: 0 };
+  p.alive = true; p.item = null; p.mini = null; p.input = { x: 0, y: 0 };
   p.tasks = []; p.doneTasks = new Set(); p.moving = false; p.emUsed = false;
 }
 
@@ -377,7 +372,7 @@ function toLobby(R) {
   R.map = null; R.mapMsg = null;
   for (const p of R.players.values()) {
     p.late = false; p.ready = false; p.role = null; p.alive = true;
-    p.slots = []; p.tasks = []; p.mini = null; p.input = { x: 0, y: 0 }; p.moving = false;
+    p.item = null; p.tasks = []; p.mini = null; p.input = { x: 0, y: 0 }; p.moving = false;
   }
 }
 
@@ -396,7 +391,9 @@ function checkWin(R) {
 function startMeeting(R, caller, reason) {
   const now = Date.now();
   R.phase = 'meeting';
-  R.meeting = { mode: 'discuss', startAt: now, modeEnds: now + DISCUSS_MS, votes: new Map(), reason, callerName: caller.name, result: null };
+  // 死体報告の場合は直近の死体を犠牲者として記録
+  const victim = reason === 'body' && R.bodies.length > 0 ? R.bodies[R.bodies.length - 1] : null;
+  R.meeting = { mode: 'discuss', startAt: now, modeEnds: now + DISCUSS_MS, votes: new Map(), reason, callerName: caller.name, result: null, victim };
   if (reason === 'button') caller.emUsed = true;
   const part = participants(R);
   part.forEach((p, i) => {
@@ -468,9 +465,8 @@ function doAction(R, p) {
     const d = defOf(id);
     if (d.kind !== 'carry' || !near(p, R.map.stations[d.item], REACH)) continue;
     if (hasItem(p, d.item)) { toast(p, 'すでに持っている', 'error'); return; }
-    const need = d.item === 'core' ? 2 : 1;
-    if (p.slots.length + need > SLOT_MAX) { toast(p, 'スロットがいっぱい!', 'error'); return; }
-    for (let i = 0; i < need; i++) p.slots.push({ t: d.item });
+    if (p.item) { toast(p, '手がふさがっている! 先に設置しよう', 'error'); return; }
+    p.item = d.item;
     toast(p, `${ITEM_NAME[d.item]}を取得`, 'info'); io.to(p.id).emit('sfx', 'click');
     return;
   }
@@ -500,7 +496,7 @@ function doKill(R, p) {
   }
   if (!best) { toast(p, '範囲内にターゲットがいない', 'error'); return; }
   best.alive = false; cancelMini(best);
-  R.bodies.push({ id: R.nextBody++, x: Math.round(best.x), y: Math.round(best.y), c: best.color });
+  R.bodies.push({ id: R.nextBody++, x: Math.round(best.x), y: Math.round(best.y), c: best.color, name: best.name });
   p.x = best.x; p.y = best.y; p.killReady = now + KILL_CD;
   // 被害者にだけキルカットシーン。実行者は演出なしで即操作可能
   io.to(best.id).emit('killCut', { kc: p.color, ka: p.acc, kn: p.name, vc: best.color, va: best.acc, vn: best.name });
@@ -542,7 +538,7 @@ function tickRoom(R, now, dt) {
       if (len > 0) {
         const dx = p.input.x / len, dy = p.input.y / len;
         const ghost = !p.alive;
-        const sp = (hasItem(p, 'core') ? SPEED_CORE : SPEED) * (ghost ? GHOST_MULT : 1);
+        const sp = SPEED * (ghost ? GHOST_MULT : 1);
         p.x += dx * sp * dt; p.y += dy * sp * dt;
         if (!ghost) resolveWalls(R.map.grid, p); // 幽霊は壁通り抜け
         p.x = clamp(p.x, PR, W - PR); p.y = clamp(p.y, PR, H - PR);
@@ -569,14 +565,14 @@ function broadcast(R, now) {
       imp: R.impCount, max: maxImp(R.players.size),
     };
   }
-  const pv = R.phase === 'lobby' ? null : part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face }));
+  const pv = R.phase === 'lobby' ? null : part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face, item: p.item || null }));
   for (const v of R.players.values()) {
     const ghost = !v.alive || v.late || R.phase === 'end';
     const msg = {
       ...base,
       me: {
         role: v.role, alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
-        tasks: v.tasks, sl: v.slots.map(s => s.t),
+        tasks: v.tasks, item: v.item || null,
         kcd: Math.max(0, (v.killReady || 0) - now), scd: Math.max(0, (v.sabReady || 0) - now),
         em: v.emUsed, emLock: Math.max(0, R.noMeetingUntil - now),
         mates: v.role === 'imposter' ? part.filter(x => x.role === 'imposter' && x !== v).map(x => x.id) : [],
@@ -589,7 +585,7 @@ function broadcast(R, now) {
       if (R.phase === 'meeting') {
         const m = R.meeting;
         msg.meet = {
-          mode: m.mode, t: Math.max(0, m.modeEnds - now), reason: m.reason, caller: m.callerName,
+          mode: m.mode, t: Math.max(0, m.modeEnds - now), reason: m.reason, caller: m.callerName, victim: m.victim || null,
           roster: part.map(p => ({ id: p.id, name: p.name, c: p.color, a: p.alive, voted: m.votes.has(p.id) })),
           my: m.votes.get(v.id) || null, res: m.result,
         };
@@ -617,7 +613,7 @@ function addPlayer(socket, R, d) {
   const p = {
     id: socket.id, joinOrder: R.joinCounter, name, color, acc: ACCS.includes(d && d.acc) ? d.acc : '',
     x: 0, y: 0, face: 1, moving: false, ready: false, late, role: null, alive: !late,
-    tasks: [], doneTasks: new Set(), slots: [], mini: null,
+    tasks: [], doneTasks: new Set(), item: null, mini: null,
     input: { x: 0, y: 0 }, lastAct: 0, lastDisc: 0, lastChat: 0, killReady: 0, sabReady: 0, emUsed: false,
   };
   R.players.set(socket.id, p);
@@ -629,7 +625,7 @@ function addPlayer(socket, R, d) {
 
 io.on('connection', (socket) => {
   socket.emit('init', {
-    you: socket.id, W, H, CELL, COLS, ROWS, REACH, SLOT_MAX, GAME_MS, ITEM_NAME, ACCS, COLORS,
+    you: socket.id, W, H, CELL, COLS, ROWS, REACH, GAME_MS, ITEM_NAME, ACCS, COLORS,
     TASKS: TASK_DEFS.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon })),
   });
 
@@ -657,7 +653,7 @@ io.on('connection', (socket) => {
   socket.on('report', () => { const { R, p } = C(); if (p) doReport(R, p); });
   socket.on('kill', () => { const { R, p } = C(); if (p) doKill(R, p); });
   socket.on('sabotage', () => { const { R, p } = C(); if (p) doSabotage(R, p); });
-  socket.on('discard', (i) => { const { R, p } = C(); if (p) doDiscard(R, p, i); });
+  // discard廃止（スロットシステム廃止）
 
   socket.on('miniEnd', (d) => {
     const { R, p } = C(); if (!p || !p.mini) return;
