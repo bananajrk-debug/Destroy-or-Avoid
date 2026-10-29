@@ -62,125 +62,191 @@ function mulberry32(a) {
   };
 }
 
-// BSP + 幅3の廊下 + ループ廊下 で、毎回違う非対称の宇宙船レイアウトを生成
+// ===== 宇宙船レイアウト（Among Us / The Skeld 風・左右非対称の手設計） =====
+// 座標はセル単位 (COLS=64 x ROWS=40)。th は index.html の THEMES のインデックス。
+// 0エンジン 1貯蔵庫 2医務室 3操舵室 4食堂(=中央ホール) 5ラボ 6電気室 7格納庫 8居住区 9通信室 10酸素室 11武器庫
+const ROOMS = {
+  hall:    { x: 26, y: 2,  w: 13, h: 10, th: 4 },  // 中央ホール(緊急会議ボタン) ※上寄り・中心から外す
+  engine:  { x: 2,  y: 2,  w: 10, h: 7,  th: 0 },  // 左上エンジン
+  reactor: { x: 2,  y: 15, w: 8,  h: 9,  th: 11 }, // 左端・武器庫(リアクター枠)
+  hangar:  { x: 3,  y: 29, w: 10, h: 8,  th: 7 },  // 左下・格納庫
+  medbay:  { x: 16, y: 10, w: 8,  h: 7,  th: 2 },  // 医務室 (基本は行き止まり)
+  security:{ x: 13, y: 19, w: 6,  h: 5,  th: 8 },  // 居住区 (小部屋・行き止まり)
+  electric:{ x: 18, y: 25, w: 9,  h: 8,  th: 6 },  // 電気室 (入口1つの袋小路＝キルスポット)
+  storage: { x: 29, y: 24, w: 11, h: 11, th: 1 },  // 貯蔵庫 (大部屋・下中央)
+  lab:     { x: 40, y: 14, w: 9,  h: 7,  th: 5 },  // ラボ (アドミン枠)
+  oxygen:  { x: 44, y: 3,  w: 7,  h: 6,  th: 10 }, // 酸素室
+  nav:     { x: 55, y: 12, w: 7,  h: 11, th: 3 },  // 操舵室 (右端に突き出す)
+  comms:   { x: 45, y: 29, w: 9,  h: 7,  th: 9 },  // 通信室
+};
+
+// 幅3の通路。セル中心のウェイポイント列 (直角で折れる)
+const CORRIDORS = [
+  [[26, 5], [11, 5]],                         // ホール ⇔ エンジン (上の長廊下)
+  [[19, 5], [19, 10]],                        // 上の長廊下 → 医務室 (枝)
+  [[6, 8], [6, 15]],                          // エンジン ⇔ 武器庫
+  [[5, 23], [5, 29]],                         // 武器庫 ⇔ 格納庫
+  [[9, 20], [13, 20]],                        // 武器庫 → 居住区 (袋小路)
+  [[12, 34], [29, 34]],                       // 格納庫 ⇔ 貯蔵庫 (下の長廊下)
+  [[22, 32], [22, 34]],                       // 下の長廊下 → 電気室 (唯一の入口)
+  [[33, 11], [33, 24]],                       // ホール ⇔ 貯蔵庫 (中央スパイン)
+  [[33, 17], [40, 17]],                       // スパイン → ラボ (枝)
+  [[38, 6], [44, 6]],                         // ホール ⇔ 酸素室
+  [[50, 5], [58, 5], [58, 12]],               // 酸素室 ⇔ 操舵室 (L字)
+  [[58, 22], [58, 32], [53, 32]],             // 操舵室 ⇔ 通信室 (L字)
+  [[45, 32], [39, 32]],                       // 通信室 ⇔ 貯蔵庫
+];
+
+// 毎試合ランダムで一部だけ開通する抜け道 (迂回路・逃走ルートのバリエーション)
+const OPTIONAL_CORRIDORS = [
+  [[21, 16], [21, 25]],                       // 医務室 ⇔ 電気室
+  [[48, 18], [55, 18]],                       // ラボ ⇔ 操舵室
+  [[16, 16], [16, 19]],                       // 医務室 ⇔ 居住区
+  [[46, 20], [46, 29]],                       // ラボ ⇔ 通信室
+  [[9, 16], [14, 16], [14, 14], [16, 14]],    // 武器庫 ⇔ 医務室 (クランク)
+  [[39, 27], [44, 27], [44, 22]],             // 貯蔵庫 ⇔ ラボ (裏道)
+];
+
+// 固定の柱・仕切り壁 [x, y, w, h]。部屋を「ただの箱」にしない
+const PILLARS = [
+  [33, 27, 1, 4],   // 貯蔵庫の中仕切り (左右に回り込める)
+  [36, 30, 2, 2],   // 貯蔵庫のコンテナ
+  [6, 18, 2, 2],    // 武器庫の炉心
+  [57, 16, 2, 1],   // 操舵室のコンソール
+  [21, 28, 1, 3],   // 電気室の配電盤 (死角を作る)
+  [28, 9, 1, 2], [37, 9, 1, 2], // ホールのテーブル脚
+];
+
+// タスク/供給所を置く優先部屋 (部屋内の具体位置はシードでランダム)
+const TASK_ROOMS = {
+  stations: { fuse: 'electric', battery: 'hangar', core: 'reactor' },
+  1: 'nav', 2: 'lab', 3: 'oxygen', 4: 'engine', 5: 'storage', 6: 'electric', 7: 'comms', 8: 'security',
+  9: 'medbay', 10: 'engine', 11: 'oxygen', 12: 'storage', 13: 'reactor', 14: 'comms', 15: 'nav',
+};
+
 function genMap() {
   const seed = Math.floor(Math.random() * 2147483647);
   const rng = mulberry32(seed);
   const ri = (a, b) => a + Math.floor(rng() * (b - a + 1));
+  // 毎試合 左右/上下反転をランダム適用 (非対称なので反転すると別マップとして遊べる)
+  const fx = rng() < 0.5, fy = rng() < 0.5;
+  const tc = c => fx ? COLS - 1 - c : c, tr = r => fy ? ROWS - 1 - r : r;
+  const trect = ([x, y, w, h]) => [fx ? COLS - x - w : x, fy ? ROWS - y - h : y, w, h];
+
   const g = Array.from({ length: ROWS }, () => Array(COLS).fill(true));
   const wall = (c, r) => c < 0 || r < 0 || c >= COLS || r >= ROWS || g[r][c];
   const carve = (c0, r0, c1, r1) => {
-    for (let r = Math.max(1, r0); r <= Math.min(ROWS - 2, r1); r++)
-      for (let c = Math.max(1, c0); c <= Math.min(COLS - 2, c1); c++) g[r][c] = false;
+    for (let r = Math.max(1, Math.min(r0, r1)); r <= Math.min(ROWS - 2, Math.max(r0, r1)); r++)
+      for (let c = Math.max(1, Math.min(c0, c1)); c <= Math.min(COLS - 2, Math.max(c0, c1)); c++) g[r][c] = false;
   };
-  const rooms = [];
-  function bsp(x, y, w, h) {
-    const node = {};
-    const canV = w >= 24, canH = h >= 18, big = w > 22 || h > 17;
-    if ((canV || canH) && (big || rng() < 0.3)) {
-      const vert = canV && canH ? (w / h > 1.3 ? true : (h / w > 1.3 ? false : rng() < 0.5)) : canV;
-      if (vert) { const s = ri(12, w - 12); node.a = bsp(x, y, s, h); node.b = bsp(x + s, y, w - s, h); }
-      else { const s = ri(9, h - 9); node.a = bsp(x, y, w, s); node.b = bsp(x, y + s, w, h - s); }
-    } else {
-      const rw = ri(Math.max(6, Math.floor(w * 0.6)), w - 2), rh = ri(Math.max(6, Math.floor(h * 0.6)), h - 2);
-      const rx = x + 1 + ri(0, w - 2 - rw), ry = y + 1 + ri(0, h - 2 - rh);
-      carve(rx, ry, rx + rw - 1, ry + rh - 1);
-      node.room = { x: rx, y: ry, w: rw, h: rh };
-      rooms.push(node.room);
+  const carvePath = (pts) => {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = [tc(pts[i][0]), tr(pts[i][1])], b = [tc(pts[i + 1][0]), tr(pts[i + 1][1])];
+      carve(a[0] - 1, a[1] - 1, b[0] + 1, b[1] + 1);
     }
-    return node;
-  }
-  const root = bsp(1, 1, COLS - 2, ROWS - 2);
-  const center = r => ({ c: r.x + (r.w >> 1), r: r.y + (r.h >> 1) });
-  const pick = n => n.room ? n.room : pick(rng() < 0.5 ? n.a : n.b);
-  const hcar = (c1, c2, r) => carve(Math.min(c1, c2), r - 1, Math.max(c1, c2), r + 1);
-  const vcar = (r1, r2, c) => carve(c - 1, Math.min(r1, r2), c + 1, Math.max(r1, r2));
-  function corridor(a, b) {
-    const A = center(a), B = center(b);
-    if (rng() < 0.5) { hcar(A.c, B.c, A.r); vcar(A.r, B.r, B.c); }
-    else { vcar(A.r, B.r, A.c); hcar(A.c, B.c, B.r); }
-  }
-  (function connect(n) { if (!n.a) return; connect(n.a); connect(n.b); corridor(pick(n.a), pick(n.b)); })(root);
-  for (let i = 0; i < 4; i++) { const a = rooms[ri(0, rooms.length - 1)], b = rooms[ri(0, rooms.length - 1)]; if (a !== b) corridor(a, b); }
+  };
 
-  // 中央付近の大きめの部屋を「緊急会議ルーム」に
-  const mid = { c: COLS / 2, r: ROWS / 2 };
-  const dm = r => Math.hypot(center(r).c - mid.c, center(r).r - mid.r);
-  let cands = rooms.filter(r => r.w >= 9 && r.h >= 7);
-  if (!cands.length) cands = rooms.slice().sort((a, b) => b.w * b.h - a.w * a.h).slice(0, 1);
-  cands.sort((a, b) => dm(a) - dm(b));
-  const hall = cands[0], bc = center(hall);
+  // 部屋 (サイズを ±1 セル揺らして毎回少し違う形に)
+  const R = {};
+  for (const key in ROOMS) {
+    const o = ROOMS[key];
+    const jx = key === 'hall' ? 0 : ri(-1, 0), jw = key === 'hall' ? 0 : ri(0, 1);
+    const jy = key === 'hall' ? 0 : ri(-1, 0), jh = key === 'hall' ? 0 : ri(0, 1);
+    const [x, y, w, h] = trect([o.x + jx, o.y + jy, o.w + jw - jx, o.h + jh - jy]);
+    R[key] = { key, x, y, w, h, th: o.th };
+    carve(x, y, x + w - 1, y + h - 1);
+  }
+  for (const p of CORRIDORS) carvePath(p);
+  // 抜け道は 2〜4 本をランダムに開通
+  const opt = OPTIONAL_CORRIDORS.slice().sort(() => rng() - 0.5).slice(0, ri(2, 4));
+  for (const p of opt) carvePath(p);
 
-  // 柱 (2x2)
-  for (const r of rooms) {
-    if (r === hall || r.w < 10 || r.h < 8 || rng() > 0.7) continue;
-    for (let k = ri(1, 2); k > 0; k--) {
-      const px = ri(r.x + 3, r.x + r.w - 5), py = ri(r.y + 3, r.y + r.h - 5);
-      g[py][px] = g[py][px + 1] = g[py + 1][px] = g[py + 1][px + 1] = true;
+  // 柱・仕切り
+  for (const pr of PILLARS) {
+    const [x, y, w, h] = trect(pr);
+    for (let r = y; r < y + h; r++) for (let c = x; c < x + w; c++) if (r > 0 && c > 0 && r < ROWS - 1 && c < COLS - 1) g[r][c] = true;
+  }
+  // 大部屋にランダムな木箱 (1x1) を少し
+  for (const key of ['storage', 'engine', 'hangar', 'comms']) {
+    const rm = R[key];
+    for (let n = ri(0, 2); n > 0; n--) {
+      const c = ri(rm.x + 2, rm.x + rm.w - 3), r = ri(rm.y + 2, rm.y + rm.h - 3);
+      g[r][c] = true;
     }
   }
-  // 会議ルーム中央のクリアゾーン
-  const cr = Math.min(3.4, (Math.min(hall.w, hall.h) - 1) / 2);
+
+  const hall = R.hall;
+  const bc = { c: hall.x + (hall.w >> 1), r: hall.y + (hall.h >> 1) };
+  // 会議ルーム中央のクリアゾーン (ボタンとスポーンリング用)
   for (let r = hall.y; r < hall.y + hall.h; r++) for (let c = hall.x; c < hall.x + hall.w; c++)
-    if (Math.hypot(c - bc.c, r - bc.r) <= cr) g[r][c] = false;
+    if (Math.hypot(c - bc.c, r - bc.r) <= 3.4) g[r][c] = false;
 
-  // 飛び出し(突起・斜め接触)の除去
-  for (let it = 0; it < 16; it++) {
-    for (let r = 1; r < ROWS - 1; r++) for (let c = 1; c < COLS - 1; c++) {
-      if (!g[r][c]) continue;
-      const n = (wall(c - 1, r) ? 1 : 0) + (wall(c + 1, r) ? 1 : 0) + (wall(c, r - 1) ? 1 : 0) + (wall(c, r + 1) ? 1 : 0);
-      if (n <= 1) g[r][c] = false;
-    }
+  // 斜め接触(角だけで接する壁)の除去。※柱や1マス幅の仕切りを侵食しないよう、突起削りは行わない
+  for (let it = 0; it < 4; it++) {
+    let changed = false;
     for (let r = 0; r < ROWS - 1; r++) for (let c = 0; c < COLS - 1; c++) {
       const a = wall(c, r), b = wall(c + 1, r), d = wall(c, r + 1), e = wall(c + 1, r + 1);
-      let tr = -1, tc = -1;
-      if (a && e && !b && !d) { tr = r; tc = c; } else if (b && d && !a && !e) { tr = r; tc = c + 1; }
-      if (tr >= 1 && tc >= 1 && tr < ROWS - 1 && tc < COLS - 1) g[tr][tc] = false;
+      let tr2 = -1, tc2 = -1;
+      if (a && e && !b && !d) { tr2 = r; tc2 = c; } else if (b && d && !a && !e) { tr2 = r; tc2 = c + 1; }
+      if (tr2 >= 1 && tc2 >= 1 && tr2 < ROWS - 1 && tc2 < COLS - 1) { g[tr2][tc2] = false; changed = true; }
     }
+    if (!changed) break;
   }
-  // 到達性: 会議ルームから行けない空間は壁で埋める
-  const reach = new Set([bc.r * COLS + bc.c]);
-  const q = [[bc.c, bc.r]];
-  for (let i = 0; i < q.length; i++) {
-    const [c, r] = q[i];
-    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const nc = c + dc, nr = r + dr;
-      if (wall(nc, nr) || reach.has(nr * COLS + nc)) continue;
-      reach.add(nr * COLS + nc); q.push([nc, nr]);
+
+  // 到達性チェック: 会議ルームから行けない空間は壁で埋める (スタック防止)
+  const flood = () => {
+    const reach = new Set([bc.r * COLS + bc.c]);
+    const q = [[bc.c, bc.r]];
+    for (let i = 0; i < q.length; i++) {
+      const [c, r] = q[i];
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nc = c + dc, nr = r + dr;
+        if (wall(nc, nr) || reach.has(nr * COLS + nc)) continue;
+        reach.add(nr * COLS + nc); q.push([nc, nr]);
+      }
     }
+    return reach;
+  };
+  let reach = flood();
+  // 万一ある部屋が孤立したら、その部屋からホールへ直線通路を掘って救済
+  for (const key in R) {
+    const rm = R[key], cc = rm.x + (rm.w >> 1), cr = rm.y + (rm.h >> 1);
+    let ok = false;
+    for (let r = rm.y; r < rm.y + rm.h && !ok; r++) for (let c = rm.x; c < rm.x + rm.w; c++) if (reach.has(r * COLS + c)) { ok = true; break; }
+    if (!ok) { carve(cc - 1, cr - 1, bc.c + 1, cr + 1); carve(bc.c - 1, cr - 1, bc.c + 1, bc.r + 1); reach = flood(); }
   }
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!g[r][c] && !reach.has(r * COLS + c)) g[r][c] = true;
 
-  // 設備配置 (3x3が空いている到達可能セル、設備同士は離す)
+  // 設備配置: 指定部屋の中で 3x3 が空いている到達可能セル。設備同士は離す
   const open3 = (c, r) => { for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (wall(c + dc, r + dr)) return false; return true; };
   const used = [];
-  const order = rooms.slice().sort(() => rng() - 0.5);
-  let k = 0;
-  function spot() {
-    let minD = 9;
-    for (let t = 0; t < 1200; t++) {
-      if (t % 150 === 149) minD = Math.max(3, minD - 1.5);
-      const R = order[k++ % order.length];
-      const c = ri(R.x + 1, R.x + R.w - 2), r = ri(R.y + 1, R.y + R.h - 2);
-      if (!reach.has(r * COLS + c) || !open3(c, r)) continue;
-      if (Math.hypot(c - bc.c, r - bc.r) < 5) continue;
-      if (used.some(u => Math.hypot(u.c - c, u.r - r) < minD)) continue;
-      used.push({ c, r }); return cp(c, r);
-    }
+  const okCell = (c, r, minD) => reach.has(r * COLS + c) && open3(c, r) && Math.hypot(c - bc.c, r - bc.r) >= 5 && !used.some(u => Math.hypot(u.c - c, u.r - r) < minD);
+  const roomList = Object.values(R).filter(r => r !== hall);
+  function spot(prefKey) {
+    const tryRoom = (rm, minD, tries) => {
+      for (let t = 0; t < tries; t++) {
+        const c = ri(rm.x + 1, rm.x + rm.w - 2), r = ri(rm.y + 1, rm.y + rm.h - 2);
+        if (okCell(c, r, minD)) { used.push({ c, r }); return cp(c, r); }
+      }
+      return null;
+    };
+    const pref = R[prefKey];
+    for (const minD of [4, 3, 2.5]) { const p = pref && tryRoom(pref, minD, 200); if (p) return p; }
+    for (const minD of [5, 3]) for (const rm of roomList.slice().sort(() => rng() - 0.5)) { const p = tryRoom(rm, minD, 60); if (p) return p; }
     for (const idx of reach) {
       const c = idx % COLS, r = (idx / COLS) | 0;
-      if (open3(c, r) && !used.some(u => u.c === c && u.r === r)) { used.push({ c, r }); return cp(c, r); }
+      if (okCell(c, r, 1)) { used.push({ c, r }); return cp(c, r); }
     }
-    return cp(bc.c, bc.r);
+    return cp(bc.c + 4, bc.r);
   }
-  const stations = { fuse: spot(), battery: spot(), core: spot() };
+  const stations = {};
+  for (const it in TASK_ROOMS.stations) stations[it] = spot(TASK_ROOMS.stations[it]);
   const tasks = {};
-  for (const d of TASK_DEFS) tasks[d.id] = spot();
+  for (const d of TASK_DEFS) tasks[d.id] = spot(TASK_ROOMS[d.id]);
 
-  const themes = Array.from({ length: THEME_COUNT }, (_, i) => i).sort(() => rng() - 0.5);
   return {
     seed, grid: g, rows: g.map(row => row.map(v => (v ? '1' : '0')).join('')),
-    rooms: rooms.map((r, i) => [r.x, r.y, r.w, r.h, themes[i % THEME_COUNT]]),
+    rooms: Object.values(R).map(r => [r.x, r.y, r.w, r.h, r.th]),
     button: cp(bc.c, bc.r), stations, tasks,
   };
 }
@@ -650,5 +716,5 @@ io.on('connection', (socket) => {
   });
 });
 
-if (require.main === module) server.listen(PORT, () => console.log(`Destroy or Avoid v5 running on :${PORT}`));
+if (require.main === module) server.listen(PORT, () => console.log(`Destroy or Avoid v7.1 running on :${PORT}`));
 module.exports = { genMap };
