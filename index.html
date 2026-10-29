@@ -25,6 +25,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 .row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:min(540px,92vw);flex:none}
 .chip{width:38px;height:38px;border-radius:10px;padding:0;font-size:20px;background:#12192b;border:2px solid #2b3856;box-shadow:none;display:flex;align-items:center;justify-content:center}
 .chip.sel{border-color:#ffd43b;box-shadow:0 0 12px #ffd43b88}
+.chip small{font-size:11px;white-space:nowrap;font-weight:700}
 .sw{width:28px;height:28px;border-radius:50%;padding:0;border:3px solid #fff3;box-shadow:none}
 .sw.sel{border-color:#fff}
 #titleBtns{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:row;gap:12px;z-index:21;padding:10px 14px;background:rgba(8,11,20,.78);border-radius:18px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 6px 24px #000a}
@@ -542,7 +543,6 @@ function renderMeeting(s) {
   $('chatIn').disabled = !canChat; $('chatIn').placeholder = canChat ? '発言する…' : '発言できません';
 }
 // ---------- マップオーバーレイ ----------
-let mapOpen = false;
 function toggleMap() {
   mapOpen = !mapOpen;
   const ov = $('mapOverlay');
