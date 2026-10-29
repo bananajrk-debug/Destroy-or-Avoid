@@ -54,10 +54,11 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 .tk b{color:#ffd43b;margin-left:4px}.tk small{opacity:.6;margin-left:4px;font-size:11px}
 #mm{position:absolute;top:64px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:200px;height:125px}
 #hint{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:18px;font-weight:700;color:#ffd43b;text-shadow:0 2px 6px #000;white-space:nowrap}
-#slots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
-.slot{width:64px;height:64px;border-radius:12px;background:#000a;border:3px solid #fff3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;position:relative}
-.slot.sel{border-color:#ffd43b;box-shadow:0 0 14px #ffd43b88}
-.slot b{position:absolute;top:2px;left:6px;font-size:11px;opacity:.7}.slot small{font-size:10px}
+#itemHud{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#000a;border:3px solid #ffd43b;border-radius:14px;padding:6px 16px;font-size:26px;display:flex;align-items:center;gap:8px;min-width:80px;justify-content:center}
+#itemHud.empty{border-color:#fff3;opacity:.5}
+#mapOverlay{position:fixed;inset:0;z-index:15;background:#000c;display:flex;align-items:center;justify-content:center}
+#mapOverlay canvas{max-width:min(900px,95vw);max-height:90vh;border:3px solid #4b5b83;border-radius:10px}
+#mapOverlay .mapClose{position:absolute;top:16px;right:20px;font-size:28px;cursor:pointer;color:#fff;background:#000a;border:none;border-radius:50%;width:44px;height:44px}
 #btns{position:absolute;bottom:14px;right:14px;display:flex;gap:10px}
 #btns button{padding:10px 16px;font-size:16px;display:flex;flex-direction:column;align-items:center;line-height:1.2;min-width:72px}
 #btns small{font-size:10px;opacity:.8;font-weight:400}
@@ -120,7 +121,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
   <input type="text" id="nameIn" maxlength="10" placeholder="なまえ (10文字まで)">
   <div class="row" id="accRow"></div>
   <div class="row" id="colRow"></div>
-  <p class="sub" style="font-size:12px">WASD:移動 / SPACE:使う・会議ボタン / R:報告 / E:キル / F:妨害 / 1-3:スロット / Q:捨てる</p>
+  <p class="sub" style="font-size:12px">WASD:移動 / SPACE:使う・会議ボタン / R:報告 / E:キル / F:妨害 / M:マップ表示</p>
 </div>
 <div id="titleBtns">
   <button id="bCreate" class="green">ロビーを作成</button>
@@ -151,7 +152,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
   <div id="tasks"></div>
   <canvas id="mm" width="200" height="125"></canvas>
   <div id="hint"></div>
-  <div id="slots"></div>
+  <div id="itemHud" class="empty"></div>
   <div id="btns">
     <button id="bUse" class="blue">使う<small>SPACE</small></button>
     <button id="bRep" class="green">報告<small>R</small></button>
@@ -171,6 +172,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
   <div id="mFoot"><button id="bSkip" class="blue hidden">スキップ (投票しない)</button><div id="mRes"></div></div>
 </div>
 
+<div id="mapOverlay" class="hidden"><canvas id="mapBig"></canvas><button class="mapClose" id="mapCloseBtn">✕</button></div>
 <div id="endscr" class="hidden"><h2 id="endTitle"></h2><p id="endReason" class="sub" style="font-size:18px"></p><div id="roster"></div><button id="btnLobby" class="blue">ロビーへ戻る</button></div>
 <div id="toast"></div>
 
@@ -185,7 +187,7 @@ const mmx = $('mm').getContext('2d');
 const pvc = $('pv'), pvg = pvc.getContext('2d');
 const ITEM_ICON = { fuse: '🔌', battery: '🔋', core: '⚛️' };
 let init = null, S = null, MAP = null, mapCv = null, joined = false, prevPh = '', prevMode = '';
-let selSlot = 0, mini = null, meetSig = '', lastIn = '', taskSig = '', slotSig = '', fx = null;
+let mini = null, meetSig = '', lastIn = '', taskSig = '', itemSig = '', fx = null, mapOpen = false;
 let myAcc = '', myColor = '#4dabf7';
 const TB = {}, ents = new Map(), keysDown = {};
 const hyp = Math.hypot, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -466,7 +468,7 @@ function updateEnts(s) {
     seen.add(p.id); let e = ents.get(p.id);
     if (!e) { e = { x: p.x, y: p.y, ph: 0 }; ents.set(p.id, e); }
     if (hyp(p.x - e.x, p.y - e.y) > 160) { e.x = p.x; e.y = p.y; }
-    Object.assign(e, { id: p.id, tx: p.x, ty: p.y, mv: p.mv, f: p.f, a: p.a, name: p.name, c: p.c, acc: p.acc });
+    Object.assign(e, { id: p.id, tx: p.x, ty: p.y, mv: p.mv, f: p.f, a: p.a, name: p.name, c: p.c, acc: p.acc, item: p.item || null });
   }
   for (const id of [...ents.keys()]) if (!seen.has(id)) ents.delete(id);
 }
@@ -480,7 +482,7 @@ function nearHint(me, e) {
   let text = '';
   if (body) text = 'R: 死体を報告';
   else {
-    for (const id of me.tasks) { const d = TB[id]; if (hyp(d.x - e.x, d.y - e.y) <= init.REACH) { text = d.kind === 'carry' ? (me.sl.includes(d.item) ? 'SPACE: 設置する' : `${init.ITEM_NAME[d.item]}が必要`) : `SPACE: ${d.name}`; break; } }
+    for (const id of me.tasks) { const d = TB[id]; if (hyp(d.x - e.x, d.y - e.y) <= init.REACH) { text = d.kind === 'carry' ? (me.item === d.item ? 'SPACE: 設置する' : `${init.ITEM_NAME[d.item]}が必要`) : `SPACE: ${d.name}`; break; } }
     if (!text) for (const id of me.tasks) { const d = TB[id]; if (d.kind !== 'carry') continue; const st = MAP.STATIONS[d.item]; if (hyp(st.x - e.x, st.y - e.y) <= init.REACH) { text = `SPACE: ${init.ITEM_NAME[d.item]}を取る`; break; } }
     if (!text && me.alive && hyp(MAP.BUTTON.x - e.x, MAP.BUTTON.y - e.y) <= 90) text = me.em ? '' : (me.emLock > 0 ? `会議ボタン (あと${Math.ceil(me.emLock / 1000)}秒)` : 'SPACE: 緊急会議ボタン');
   }
@@ -491,20 +493,14 @@ function renderHud(s) {
   $('pfill').style.width = s.prog + '%'; $('ptxt').textContent = 'タスク進捗 ' + Math.floor(s.prog) + '%';
   const sec = Math.ceil(s.remain / 1000);
   $('timer').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; $('timer').style.color = sec < 60 ? '#ff6b6b' : '#fff';
-  const tsig = me.tasks.join() + me.role + me.sl.join();
+  const tsig = me.tasks.join() + me.role + (me.item || '');
   if (tsig !== taskSig) {
     taskSig = tsig;
     $('tasks').innerHTML = me.late ? '<h4>観戦中</h4>' : '<h4>タスク</h4>' + me.tasks.map(id => { const d = TB[id];
-      const sub = d.kind === 'carry' ? (me.sl.includes(d.item) ? '→設置' : '→取りに行く') : '';
+      const sub = d.kind === 'carry' ? (me.item === d.item ? '→設置' : '→取りに行く') : '';
       return `<div class="tk">${d.icon} ${d.name}<b>+${d.pct}%</b><small>${sub}</small></div>`; }).join('');
   }
-  const ssig = me.sl.join() + selSlot;
-  if (ssig !== slotSig) {
-    slotSig = ssig; let html = '';
-    for (let k = 0; k < init.SLOT_MAX; k++) { const t = me.sl[k];
-      html += `<div class="slot ${k === selSlot ? 'sel' : ''}"><b>${k + 1}</b>${t ? ITEM_ICON[t] : ''}${t ? `<small>${init.ITEM_NAME[t].slice(0, 4)}</small>` : ''}</div>`; }
-    $('slots').innerHTML = html;
-  }
+  { const t = me.item; const el = $('itemHud'); el.textContent = t ? ITEM_ICON[t] + ' ' + init.ITEM_NAME[t] : '✋'; el.className = t ? '' : 'empty'; }
   const h = nearHint(me, e);
   $('hint').textContent = h.text;
   $('bRep').classList.toggle('rdy', h.body); $('bRep').classList.toggle('hidden', !me.alive || me.late); $('bUse').classList.toggle('hidden', me.late);
@@ -526,7 +522,8 @@ $('bUse').onclick = press('action'); $('bRep').onclick = press('report'); $('bKi
 // ---------- 会議 ----------
 function renderMeeting(s) {
   const m = s.meet, me = s.me;
-  $('mTitle').textContent = m.reason === 'body' ? `💀 死体発見! (報告者: ${m.caller})` : `🚨 緊急会議 (${m.caller})`;
+  const victimStr = m.victim ? ` — 被害者: ${m.victim.name}` : '';
+  $('mTitle').textContent = m.reason === 'body' ? `💀 死体発見!${victimStr} (報告者: ${m.caller})` : `🚨 緊急会議 (${m.caller})`;
   $('mTimer').textContent = ({ discuss: '議論タイム', vote: '投票タイム', result: '投票結果' })[m.mode] + `  ${Math.ceil(m.t / 1000)}s`;
   if (m.mode === 'result' && prevMode !== 'result') startFx('eject', { res: m.res, roster: m.roster }, m.res.ej ? 6000 : 3200);
   prevMode = m.mode;
@@ -543,6 +540,17 @@ function renderMeeting(s) {
   const canChat = me.alive && !me.late && m.mode !== 'result';
   $('chatIn').disabled = !canChat; $('chatIn').placeholder = canChat ? '発言する…' : '発言できません';
 }
+// ---------- マップオーバーレイ ----------
+let mapOpen = false;
+function toggleMap() {
+  mapOpen = !mapOpen;
+  const ov = $('mapOverlay');
+  if (mapOpen) {
+    if (mapCv) { const bc = $('mapBig'); bc.width = mapCv.width; bc.height = mapCv.height; bc.getContext('2d').drawImage(mapCv, 0, 0); }
+    ov.classList.remove('hidden');
+  } else { ov.classList.add('hidden'); }
+}
+$('mapCloseBtn').onclick = () => { mapOpen = false; $('mapOverlay').classList.add('hidden'); };
 $('bSkip').onclick = () => socket.emit('vote', 'skip');
 $('chatForm').onsubmit = e => { e.preventDefault(); const v = $('chatIn').value.trim(); if (v) socket.emit('chat', v); $('chatIn').value = ''; };
 socket.on('chat', c => { const d = document.createElement('div'); d.innerHTML = `<b style="color:${c.c}">${esc(c.n)}</b>${esc(c.t)}`; const l = $('chatLog'); l.appendChild(d); l.scrollTop = l.scrollHeight; });
@@ -574,11 +582,11 @@ function drawFx(now) {
     fxStars(t, 4); if (imp) { const g = fxg.createRadialGradient(w / 2, h / 2, 50, w / 2, h / 2, h); g.addColorStop(0, 'rgba(160,0,0,0)'); g.addColorStop(1, 'rgba(160,0,0,.5)'); fxg.fillStyle = g; fxg.fillRect(0, 0, w, h); }
     const ease = 1 - Math.pow(1 - clamp(t / .6, 0, 1), 3), fade = clamp((fx.dur / 1000 - t) / .5, 0, 1);
     fxg.globalAlpha = fade;
-    fxText(imp ? 'あなたは インポスター' : 'あなたは クルー', w / 2, h * .2, Math.min(80, w / 9) * (.4 + .6 * ease), imp ? '#ff4d4d' : '#8ecbff', ease);
+    fxText(imp ? 'あなたは インポスター' : 'あなたは クルー', w / 2, h * .16, Math.min(72, w / 10) * (.4 + .6 * ease), imp ? '#ff4d4d' : '#8ecbff', ease);
     const sub = imp ? (d.mates.length ? '仲間: ' + d.players.filter(p => d.mates.includes(p.id)).map(p => p.name).join(', ') : '仲間はいない… 一人で全員を欺け') : `この中に インポスターが ${d.ic}人 紛れている`;
-    fxText(sub, w / 2, h * .31, Math.min(28, w / 26), '#fff', ease);
+    fxText(sub, w / 2, h * .27, Math.min(26, w / 28), '#fff', ease);
     const n = d.players.length, sc = Math.min(2.2 * u / 2, w / (n * 62)), gap = Math.min(110 * sc / 1.3, w / (n + 1));
-    d.players.forEach((p, i) => { const ent = { x: w / 2 + (i - (n - 1) / 2) * gap, y: h * .66 + Math.sin(t * 6 + i) * 4, f: 1, ph: t * 12 + i, mv: true, a: true, c: p.c, acc: p.acc, name: p.name };
+    d.players.forEach((p, i) => { const ent = { x: w / 2 + (i - (n - 1) / 2) * gap, y: h * .68 + Math.sin(t * 6 + i) * 4, f: 1, ph: t * 12 + i, mv: true, a: true, c: p.c, acc: p.acc, name: p.name };
       const mine = p.id === init.you, mate = d.mates.includes(p.id); ent.x = (1 - ease) * (i % 2 ? -w : w) * .3 + ent.x;
       drawAstro(fxg, ent, sc * 1.9, imp && (mine || mate) ? '#ff6b6b' : '#fff'); });
     fxg.globalAlpha = 1;
@@ -749,8 +757,7 @@ function onKeyDown(e) {
   if (GAMEKEYS.includes(k)) { e.preventDefault(); e.stopPropagation(); } // フォーカス中ボタンの二重発火・スクロールを防ぐ
   if (!rep) {
     if (k === 'space') socket.emit('action'); else if (k === 'r') socket.emit('report'); else if (k === 'e') socket.emit('kill');
-    else if (k === 'f') socket.emit('sabotage'); else if (k === 'q') socket.emit('discard', selSlot);
-    else if (k === '1' || k === '2' || k === '3') selSlot = +k - 1;
+    else if (k === 'f') socket.emit('sabotage'); else if (k === 'm') toggleMap();
   }
   sendInput();
 }
@@ -811,7 +818,10 @@ function drawGame(dt, now) {
     drawMachine(d, act || me.late, now);
   }
   for (const b of S.bodies) drawBody(b);
-  [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff')));
+  [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => {
+    drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff'));
+    if (e.item) { ctx.save(); ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(ITEM_ICON[e.item], e.x, e.y - 38); ctx.restore(); }
+  });
   ctx.restore();
   if (me.alive && !me.late) {
     const g = ctx.createRadialGradient(w / 2, h / 2, 190 * sc * .8, w / 2, h / 2, 330 * sc); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.93)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
@@ -820,7 +830,7 @@ function drawGame(dt, now) {
   if (!me.late) {
     const R = Math.min(w, h) * .38;
     for (const id of me.tasks) {
-      const d = TB[id]; let tg = d; if (d.kind === 'carry' && !me.sl.includes(d.item)) tg = MAP.STATIONS[d.item];
+      const d = TB[id]; let tg = d; if (d.kind === 'carry' && me.item !== d.item) tg = MAP.STATIONS[d.item];
       const dx = tg.x - cam.x, dy = tg.y - cam.y, dd = hyp(dx, dy); if (dd * sc < R) continue;
       const a = Math.atan2(dy, dx), px = w / 2 + Math.cos(a) * R, py = h / 2 + Math.sin(a) * R;
       ctx.save(); ctx.translate(px, py); ctx.rotate(a); ctx.fillStyle = '#ffd43b'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
