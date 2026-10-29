@@ -161,7 +161,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
   <div id="roleTag"></div><div id="spec" class="hidden"></div>
 </div>
 
-<div id="mini" class="hidden"><div id="miniBox"><div id="miniTitle"></div><div id="miniBody"></div><div id="miniHelp"></div></div></div>
+<div id="mini" class="hidden"><div id="miniBox"><div id="miniTitle"></div><div id="miniBody"></div><div id="miniHelp"></div><button id="miniX" style="margin-top:12px;padding:8px 20px;font-size:15px;background:#555;box-shadow:0 4px 0 #333">✕ 中止 (Esc)</button></div></div>
 
 <div id="meeting" class="hidden">
   <div id="mHead"><div id="mTitle"></div><div id="mTimer"></div></div>
@@ -269,7 +269,7 @@ $('bJoinGo').onclick = doJoin;
 $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') doJoin(); });
 $('codeIn').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
 socket.on('joinError', m => { $('joinErr').textContent = m; SFX.error(); });
-socket.on('joined', () => { joined = true; $('title').classList.add('hidden'); $('titleBtns').classList.add('hidden'); $('joinModal').classList.add('hidden'); });
+socket.on('joined', () => { joined = true; releaseFocus(); $('title').classList.add('hidden'); $('titleBtns').classList.add('hidden'); $('joinModal').classList.add('hidden'); });
 socket.on('disconnect', () => location.reload());
 
 // ---------- 初期化 / マップ ----------
@@ -442,7 +442,7 @@ function renderLobby(s) {
 function onPhase(old, now) {
   const hide = (...ids) => ids.forEach(i => $(i).classList.add('hidden')), show = (...ids) => ids.forEach(i => $(i).classList.remove('hidden'));
   if (now === 'lobby') { hide('hud', 'meeting', 'endscr', 'mini'); show('lobby'); mini = null; ents.clear(); renderLobby.sig = ''; fx = null; fxc.classList.add('hidden'); return; }
-  hide('lobby'); show('hud');
+  hide('lobby'); show('hud'); if (now !== 'meeting') releaseFocus();
   if (now === 'playing') {
     hide('meeting', 'endscr'); if (old === 'meeting') meetSig = '';
     if (old === 'lobby' && S.me.role) startFx('role', { role: S.me.role, mates: S.me.mates, ic: S.ic, players: S.players.map(p => ({ ...p })) }, 3400);
@@ -628,7 +628,7 @@ function initWeld(body) {
 }
 function updateWeld(dt) {
   const m = mini, g = m.g;
-  const dir = ((keysDown.d || keysDown.arrowright) ? 1 : 0) - ((keysDown.a || keysDown.arrowleft) ? 1 : 0);
+  const dir = ((keysDown.d || keysDown.right) ? 1 : 0) - ((keysDown.a || keysDown.left) ? 1 : 0);
   m.tx = clamp(m.tx + dir * TORCH_SIDE * dt, 20, 500); m.ty += TORCH_DOWN * dt;
   const ok = Math.abs(m.tx - seamX(m.ty, m.ph)) <= SEAM_TOL; if (!ok) m.off += dt; m.trail.push([m.tx, m.ty, ok]);
   g.fillStyle = '#2a303d'; g.fillRect(0, 0, 520, 330); g.fillStyle = '#343c4d'; g.fillRect(0, 0, 258, 330); g.fillRect(262, 0, 258, 330);
@@ -680,34 +680,93 @@ function initSpace(body, n) {
 }
 function spaceUi() { $('spFill').style.width = (mini.cnt / mini.n * 100) + '%'; $('spTxt').textContent = `${mini.cnt} / ${mini.n}`; }
 function spacePress() { const m = mini; if (!m || m.kind !== 'space') return; m.cnt++; beep(300 + m.cnt * 40, .05); spaceUi(); if (m.cnt >= m.n) later(m, () => finishMini(true), 200); }
-function miniKey(e, k) {
-  if (e.repeat) return;
-  if (mini.kind === 'seq' && /^[1-9]$/.test(k)) seqPress(+k); else if (mini.kind === 'alt') altKey(k); else if (mini.kind === 'space' && k === ' ') spacePress();
+function miniKey(k) {
+  if (!mini) return;
+  if (mini.kind === 'seq' && /^[1-9]$/.test(k)) seqPress(+k);
+  else if (mini.kind === 'alt') altKey(k);
+  else if (mini.kind === 'space' && k === 'space') spacePress();
 }
+$('miniX').onclick = () => { cancelMini(); $('miniX').blur(); };
 
-// ---------- 入力 ----------
+// ---------- 入力 (iPad外付けキーボード / 日本語IME / 全角スペース対応) ----------
+// どの経路で来てもキーを正規化名 ('space','up','down','left','right','escape','w','1' …) にそろえる
+const KEY_MAP = {
+  ' ': 'space', '　': 'space', 'Spacebar': 'space', 'Space': 'space',
+  ArrowUp: 'up', Up: 'up', UIKeyInputUpArrow: 'up',
+  ArrowDown: 'down', Down: 'down', UIKeyInputDownArrow: 'down',
+  ArrowLeft: 'left', Left: 'left', UIKeyInputLeftArrow: 'left',
+  ArrowRight: 'right', Right: 'right', UIKeyInputRightArrow: 'right',
+  Escape: 'escape', Esc: 'escape', UIKeyInputEscape: 'escape',
+};
+const CODE_MAP = { Space: 'space', ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Escape: 'escape' };
+const KC_MAP = { 32: 'space', 37: 'left', 38: 'up', 39: 'right', 40: 'down', 27: 'escape' };
+function normKey(e) {
+  const key = e.key || '', code = e.code || '';
+  if (KEY_MAP[key]) return KEY_MAP[key];
+  if (CODE_MAP[code]) return CODE_MAP[code];               // 物理キー位置 (e.key が 'Process'/'Unidentified' でも拾える)
+  if (key.length === 1) {                                   // 全角英数 (ｗ, １, 　) も NFKC で半角化
+    const ch = (key.normalize ? key.normalize('NFKC') : key).toLowerCase();
+    if (ch === ' ') return 'space';
+    if (/^[a-z0-9]$/.test(ch)) return ch;
+  }
+  const m = /^(?:Key([A-Z])|Digit([0-9])|Numpad([0-9]))$/.exec(code); // IME変換中(keyCode 229)は物理位置で判定
+  if (m) return (m[1] || m[2] || m[3]).toLowerCase();
+  return KC_MAP[e.keyCode] || KC_MAP[e.which] || '';
+}
+// 実際に文字入力中の欄だけを「入力中」とみなす (非表示になった名前欄/コード欄にフォーカスが残る iPad Safari 対策)
+function typing() {
+  const a = document.activeElement;
+  if (!a || !(a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return false;
+  return !a.disabled && a.getClientRects().length > 0;
+}
+function releaseFocus() {
+  const a = document.activeElement;
+  if (a && a !== document.body && a.blur) a.blur();
+  try { window.focus(); } catch (e) {}
+}
+const lastDown = {};
+function clearKeys() { for (const k in keysDown) keysDown[k] = false; sendInput(true); }
 function sendInput(force) {
   const blocked = mini || !S || S.ph !== 'playing';
-  const o = blocked ? { up: 0, down: 0, left: 0, right: 0 } : { up: !!(keysDown.w || keysDown.arrowup), down: !!(keysDown.s || keysDown.arrowdown), left: !!(keysDown.a || keysDown.arrowleft), right: !!(keysDown.d || keysDown.arrowright) };
+  const o = blocked ? { up: 0, down: 0, left: 0, right: 0 } : { up: !!(keysDown.w || keysDown.up), down: !!(keysDown.s || keysDown.down), left: !!(keysDown.a || keysDown.left), right: !!(keysDown.d || keysDown.right) };
   const j = JSON.stringify(o); if (force || j !== lastIn) { lastIn = j; socket.emit('input', o); }
 }
-const GAMEKEYS = [' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
-addEventListener('keydown', e => {
-  if (!joined || !S) return;
-  const ae = document.activeElement; if (ae && ae.tagName === 'INPUT') return;
-  const k = e.key.toLowerCase(); keysDown[k] = true;
-  if (mini) { e.preventDefault(); if (k === 'escape') cancelMini(); else miniKey(e, k); return; }
+const GAMEKEYS = ['space', 'up', 'down', 'left', 'right', 'escape'];
+function onKeyDown(e) {
+  if (!joined || !S || typing()) return;
+  if (e.key === 'Meta' || e.metaKey) { if (e.key === 'Meta') clearKeys(); if (normKey(e) !== 'escape') return; } // ⌘+. は iPad の Esc
+  const k = normKey(e); if (!k) return;
+  const now = performance.now();
+  // e.repeat を出さない環境向け: 押しっぱなし中の連続keydownもリピート扱い。keyupを取りこぼしても150ms空けば新規押下
+  const rep = e.repeat || (keysDown[k] && now - (lastDown[k] || 0) < 150);
+  lastDown[k] = now; keysDown[k] = true;
+  if (mini) {
+    e.preventDefault(); e.stopPropagation();
+    if (!rep) { if (k === 'escape') cancelMini(); else miniKey(k); }
+    return;
+  }
   if (S.ph !== 'playing') return;
-  if (GAMEKEYS.includes(k)) e.preventDefault();
-  if (!e.repeat) {
-    if (k === ' ') socket.emit('action'); else if (k === 'r') socket.emit('report'); else if (k === 'e') socket.emit('kill');
+  if (GAMEKEYS.includes(k)) { e.preventDefault(); e.stopPropagation(); } // フォーカス中ボタンの二重発火・スクロールを防ぐ
+  if (!rep) {
+    if (k === 'space') socket.emit('action'); else if (k === 'r') socket.emit('report'); else if (k === 'e') socket.emit('kill');
     else if (k === 'f') socket.emit('sabotage'); else if (k === 'q') socket.emit('discard', selSlot);
     else if (k === '1' || k === '2' || k === '3') selSlot = +k - 1;
   }
   sendInput();
-});
-addEventListener('keyup', e => { const k = e.key.toLowerCase(); keysDown[k] = false; if (k === ' ' && joined) e.preventDefault(); sendInput(); });
-addEventListener('blur', () => { for (const k in keysDown) keysDown[k] = false; sendInput(); });
+}
+function onKeyUp(e) {
+  if (e.key === 'Meta') { clearKeys(); return; } // ⌘を離すと他キーのkeyupが来ないことがある
+  const k = normKey(e);
+  if (k) keysDown[k] = false;
+  if (joined && !typing() && (mini || (S && S.ph === 'playing')) && GAMEKEYS.includes(k)) e.preventDefault(); // keyupでのボタン活性化も阻止
+  sendInput();
+}
+// capture フェーズで受けて、フォーカス位置に関係なく確実に拾う
+addEventListener('keydown', onKeyDown, true);
+addEventListener('keyup', onKeyUp, true);
+addEventListener('blur', clearKeys);
+addEventListener('pagehide', clearKeys);
+document.addEventListener('visibilitychange', () => { if (document.hidden) clearKeys(); });
 
 // ---------- 描画 ----------
 function drawMachine(d, act, t) {
