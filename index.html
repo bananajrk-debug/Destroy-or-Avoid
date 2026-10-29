@@ -42,25 +42,57 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 .tag{font-size:12px;padding:2px 10px;border-radius:99px;background:#334}
 .tag.host{background:#ffd43b;color:#222}.tag.ready{background:#51cf66;color:#042}
 #codeBox{font-size:clamp(40px,9vw,84px);font-weight:900;letter-spacing:.25em;padding-left:.25em;color:#ffd43b;text-shadow:0 0 20px #ffd43b66}
+#lobby{position:fixed;inset:0;z-index:20;pointer-events:none}
+#lobby button,#lobby .lbPanel{pointer-events:auto}
+#lobbyTop{position:absolute;top:10px;left:50%;transform:translateX(-50%);text-align:center;background:#000a;border:2px solid #fff2;border-radius:16px;padding:6px 18px}
+#lobbyTop #codeBox{font-size:clamp(28px,5vw,46px)}
+#lobbyMsg{font-size:12px;max-width:min(560px,70vw)}
+#lobby #impBox{position:absolute;top:12px;left:12px;font-size:15px;padding:6px 12px}
+#btnLeave{position:absolute;top:12px;right:12px;padding:8px 16px;font-size:15px}
+#lobbyBar{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:12px}
+#lobbyBar button{font-size:22px;padding:14px 40px;min-width:220px}
+#lobbyHint{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);font-size:18px;font-weight:800;color:#ffd43b;text-shadow:0 2px 6px #000;background:#000a;border:2px solid #ffd43b;border-radius:99px;padding:6px 18px;white-space:nowrap;cursor:pointer}
+#lobbyKeys{position:absolute;left:12px;bottom:12px;font-size:12px;opacity:.6;text-shadow:0 1px 3px #000}
+#closet{position:fixed;inset:0;z-index:42;background:#000b;display:flex;align-items:center;justify-content:center}
+#closetBox{background:#1c1626;border:4px solid #a77b4f;border-radius:20px;padding:18px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;width:min(560px,94vw);box-shadow:0 0 40px #000}
+#closetBox h2{font-size:22px;color:#ffd8a8}
+#closetPv{width:150px;height:180px}
+#closetBox .row{max-width:100%}
+.sw.taken{opacity:.25;cursor:not-allowed}
 #impBox{display:flex;gap:12px;align-items:center;font-size:18px;font-weight:700;background:#12192b;border:2px solid #2b3856;padding:8px 16px;border-radius:14px}
 #impBox button{padding:4px 14px;font-size:20px;box-shadow:0 3px 0 #8f2323}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
 #hud button{pointer-events:auto}
-#top{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:16px;align-items:center}
-#progWrap{position:relative;width:min(700px,60vw);height:40px;background:#000b;border:4px solid #fff;border-radius:99px;overflow:hidden;box-shadow:0 0 22px #51cf66aa,0 4px 14px #000}
+#top{position:absolute;top:10px;left:12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:8px 10px;background:#000a;border:2px solid #fff3;border-radius:14px;pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#top:active{transform:scale(.97)}
+#topRow{display:flex;align-items:center;gap:10px}
+#progWrap{position:relative;width:min(240px,46vw);height:26px;background:#000b;border:3px solid #fff;border-radius:99px;overflow:hidden;box-shadow:0 0 14px #51cf66aa}
 #pfill{height:100%;width:0;background:linear-gradient(90deg,#2f9e44,#51cf66 60%,#d8f5a2);transition:width .35s;box-shadow:0 0 14px #a9e34b inset}
-#ptxt{position:absolute;inset:0;text-align:center;line-height:32px;font-size:20px;font-weight:900;letter-spacing:.06em;text-shadow:0 2px 4px #000,0 0 8px #000}
-#timer{font-size:32px;font-weight:900;text-shadow:0 2px 6px #000;min-width:96px}
-#tasks{position:absolute;top:64px;left:12px;background:#000a;border:1px solid #fff3;border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.55;max-width:250px}
+#ptxt{position:absolute;inset:0;text-align:center;line-height:20px;font-size:14px;font-weight:900;letter-spacing:.04em;text-shadow:0 2px 4px #000,0 0 8px #000;white-space:nowrap}
+#timer{font-size:24px;font-weight:900;text-shadow:0 2px 6px #000;min-width:70px;font-variant-numeric:tabular-nums}
+#topTip{font-size:10px;opacity:.55}
+#statsPop{position:fixed;inset:0;z-index:46;background:#000b;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;animation:popIn .18s ease-out}
+@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+#statsBox{background:#111a2e;border:4px solid #fff;border-radius:24px;padding:28px 36px;text-align:center;box-shadow:0 0 40px #51cf6688;width:min(720px,92vw)}
+#spTimer{font-size:clamp(64px,14vw,140px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 4px 16px #000}
+#spBar{position:relative;height:56px;margin:20px 0 10px;background:#000;border:4px solid #fff;border-radius:99px;overflow:hidden}
+#spFill2{height:100%;background:linear-gradient(90deg,#2f9e44,#51cf66 60%,#d8f5a2);transition:width .35s}
+#spPct{position:absolute;inset:0;line-height:48px;font-size:32px;font-weight:900;text-shadow:0 2px 6px #000}
+#spInfo{font-size:18px;opacity:.85;line-height:1.8}
+#tasks{position:absolute;top:96px;left:12px;background:#000a;border:1px solid #fff3;border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.55;max-width:250px}
 #tasks h4{font-size:11px;opacity:.7;margin-bottom:2px}
 .tk b{color:#ffd43b;margin-left:4px}.tk small{opacity:.6;margin-left:4px;font-size:11px}
-#mm{position:absolute;top:64px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:200px;height:125px}
+#mm{position:absolute;top:12px;right:12px;border:2px solid #fff5;border-radius:8px;background:#000a;width:200px;height:125px;pointer-events:auto;cursor:pointer}
+#mmTip{position:absolute;top:142px;right:12px;font-size:11px;opacity:.6;text-shadow:0 1px 3px #000}
 #hint{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:18px;font-weight:700;color:#ffd43b;text-shadow:0 2px 6px #000;white-space:nowrap}
 #itemHud{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#000a;border:3px solid #ffd43b;border-radius:14px;padding:6px 16px;font-size:26px;display:flex;align-items:center;gap:8px;min-width:80px;justify-content:center}
 #itemHud.empty{border-color:#fff3;opacity:.5}
-#mapOverlay{position:fixed;inset:0;z-index:15;background:#000c;display:flex;align-items:center;justify-content:center}
-#mapOverlay canvas{max-width:min(900px,95vw);max-height:90vh;border:3px solid #4b5b83;border-radius:10px}
-#mapOverlay .mapClose{position:absolute;top:16px;right:20px;font-size:28px;cursor:pointer;color:#fff;background:#000a;border:none;border-radius:50%;width:44px;height:44px}
+#mapOverlay{position:fixed;inset:0;z-index:45;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px}
+#mapOverlay canvas{display:block;flex:none;min-width:0;border:3px solid #4b5b83;border-radius:10px;background:#06080d}
+#mapHead{font-size:18px;font-weight:800;color:#ffd43b}
+#mapLegend{font-size:13px;opacity:.85;display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+#mapOverlay .mapClose{position:absolute;top:14px;right:16px;font-size:24px;padding:0;color:#fff;background:#000a;border:2px solid #fff5;border-radius:50%;width:46px;height:46px;box-shadow:none}
+.mapBtn{padding:6px 14px;font-size:15px;box-shadow:0 3px 0 #1a4f80;margin-left:10px;vertical-align:middle}
 #btns{position:absolute;bottom:14px;right:14px;display:flex;gap:10px}
 #btns button{padding:10px 16px;font-size:16px;display:flex;flex-direction:column;align-items:center;line-height:1.2;min-width:72px}
 #btns small{font-size:10px;opacity:.8;font-weight:400}
@@ -110,7 +142,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 #endscr{position:fixed;inset:0;z-index:35;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
 #endscr h2{font-size:clamp(34px,8vw,76px)}
 #roster{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:720px}
-@media(max-width:700px){#tasks{max-width:56vw;font-size:12px}#mm{width:130px;height:81px}#mMain{flex-direction:column}}
+@media(max-width:700px){#tasks{max-width:56vw;font-size:12px}#mm{width:130px;height:81px}#mmTip{top:98px}#mMain{flex-direction:column}#lobbyBar button{min-width:150px;padding:12px 22px;font-size:18px}}
 </style>
 </head>
 <body>
@@ -136,23 +168,33 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
   <div style="display:flex;gap:10px"><button id="bJoinGo" class="green">参加する</button><button id="bJoinCancel" class="blue">もどる</button></div>
 </div></div>
 
-<div id="lobby" class="screen hidden">
-  <div class="sub">ルームコード (友達に教えよう)</div>
-  <div id="codeBox">-----</div>
-  <div id="lobbyMsg" class="sub"></div>
-  <div id="plist"></div>
-  <div id="impBox"><span>🔪 インポスター人数</span><button id="impDn">−</button><span id="impN">1</span><span>人</span><button id="impUp">＋</button></div>
-  <div style="display:flex;gap:12px">
+<div id="lobby" class="hidden">
+  <div id="lobbyTop" class="lbPanel">
+    <div class="sub" style="font-size:11px">ルームコード (友達に教えよう)</div>
+    <div id="codeBox">-----</div>
+    <div id="lobbyMsg" class="sub"></div>
+  </div>
+  <div id="impBox" class="lbPanel"><span>🔪 インポスター</span><button id="impDn">−</button><span id="impN">1</span><span>人</span><button id="impUp">＋</button></div>
+  <button id="btnLeave" style="background:#555;box-shadow:0 4px 0 #333">退出</button>
+  <div id="lobbyHint" class="hidden">🚪 SPACE: クローゼットを開く</div>
+  <div id="lobbyBar">
     <button id="btnReady" class="blue">準備OK</button>
     <button id="btnGo" class="green hidden">ゲーム開始</button>
-    <button id="btnLeave" style="background:#555;box-shadow:0 4px 0 #333">退出</button>
   </div>
+  <div id="lobbyKeys">WASD / 矢印キー: 移動 ・ 奥のクローゼットで着替え</div>
 </div>
+<div id="closet" class="hidden"><div id="closetBox">
+  <h2>🚪 クローゼット</h2>
+  <canvas id="closetPv" width="150" height="180"></canvas>
+  <div class="sub">アクセサリー</div><div class="row" id="clAcc"></div>
+  <div class="sub">カラー (他の人が使っている色は選べません)</div><div class="row" id="clCol"></div>
+  <button id="closetX" class="blue">閉じる (Esc)</button>
+</div></div>
 
 <div id="hud" class="hidden">
-  <div id="top"><div id="progWrap"><div id="pfill"></div><div id="ptxt">0%</div></div><div id="timer">10:00</div></div>
+  <div id="top" title="タップで拡大"><div id="topRow"><div id="timer">10:00</div><div id="progWrap"><div id="pfill"></div><div id="ptxt">0%</div></div></div><div id="topTip">タップで拡大</div></div>
   <div id="tasks"></div>
-  <canvas id="mm" width="200" height="125"></canvas>
+  <canvas id="mm" width="200" height="125"></canvas><div id="mmTip">タップ / M でマップ</div>
   <div id="hint"></div>
   <div id="itemHud" class="empty"></div>
   <div id="btns">
@@ -167,14 +209,25 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 <div id="mini" class="hidden"><div id="miniBox"><div id="miniTitle"></div><div id="miniBody"></div><div id="miniHelp"></div><button id="miniX" style="margin-top:12px;padding:8px 20px;font-size:15px;background:#555;box-shadow:0 4px 0 #333">✕ 中止 (Esc)</button></div></div>
 
 <div id="meeting" class="hidden">
-  <div id="mHead"><div id="mTitle"></div><div id="mTimer"></div></div>
+  <div id="mHead"><div id="mTitle"></div><div id="mTimer"></div><button id="mMapBtn" class="blue mapBtn">🗺 マップ (M)</button></div>
   <div id="mMain"><div id="mRoster"></div>
     <div id="mChat"><div id="chatLog"></div>
       <form id="chatForm"><input type="text" id="chatIn" maxlength="60" autocomplete="off" placeholder="発言する…"><button type="submit" class="blue">送信</button></form></div></div>
   <div id="mFoot"><button id="bSkip" class="blue hidden">スキップ (投票しない)</button><div id="mRes"></div></div>
 </div>
 
-<div id="mapOverlay" class="hidden"><canvas id="mapBig"></canvas><button class="mapClose" id="mapCloseBtn">✕</button></div>
+<div id="mapOverlay" class="hidden">
+  <div id="mapHead">🗺 マップ</div>
+  <canvas id="mapBig" width="1600" height="1000"></canvas>
+  <div id="mapLegend"><span>⚪ 現在地</span><span>⭐ 会議直前の位置</span><span style="color:#8ecbff">━ あなたの足跡</span><span>💀 あなたが死んだ場所</span><span style="color:#ff6b6b">✖ 死体</span><span>🟨 タスク</span></div>
+  <button class="mapClose" id="mapCloseBtn">✕</button>
+</div>
+<div id="statsPop" class="hidden"><div id="statsBox">
+  <div id="spTimer">10:00</div>
+  <div id="spBar"><div id="spFill2"></div><div id="spPct">0%</div></div>
+  <div id="spInfo"></div>
+  <div class="sub" style="margin-top:8px">タップで閉じる</div>
+</div></div>
 <div id="endscr" class="hidden"><h2 id="endTitle"></h2><p id="endReason" class="sub" style="font-size:18px"></p><div id="roster"></div><button id="btnLobby" class="blue">ロビーへ戻る</button></div>
 <div id="toast"></div>
 
@@ -236,15 +289,24 @@ function drawAstro(g, e, s, nameCol) {
   const limb = (x, y, ang, col, len) => { g.save(); g.translate(x, y); g.rotate(ang); g.fillStyle = col; rrg(g, -3.5, 0, 7, len, 3); g.fill(); g.fillStyle = '#e9ecef'; rrg(g, -4, len - 4, 8, 5, 2); g.fill(); g.restore(); };
   g.fillStyle = '#c9ced6'; rrg(g, -18, -14, 8, 20, 3); g.fill();
   if (e.a !== false) { limb(-4, 8, sw, dark, 11); limb(4, 8, -sw, mid, 11); }
-  limb(0, -9, -sw * 1.1, dark, 12);
+  const carry = !!e.item; // 運搬中は両腕を前に突き出して抱える
+  limb(0, -9, carry ? -1.15 : -sw * 1.1, dark, 12);
   g.fillStyle = e.c; rrg(g, -11, -15, 22, 24, 7); g.fill(); g.strokeStyle = dark; g.lineWidth = 2; g.stroke();
   g.fillStyle = 'rgba(255,255,255,.25)'; rrg(g, -7, -12, 5, 12, 3); g.fill();
-  limb(0, -9, sw * 1.1, mid, 12);
   g.fillStyle = '#f1f3f5'; elg(g, 2, -24, 12, 11); g.fill(); g.strokeStyle = '#9aa3b5'; g.lineWidth = 1.5; g.stroke();
   g.fillStyle = '#17324f'; elg(g, 6, -24, 7.5, 5.5); g.fill();
   g.fillStyle = 'rgba(255,255,255,.7)'; elg(g, 8, -26, 2.8, 1.5); g.fill();
+  if (!carry) limb(0, -9, sw * 1.1, mid, 12);
   g.restore();
-  if (e.acc) { g.font = '19px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e.acc, 2 * (e.f || 1), -37 + (e.mv ? Math.abs(Math.sin(e.ph)) * -1.5 : 0)); }
+  const f = e.f || 1, bob = e.mv ? Math.abs(Math.sin(e.ph)) * -1.5 : 0;
+  // 絵文字は塗り色の透明度を引き継ぐブラウザ(Safari)があるので、必ず不透明色をセットしてから描く
+  g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (carry) {
+    g.save(); g.fillStyle = 'rgba(255,212,59,.35)'; elg(g, 17 * f, -4 + bob, 12, 11); g.fill(); g.restore();
+    g.fillStyle = '#000'; g.font = '18px serif'; g.fillText(ITEM_ICON[e.item] || '📦', 17 * f, -4 + bob);
+    g.save(); g.scale(f, 1); limb(0, -9, -1.35, mid, 13); g.restore(); // 手前の腕でアイテムを支える
+  }
+  if (e.acc) { g.fillStyle = '#000'; g.font = '19px serif'; g.fillText(e.acc, 2 * f, -37 + bob); }
   if (nameCol && e.name && !e.rot) {
     g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.lineWidth = 3; g.strokeStyle = '#000b';
     g.strokeText(e.name, 0, -50); g.fillStyle = nameCol; g.fillText(e.name, 0, -50);
@@ -423,14 +485,15 @@ $('btnLeave').onclick = () => location.reload();
 $('btnLobby').onclick = () => socket.emit('toLobby');
 $('impUp').onclick = () => socket.emit('setImp', (S.lobby.imp || 1) + 1);
 $('impDn').onclick = () => socket.emit('setImp', (S.lobby.imp || 1) - 1);
+function nearCloset() { const e = myEnt(); return !!(e && init && hyp(e.x - init.CLOSET.x, e.y - init.CLOSET.y) <= init.CLOSET.range); }
 function renderLobby(s) {
   const L = s.lobby, me = s.me;
   $('codeBox').textContent = s.code;
-  const sig = L.list.map(p => p.id + p.ready + p.host + p.name + p.acc).join('|');
-  if (sig !== renderLobby.sig) {
-    renderLobby.sig = sig;
-    $('plist').innerHTML = L.list.map(p => `<div class="pcard">${avatar(p.c, p.acc)}<b>${esc(p.name)}</b>${p.host ? '<span class="tag host">HOST</span>' : p.ready ? '<span class="tag ready">READY</span>' : '<span class="tag">待機中</span>'}</div>`).join('');
-  }
+  updateEnts({ players: L.list });
+  const mine = L.list.find(p => p.id === init.you);
+  if (mine) { myColor = mine.c; myAcc = mine.acc; }
+  $('lobbyHint').classList.toggle('hidden', !nearCloset() || closetOpen);
+  if (closetOpen) buildCloset();
   $('impN').textContent = L.imp;
   $('impUp').classList.toggle('hidden', !me.host); $('impDn').classList.toggle('hidden', !me.host);
   $('impUp').disabled = L.imp >= 3; $('impDn').disabled = L.imp <= 1;
@@ -442,13 +505,92 @@ function renderLobby(s) {
   $('lobbyMsg').textContent = `参加 ${L.list.length}人 / 実際のインポスター数: ${eff}人 (参加人数に応じて最大${L.max}人) ` + (me.host ? (ok ? '— スタートできます!' : '— 全員の準備完了を待っています (最低2人)') : '— ホストの開始を待っています');
 }
 
+// ---------- クローゼット (ロビー奥の壁) ----------
+let closetOpen = false, closetSig = '';
+const clPvG = $('closetPv').getContext('2d');
+function buildCloset() {
+  const used = new Set(S.lobby.list.filter(p => p.id !== init.you).map(p => p.c));
+  const sig = myAcc + myColor + [...used].join();
+  if (sig === closetSig) return; closetSig = sig;
+  $('clAcc').innerHTML = init.ACCS.map(a => `<button class="chip ${a === myAcc ? 'sel' : ''}" data-a="${a}">${a || '<small>なし</small>'}</button>`).join('');
+  $('clAcc').querySelectorAll('button').forEach(b => b.onclick = () => { socket.emit('setLook', { acc: b.dataset.a }); myAcc = b.dataset.a; saveLook(); closetSig = ''; buildCloset(); SFX.click(); });
+  $('clCol').innerHTML = init.COLORS.map(c => `<button class="sw ${c === myColor ? 'sel' : ''} ${used.has(c) ? 'taken' : ''}" data-c="${c}" style="background:${c}"></button>`).join('');
+  $('clCol').querySelectorAll('button').forEach(b => b.onclick = () => {
+    if (b.classList.contains('taken')) { toast('その色は他の人が使っています', 'error'); return; }
+    socket.emit('setLook', { color: b.dataset.c }); myColor = b.dataset.c; saveLook(); closetSig = ''; buildCloset(); SFX.click(); });
+}
+function saveLook() { try { localStorage.setItem('doa_acc', myAcc); localStorage.setItem('doa_col', myColor); } catch (e) {} }
+function openCloset(v) {
+  if (v && (!S || S.ph !== 'lobby')) return;
+  if (v && !nearCloset()) { toast('奥のクローゼットに近づこう', 'error'); return; }
+  closetOpen = v; $('closet').classList.toggle('hidden', !v);
+  if (v) { closetSig = ''; buildCloset(); releaseFocus(); SFX.click(); }
+  clearKeys();
+}
+$('closetX').onclick = () => openCloset(false);
+$('lobbyHint').onclick = () => openCloset(true);
+// 床に立つ部屋を描く (正方形の床 + 奥の壁 + クローゼット)
+function drawLobby(dt, now) {
+  const w = cv.width, h = cv.height, L = init.LOBBY, CL = init.CLOSET;
+  for (const e of ents.values()) { e.x += (e.tx - e.x) * Math.min(1, dt * 18); e.y += (e.ty - e.y) * Math.min(1, dt * 18); e.ph = e.mv ? e.ph + dt * 13 : 0; }
+  const RX0 = L.x0 - 40, RX1 = L.x1 + 40, RY0 = 0, RY1 = L.y1 + 40; // 壁を含めた部屋全体
+  const sc = Math.min((w - 40) / (RX1 - RX0), (h - 190) / (RY1 - RY0));
+  ctx.fillStyle = '#080b14'; ctx.fillRect(0, 0, w, h);
+  ctx.save(); ctx.translate(w / 2, (h - 190) / 2 + 95); ctx.scale(sc, sc); ctx.translate(-(RX0 + RX1) / 2, -(RY0 + RY1) / 2);
+  lobbyLayout = { sc, ox: w / 2, oy: (h - 190) / 2 + 95, cx: (RX0 + RX1) / 2, cy: (RY0 + RY1) / 2 };
+  // 外壁
+  ctx.fillStyle = '#2a3243'; ctx.fillRect(RX0, RY0, RX1 - RX0, RY1 - RY0);
+  ctx.fillStyle = '#323b50'; ctx.fillRect(RX0 + 6, RY0 + 6, RX1 - RX0 - 12, RY1 - RY0 - 12);
+  // 奥の壁 (正面に見える壁面)
+  const wg = ctx.createLinearGradient(0, RY0, 0, L.y0); wg.addColorStop(0, '#3a4560'); wg.addColorStop(1, '#262e40');
+  ctx.fillStyle = wg; ctx.fillRect(L.x0, RY0 + 20, L.x1 - L.x0, L.y0 - RY0 - 20);
+  ctx.fillStyle = '#1a2030'; for (let x = L.x0 + 80; x < L.x1; x += 80) ctx.fillRect(x, RY0 + 20, 3, L.y0 - RY0 - 20);
+  ctx.fillStyle = '#7e8aae'; ctx.fillRect(L.x0, L.y0 - 4, L.x1 - L.x0, 4);
+  // 窓 (星空)
+  for (const wx of [L.x0 + 70, L.x1 - 190]) { ctx.fillStyle = '#05070f'; rrg(ctx, wx, 34, 120, 56, 10); ctx.fill(); ctx.strokeStyle = '#7e8aae'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = '#fff'; for (let i = 0; i < 9; i++) ctx.fillRect(wx + 8 + (i * 37 % 104), 40 + (i * 23 % 44), 2, 2); }
+  // 床 (正方形)
+  for (let y = L.y0; y < L.y1; y += 40) for (let x = L.x0; x < L.x1; x += 40) {
+    ctx.fillStyle = ((x + y) / 40) % 2 ? '#3a4157' : '#343a4f'; ctx.fillRect(x, y, 40, 40);
+    ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, 39, 39); }
+  const sg = ctx.createLinearGradient(0, L.y0, 0, L.y0 + 30); sg.addColorStop(0, 'rgba(0,0,0,.5)'); sg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = sg; ctx.fillRect(L.x0, L.y0, L.x1 - L.x0, 30);
+  ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.font = 'bold 54px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('LOBBY', (L.x0 + L.x1) / 2, L.y1 - 70);
+  // クローゼット (奥の壁の中央)
+  const near = nearCloset(), glow = near ? .5 + Math.sin(now / 200) * .3 : 0;
+  if (near) { ctx.fillStyle = `rgba(255,212,59,${glow * .35})`; elg(ctx, CL.x, L.y0 + 10, 110, 34); ctx.fill(); }
+  ctx.fillStyle = '#6b4a2b'; rrg(ctx, CL.x - 70, 18, 140, L.y0 - 14, 8); ctx.fill(); ctx.strokeStyle = near ? '#ffd43b' : '#3d2914'; ctx.lineWidth = near ? 5 : 4; ctx.stroke();
+  ctx.fillStyle = '#8a6239'; rrg(ctx, CL.x - 62, 26, 60, L.y0 - 32, 4); ctx.fill(); rrg(ctx, CL.x + 2, 26, 60, L.y0 - 32, 4); ctx.fill();
+  ctx.fillStyle = '#ffd43b'; ctx.fillRect(CL.x - 10, 60, 5, 18); ctx.fillRect(CL.x + 5, 60, 5, 18);
+  ctx.fillStyle = '#000'; ctx.font = '26px serif'; ctx.fillText('👕', CL.x, 4 + 6);
+  ctx.font = 'bold 15px sans-serif'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText('クローゼット', CL.x, L.y0 + 16); ctx.fillStyle = near ? '#ffd43b' : '#fff'; ctx.fillText('クローゼット', CL.x, L.y0 + 16);
+  // プレイヤー (READY / HOST 表示つき)
+  const list = S.lobby.list;
+  [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => {
+    drawAstro(ctx, e, 1.25, e.id === init.you ? '#ffe066' : '#fff');
+    const p = list.find(q => q.id === e.id); if (!p) return;
+    const t = p.host ? 'HOST' : p.ready ? '✔ READY' : '待機中', col = p.host ? '#ffd43b' : p.ready ? '#51cf66' : '#868e96';
+    ctx.font = 'bold 11px sans-serif'; const tw = ctx.measureText(t).width + 12;
+    ctx.fillStyle = col; rrg(ctx, e.x - tw / 2, e.y + 28, tw, 16, 8); ctx.fill(); ctx.fillStyle = p.host || p.ready ? '#111' : '#fff'; ctx.textBaseline = 'middle'; ctx.fillText(t, e.x, e.y + 36);
+  });
+  ctx.restore();
+}
+let lobbyLayout = null;
+cv.addEventListener('click', ev => { // クローゼットを直接クリック/タップしても開ける
+  if (!joined || !S || S.ph !== 'lobby' || !lobbyLayout || closetOpen) return;
+  const L = lobbyLayout, x = (ev.clientX - L.ox) / L.sc + L.cx, y = (ev.clientY - L.oy) / L.sc + L.cy, CL = init.CLOSET;
+  if (Math.abs(x - CL.x) <= 75 && y >= 10 && y <= init.LOBBY.y0 + 10) openCloset(true);
+});
+
 // ---------- フェーズ ----------
 function onPhase(old, now) {
   const hide = (...ids) => ids.forEach(i => $(i).classList.add('hidden')), show = (...ids) => ids.forEach(i => $(i).classList.remove('hidden'));
-  if (now === 'lobby') { hide('hud', 'meeting', 'endscr', 'mini'); show('lobby'); mini = null; ents.clear(); renderLobby.sig = ''; fx = null; fxc.classList.add('hidden'); return; }
-  hide('lobby'); show('hud'); if (now !== 'meeting') releaseFocus();
+  if (now !== 'playing' && now !== 'meeting') openMap(false);
+  openStats(false);
+  if (now === 'lobby') { hide('hud', 'meeting', 'endscr', 'mini'); show('lobby'); mini = null; ents.clear(); fx = null; fxc.classList.add('hidden'); trail = []; deathPos = null; releaseFocus(); sendInput(true); return; }
+  hide('lobby'); openCloset(false); show('hud'); if (now !== 'meeting') releaseFocus();
   if (now === 'playing') {
-    hide('meeting', 'endscr'); if (old === 'meeting') meetSig = '';
+    hide('meeting', 'endscr'); if (old === 'meeting') { meetSig = ''; trail = []; openMap(false); }
+    if (old === 'lobby') { trail = []; deathPos = null; wasAlive = true; lastTrailT = 0; }
     if (old === 'lobby' && S.me.role) startFx('role', { role: S.me.role, mates: S.me.mates, ic: S.ic, players: S.players.map(p => ({ ...p })) }, 3400);
   }
   if (now === 'meeting') { closeMini(); show('meeting'); $('chatLog').innerHTML = ''; meetSig = ''; $('mRes').textContent = ''; prevMode = ''; }
@@ -460,7 +602,7 @@ socket.on('state', s => {
   S = s;
   if (s.ph !== prevPh) { const o = prevPh; prevPh = s.ph; onPhase(o, s.ph); }
   if (s.ph === 'lobby') { renderLobby(s); return; }
-  updateEnts(s); renderHud(s);
+  updateEnts(s); trackMe(performance.now()); renderHud(s); renderStatsPop();
   if (s.ph === 'meeting') renderMeeting(s);
   if (s.ph === 'end') renderEnd(s);
 });
@@ -543,15 +685,72 @@ function renderMeeting(s) {
   $('chatIn').disabled = !canChat; $('chatIn').placeholder = canChat ? '発言する…' : '発言できません';
 }
 // ---------- マップオーバーレイ ----------
-function toggleMap() {
-  mapOpen = !mapOpen;
-  const ov = $('mapOverlay');
-  if (mapOpen) {
-    if (mapCv) { const bc = $('mapBig'); bc.width = mapCv.width; bc.height = mapCv.height; bc.getContext('2d').drawImage(mapCv, 0, 0); }
-    ov.classList.remove('hidden');
-  } else { ov.classList.add('hidden'); }
+// 足跡: プレイ中に自分の位置を1秒ごとに記録 (会議が終わるとリセット)。死亡地点はゲーム終了まで保持
+let trail = [], deathPos = null, lastTrailT = 0, wasAlive = true;
+function trackMe(now) {
+  if (!S || S.ph !== 'playing' || S.me.late) return;
+  const p = S.players && S.players.find(q => q.id === init.you);
+  if (S.me.alive && p) {
+    if (now - lastTrailT >= 1000) { lastTrailT = now; trail.push({ x: p.x, y: p.y }); if (trail.length > 90) trail.shift(); }
+  } else if (wasAlive && !S.me.alive) {
+    const e = myEnt(); deathPos = e ? { x: e.tx, y: e.ty } : (trail.length ? trail[trail.length - 1] : null);
+  }
+  wasAlive = S.me.alive;
 }
-$('mapCloseBtn').onclick = () => { mapOpen = false; $('mapOverlay').classList.add('hidden'); };
+const mapBigG = $('mapBig').getContext('2d');
+function fitMapCanvas() {
+  const c = $('mapBig'), ar = c.width / c.height;
+  let w = innerWidth * .94, h = innerHeight - 130; // 見出し・凡例のぶんを引く
+  if (w / h > ar) w = h * ar; else h = w / ar;
+  c.style.width = Math.floor(w) + 'px'; c.style.height = Math.floor(h) + 'px';
+}
+addEventListener('resize', () => { if (mapOpen) fitMapCanvas(); });
+function openMap(v) {
+  if (v && (!mapCv || !MAP || !S || (S.ph !== 'playing' && S.ph !== 'meeting'))) { toast('マップはゲーム中に見られます'); return; }
+  mapOpen = v; $('mapOverlay').classList.toggle('hidden', !v);
+  if (v) { $('mapHead').textContent = S.ph === 'meeting' ? '🗺 マップ — 会議前の行動を思い出そう' : '🗺 マップ'; fitMapCanvas(); drawBigMap(performance.now()); releaseFocus(); }
+}
+function toggleMap() { openMap(!mapOpen); }
+function drawBigMap(now) {
+  const g = mapBigG, cw = 1600, ch = 1000, k = cw / mapCv.width;
+  g.clearRect(0, 0, cw, ch); g.drawImage(mapCv, 0, 0, cw, ch);
+  g.save(); g.scale(k, k); g.textAlign = 'center'; g.textBaseline = 'middle';
+  const me = S.me, meeting = S.ph === 'meeting';
+  const B = MAP.BUTTON; g.fillStyle = '#ff3b3b'; elg(g, B.x, B.y, 26, 20); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 4; g.stroke();
+  if (!me.late) for (const id of me.tasks) { const d = TB[id]; g.fillStyle = '#ffd43b'; g.strokeStyle = '#000'; g.lineWidth = 4; g.fillRect(d.x - 18, d.y - 18, 36, 36); g.strokeRect(d.x - 18, d.y - 18, 36, 36); }
+  for (const b of S.bodies || []) {
+    g.strokeStyle = '#ff3b3b'; g.lineWidth = 12; g.beginPath(); g.moveTo(b.x - 26, b.y - 26); g.lineTo(b.x + 26, b.y + 26); g.moveTo(b.x + 26, b.y - 26); g.lineTo(b.x - 26, b.y + 26); g.stroke();
+    if (b.name) { g.font = 'bold 34px sans-serif'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText(b.name, b.x, b.y - 52); g.fillStyle = '#ff8787'; g.fillText(b.name, b.x, b.y - 52); }
+  }
+  if (trail.length > 1) { // 古いほど薄く
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    for (let i = 1; i < trail.length; i++) { g.strokeStyle = `rgba(142,203,255,${.15 + .85 * i / trail.length})`; g.lineWidth = 14; g.beginPath(); g.moveTo(trail[i - 1].x, trail[i - 1].y); g.lineTo(trail[i].x, trail[i].y); g.stroke(); }
+    for (let i = 0; i < trail.length; i += 5) { g.fillStyle = `rgba(255,255,255,${.25 + .6 * i / trail.length})`; elg(g, trail[i].x, trail[i].y, 8, 8); g.fill(); }
+  }
+  const tag = (txt, x, y, col) => { g.font = 'bold 36px sans-serif'; g.lineWidth = 9; g.strokeStyle = '#000'; g.strokeText(txt, x, y); g.fillStyle = col; g.fillText(txt, x, y); };
+  if (deathPos) { g.fillStyle = '#000'; g.font = '80px serif'; g.fillText('💀', deathPos.x, deathPos.y); tag('あなたが死んだ場所', deathPos.x, deathPos.y + 70, '#ff8787'); }
+  const last = trail[trail.length - 1];
+  if (meeting && last && me.alive) { g.fillStyle = '#000'; g.font = '80px serif'; g.fillText('⭐', last.x, last.y); tag('会議直前の位置', last.x, last.y + 70, '#ffd43b'); }
+  if (!meeting) { const e = myEnt(); if (e) { const r = 22 + Math.sin(now / 200) * 6; g.fillStyle = '#fff'; elg(g, e.x, e.y, r, r); g.fill(); g.strokeStyle = '#000'; g.lineWidth = 6; g.stroke(); tag('現在地', e.x, e.y - 60, '#fff'); } }
+  g.restore();
+}
+$('mapCloseBtn').onclick = () => openMap(false);
+$('mm').onclick = () => toggleMap();
+$('mMapBtn').onclick = () => { openMap(true); $('mMapBtn').blur(); };
+
+// 左上の数値をタップすると拡大表示
+let statsOpen = false, statsT = 0;
+function renderStatsPop() {
+  if (!statsOpen || !S) return;
+  const sec = Math.ceil(S.remain / 1000);
+  $('spTimer').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; $('spTimer').style.color = sec < 60 ? '#ff6b6b' : '#fff';
+  $('spFill2').style.width = S.prog + '%'; $('spPct').textContent = 'タスク進捗 ' + Math.floor(S.prog) + '%';
+  const me = S.me;
+  $('spInfo').innerHTML = `インポスター: ${S.ic}人` + (me.late ? '' : `<br>あなたのタスク: ${me.tasks.length}件 進行中` + (me.item ? ` ・ 運搬中: ${ITEM_ICON[me.item]} ${init.ITEM_NAME[me.item]}` : ''));
+}
+function openStats(v) { statsOpen = v; $('statsPop').classList.toggle('hidden', !v); clearTimeout(statsT); if (v) { renderStatsPop(); statsT = setTimeout(() => openStats(false), 5000); } }
+$('top').onclick = () => openStats(true);
+$('statsPop').onclick = () => openStats(false);
 $('bSkip').onclick = () => socket.emit('vote', 'skip');
 $('chatForm').onsubmit = e => { e.preventDefault(); const v = $('chatIn').value.trim(); if (v) socket.emit('chat', v); $('chatIn').value = ''; };
 socket.on('chat', c => { const d = document.createElement('div'); d.innerHTML = `<b style="color:${c.c}">${esc(c.n)}</b>${esc(c.t)}`; const l = $('chatLog'); l.appendChild(d); l.scrollTop = l.scrollHeight; });
@@ -736,7 +935,7 @@ function releaseFocus() {
 const lastDown = {};
 function clearKeys() { for (const k in keysDown) keysDown[k] = false; sendInput(true); }
 function sendInput(force) {
-  const blocked = mini || !S || S.ph !== 'playing';
+  const blocked = mini || closetOpen || mapOpen && S && S.ph === 'lobby' || !S || (S.ph !== 'playing' && S.ph !== 'lobby');
   const o = blocked ? { up: 0, down: 0, left: 0, right: 0 } : { up: !!(keysDown.w || keysDown.up), down: !!(keysDown.s || keysDown.down), left: !!(keysDown.a || keysDown.left), right: !!(keysDown.d || keysDown.right) };
   const j = JSON.stringify(o); if (force || j !== lastIn) { lastIn = j; socket.emit('input', o); }
 }
@@ -754,8 +953,21 @@ function onKeyDown(e) {
     if (!rep) { if (k === 'escape') cancelMini(); else miniKey(k); }
     return;
   }
+  // 拡大表示中は Esc / M / SPACE で閉じる
+  if (statsOpen && !rep && (k === 'escape' || k === 'space')) { e.preventDefault(); openStats(false); return; }
+  if (mapOpen && !rep && (k === 'escape' || k === 'm')) { e.preventDefault(); e.stopPropagation(); openMap(false); return; }
+  if (S.ph === 'lobby') {
+    if (GAMEKEYS.includes(k)) { e.preventDefault(); e.stopPropagation(); }
+    if (!rep) {
+      if (closetOpen) { if (k === 'escape' || k === 'space') openCloset(false); }
+      else if (k === 'space' && nearCloset()) openCloset(true);
+    }
+    sendInput(); return;
+  }
+  if (S.ph === 'meeting') { if (!rep && k === 'm') { e.preventDefault(); openMap(true); } return; }
   if (S.ph !== 'playing') return;
   if (GAMEKEYS.includes(k)) { e.preventDefault(); e.stopPropagation(); } // フォーカス中ボタンの二重発火・スクロールを防ぐ
+  if (mapOpen) { sendInput(); return; } // マップ表示中もキャラは動かせる(アクションは無効)
   if (!rep) {
     if (k === 'space') socket.emit('action'); else if (k === 'r') socket.emit('report'); else if (k === 'e') socket.emit('kill');
     else if (k === 'f') socket.emit('sabotage'); else if (k === 'm') toggleMap();
@@ -766,7 +978,7 @@ function onKeyUp(e) {
   if (e.key === 'Meta') { clearKeys(); return; } // ⌘を離すと他キーのkeyupが来ないことがある
   const k = normKey(e);
   if (k) keysDown[k] = false;
-  if (joined && !typing() && (mini || (S && S.ph === 'playing')) && GAMEKEYS.includes(k)) e.preventDefault(); // keyupでのボタン活性化も阻止
+  if (joined && !typing() && (mini || (S && (S.ph === 'playing' || S.ph === 'lobby'))) && GAMEKEYS.includes(k)) e.preventDefault(); // keyupでのボタン活性化も阻止
   sendInput();
 }
 // capture フェーズで受けて、フォーカス位置に関係なく確実に拾う
@@ -819,10 +1031,7 @@ function drawGame(dt, now) {
     drawMachine(d, act || me.late, now);
   }
   for (const b of S.bodies) drawBody(b);
-  [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => {
-    drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff'));
-    if (e.item) { ctx.save(); ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(ITEM_ICON[e.item], e.x, e.y - 38); ctx.restore(); }
-  });
+  [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff')));
   ctx.restore();
   if (me.alive && !me.late) {
     const g = ctx.createRadialGradient(w / 2, h / 2, 190 * sc * .8, w / 2, h / 2, 330 * sc); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.93)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
@@ -849,7 +1058,10 @@ function drawGame(dt, now) {
 let lastT = performance.now(), pvPh = 0;
 function frame(t) {
   const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
-  if (joined && S && S.ph !== 'lobby' && init) drawGame(dt, t); else ctx.clearRect(0, 0, cv.width, cv.height);
+  if (joined && S && init && S.ph === 'lobby' && S.lobby) drawLobby(dt, t);
+  else if (joined && S && S.ph !== 'lobby' && init) drawGame(dt, t); else ctx.clearRect(0, 0, cv.width, cv.height);
+  if (mapOpen && mapCv && MAP && S && t - (frame.mt || 0) > 100) { frame.mt = t; drawBigMap(t); } // マップは10fpsで更新
+  if (closetOpen) { clPvG.clearRect(0, 0, 150, 180); drawAstro(clPvG, { x: 75, y: 125, f: 1, ph: t / 140, mv: true, a: true, c: myColor, acc: myAcc }, 3, null); }
   if (mini && mini.kind === 'weld') updateWeld(dt);
   drawFx(t);
   if (!joined) { // タイトルの等身大アバタープレビュー
