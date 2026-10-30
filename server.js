@@ -28,6 +28,8 @@ const DARK_MS = 30000;                       // 暗闇の長さ
 const SHORT_MS = 120000, SHORT_NEED = 5;     // 電気のショート: 2分以内に5か所直さないとクルー全滅
 const FLOOD_N = 3, BAIL_NEED = 30, FLOOD_MAX_MS = 150000; // 水の氾濫: 3か所。SPACE30回で1か所解消 (150秒で自然に引く)
 const WARP_CD = 6000, WARP_RANGE = 70;       // インポスター専用ワープ
+// 探偵: キルが起きると、探偵だけに被害者の直前5秒の移動軌跡が届く
+const TRAIL_MS = 5000, TRAIL_STEP = 100, MAX_DET = 2, DET_TRACE_MS = 45000;
 const SABS = { prog: { name: '進捗妨害', theme: null }, dark: { name: '暗闇', theme: null }, short: { name: '電気のショート', theme: 'space' }, flood: { name: '水の氾濫', theme: 'island' } };
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
 const DISCUSS_MS = process.env.DOA_TEST === '1' ? 4000 : 20000; // 自動テスト時だけ議論を短く
@@ -250,7 +252,8 @@ function genMap(layoutIdx, seedIn) {
   const carvePath = (pts) => {
     for (let i = 0; i < pts.length - 1; i++) {
       const a = [tc(pts[i][0]), tr(pts[i][1])], b = [tc(pts[i + 1][0]), tr(pts[i + 1][1])];
-      carve(a[0] - 1, a[1] - 1, b[0] + 1, b[1] + 1);
+      // 区間の向き(右→左/下→上)に関係なく、両端を1マスずつ広げて3マス幅で掘る (以前は逆向き区間の端が縮み、宇宙船右下が行き止まりになっていた)
+      carve(Math.min(a[0], b[0]) - 1, Math.min(a[1], b[1]) - 1, Math.max(a[0], b[0]) + 1, Math.max(a[1], b[1]) + 1);
     }
   };
 
@@ -411,7 +414,7 @@ function newRoom() {
   let code;
   do { code = String(Math.floor(Math.random() * 90000) + 10000); } while (rooms.has(code));
   const R = {
-    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1, mapIdx: 0, lchat: [],
+    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1, detCount: 1, mapIdx: 0, lchat: [],
     phase: 'lobby', endsAt: 0, remainAtEnd: GAME_MS, endedAt: 0, progress: 0, crewTotal: 1,
     result: null, bodies: [], nextBody: 1, meeting: null, noMeetingUntil: 0, freezeUntil: 0, map: null, mapMsg: null,
   };
@@ -480,9 +483,12 @@ function startGame(R) {
   R.impN = Math.min(R.impCount, maxImp(n));
   R.crewTotal = n;
   const imps = new Set(part.slice().sort(() => Math.random() - 0.5).slice(0, R.impN));
+  // クルーの中からランダムに探偵を選ぶ (役職はクルー陣営のまま)
+  const dets = new Set(part.filter(p => !imps.has(p)).sort(() => Math.random() - 0.5).slice(0, R.detCount));
   part.forEach((p, i) => {
     resetPlayer(R, p, i, n); p.theme = R.map.theme;
     p.role = imps.has(p) ? 'imposter' : 'crew';
+    p.sub = dets.has(p) ? 'detective' : null; p.trail = []; p.lastTrail = 0;
     p.killReady = now + FIRST_KILL_CD; p.sabReady = now + SAB_CD; p.progReady = now + PROG_CD; p.warpReady = 0;
     fillTasks(p);
   });
@@ -504,7 +510,7 @@ function toLobby(R) {
   R.map = null; R.mapMsg = null;
   const all = [...R.players.values()];
   all.forEach((p, i) => {
-    p.late = false; p.ready = false; p.role = null; p.alive = true;
+    p.late = false; p.ready = false; p.role = null; p.sub = null; p.trail = []; p.alive = true;
     p.item = null; p.tasks = []; p.mini = null; p.input = { x: 0, y: 0 }; p.moving = false;
     const s = lobbySpawn(i, all.length); p.x = s.x; p.y = s.y;
   });
@@ -567,6 +573,7 @@ function endMeeting(R, now) {
   if (R.sab.short) R.sab.short.endsAt += paused;
   if (R.sab.flood) R.sab.flood.endsAt += paused;
   R.phase = 'playing'; R.meeting = null; R.bodies = [];
+  for (const q of R.players.values()) q.trail = []; // 会議で円形に並べ直したぶんの移動は記録しない
   R.noMeetingUntil = now + BTN_LOCK;
   for (const p of participants(R)) if (p.role === 'imposter') p.killReady = Math.max(p.killReady, now + 10000);
   checkWin(R);
@@ -670,6 +677,7 @@ function doKill(R, p) {
   if (!best) { toast(p, '範囲内にターゲットがいない', 'error'); return; }
   best.alive = false; cancelMini(best);
   R.bodies.push({ id: R.nextBody++, x: Math.round(best.x), y: Math.round(best.y), c: best.color, name: best.name });
+  sendDetTrace(R, best, now);
   p.x = best.x; p.y = best.y; p.killReady = now + KILL_CD;
   // 被害者にだけキルカットシーン。実行者は演出なしで即操作可能
   io.to(best.id).emit('killCut', { kc: p.color, ka: p.acc, kn: p.name, vc: best.color, va: best.acc, vn: best.name });
@@ -678,6 +686,13 @@ function doKill(R, p) {
   checkWin(R);
 }
 
+// ---------- 探偵 ----------
+function sendDetTrace(R, victim, now) {
+  const path = (victim.trail || []).filter(q => now - q.t <= TRAIL_MS).map(q => [q.x, q.y, now - q.t]); // [x, y, 死亡の何ms前か]
+  path.push([Math.round(victim.x), Math.round(victim.y), 0]);
+  const msg = { id: victim.id, name: victim.name, c: victim.color, path, ttl: DET_TRACE_MS };
+  for (const d of participants(R)) if (d.sub === 'detective' && d.alive && d !== victim) io.to(d.id).emit('detTrace', msg);
+}
 // ---------- 妨害 (サボタージュ) ----------
 function resetSab(R) { R.sab = { dark: 0, short: null, flood: null, cells: new Set() }; }
 const sabActive = (R, now) => R.sab.dark > now || !!R.sab.short || !!R.sab.flood;
@@ -763,6 +778,11 @@ function tickRoom(R, now, dt) {
   else if (R.phase === 'playing') {
     for (const p of R.players.values()) {
       if (p.late) continue;
+      if (p.alive && now - (p.lastTrail || 0) >= TRAIL_STEP) { // 探偵用: 直近5秒の座標ログ (サーバーだけが保持)
+        p.lastTrail = now - (p.lastTrail || 0) > TRAIL_STEP * 2 ? now : p.lastTrail + TRAIL_STEP; // 平均してちょうど100msごと (サーバーは30回/秒)
+        (p.trail = p.trail || []).push({ x: Math.round(p.x), y: Math.round(p.y), t: now });
+        while (p.trail.length && now - p.trail[0].t > TRAIL_MS) p.trail.shift();
+      }
       if (p.mini && now - p.mini.start > MINI_TIMEOUT) cancelMini(p);
       if (p.mini || now < R.freezeUntil) { p.moving = false; continue; }
       const len = Math.hypot(p.input.x, p.input.y);
@@ -796,7 +816,7 @@ function broadcast(R, now) {
     lobby = {
       list: [...R.players.values()].sort((a, b) => a.joinOrder - b.joinOrder).map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, ready: p.ready, host: p.id === host,
         x: Math.round(p.x), y: Math.round(p.y), mv: p.moving, f: p.face, a: true, pid: p.pid })),
-      imp: R.impCount, max: maxImp(R.players.size), map: R.mapIdx,
+      imp: R.impCount, max: maxImp(R.players.size), map: R.mapIdx, det: R.detCount,
     };
   }
   const pv = R.phase === 'lobby' ? null : part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face, item: p.item || null, pid: p.pid }));
@@ -805,7 +825,7 @@ function broadcast(R, now) {
     const msg = {
       ...base,
       me: {
-        role: v.role, alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
+        role: v.role, det: v.sub === 'detective', alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
         tasks: v.tasks, item: v.item || null,
         kcd: Math.max(0, (v.killReady || 0) - now), scd: Math.max(0, (v.sabReady || 0) - now), pcd: Math.max(0, (v.progReady || 0) - now),
         em: v.emUsed, emLock: Math.max(0, R.noMeetingUntil - now),
@@ -825,7 +845,7 @@ function broadcast(R, now) {
           my: m.votes.get(v.id) || null, res: m.result,
         };
       }
-      if (R.phase === 'end') msg.roster = part.map(p => ({ id: p.id, name: p.name, c: p.color, role: p.role, a: p.alive }));
+      if (R.phase === 'end') msg.roster = part.map(p => ({ id: p.id, name: p.name, c: p.color, role: p.role, det: p.sub === 'detective', a: p.alive }));
     }
     io.to(v.id).volatile.emit('state', msg);
   }
@@ -1037,6 +1057,8 @@ io.on('connection', (socket) => {
     if (d.resetCd) { p.sabReady = 0; p.progReady = 0; p.warpReady = 0; }
     if (d.resetProg) p.progReady = 0;
     if (d.die) { p.alive = false; cancelMini(p); }
+    if (d.det != null) p.sub = d.det ? 'detective' : null;
+    if (d.killNow) p.killReady = 0;
     if (d.shortLeft != null && R.sab.short) R.sab.short.endsAt = Date.now() + d.shortLeft;
     if (d.clearDark) R.sab.dark = 0;
     const fz = d.flood != null && R.sab.flood ? R.sab.flood.zones[d.flood] : null;
@@ -1085,6 +1107,11 @@ io.on('connection', (socket) => {
     if (!p || R.phase !== 'lobby' || p.id !== hostId(R)) return;
     const n = LAYOUTS.length; R.mapIdx = (((parseInt(i, 10) || 0) % n) + n) % n;
     rEmit(R, 'sfx', 'click');
+  });
+  socket.on('setDet', (n) => { // ホストが探偵の人数 (0〜2) を設定
+    const { R, p } = C();
+    if (!p || R.phase !== 'lobby' || p.id !== hostId(R)) return;
+    R.detCount = clamp(parseInt(n, 10) || 0, 0, MAX_DET);
   });
   socket.on('setImp', (n) => {
     const { R, p } = C();
