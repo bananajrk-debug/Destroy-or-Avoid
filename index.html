@@ -55,7 +55,7 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 #mapPrev{display:block;width:100%;max-width:640px;aspect-ratio:8/5;height:auto;border:3px solid #8a6239;border-radius:12px;background:#0a4a72}
 #mpRow{display:flex;align-items:center;gap:12px}
 #mpTabs{display:flex;gap:8px}
-#mpTabs button{padding:8px 20px;font-size:17px;background:#26333f;box-shadow:0 3px 0 #111;border:2px solid transparent;color:#cfd8dc}
+#mpTabs button{padding:8px 16px;font-size:16px;background:#26333f;box-shadow:0 3px 0 #111;border:2px solid transparent;color:#cfd8dc}
 #mpTabs button.on{background:linear-gradient(#ffd43b,#f59f00);color:#2b1d00;box-shadow:0 3px 0 #8a5a00;border-color:#fff8}
 #mpTabs.ro button{pointer-events:none}
 #mpTabs.ro button:not(.on){opacity:.45}
@@ -325,7 +325,7 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
   </div>
   <div id="mapPanel" class="lbPanel">
     <div class="mpHead">ゲーム設定</div>
-    <div id="mpTabs"><button data-th="island">🏝 孤島</button><button data-th="space">🚀 宇宙船</button></div>
+    <div id="mpTabs"><button data-th="island">🏝 孤島</button><button data-th="sky">☁ 空島</button><button data-th="space">🚀 宇宙船</button></div>
     <canvas id="mapPrev" width="640" height="400"></canvas>
     <div id="mpRow"><button id="mpPrev" class="blue">◀</button><div id="mpName">-</div><button id="mpNext" class="blue">▶</button></div>
     <div id="mpDesc" class="sub"></div>
@@ -462,7 +462,8 @@ const cv = $('cv'), ctx = cv.getContext('2d');
 const fxc = $('fx'), fxg = fxc.getContext('2d');
 const mmx = $('mm').getContext('2d');
 const pvc = $('pv'), pvg = pvc.getContext('2d');
-const ITEM_ICON = { wood: '🪵', nut: '🌰', sos: '📡', scrap: '🧰', fuse: '🔌', battery: '🔋', core: '⚛️' };
+const ITEM_ICON = { wood: '🪵', nut: '🌰', sos: '📡', scrap: '🧰', fuse: '🔌', battery: '🔋', core: '⚛️', stone: '💎', gear: '⚙️', seed: '🌱' };
+const isSky = () => !!(MAP && MAP.theme === 'sky');
 const isSpace = () => !!(MAP && MAP.theme === 'space');
 let init = null, S = null, MAP = null, mapCv = null, joined = false, prevPh = '', prevMode = '';
 let mini = null, meetSig = '', lastIn = '', taskSig = '', itemSig = '', fx = null, mapOpen = false;
@@ -778,6 +779,8 @@ socket.on('init', d => { init = d; d.TASKS.forEach(t => TB[t.id] = t); buildTitl
 const THEMES = [{ n: 'キャンプ(拠点)', z: 'camp' }, { n: '大きな浜辺', z: 'beach' }, { n: '深い森', z: 'forest' }, { n: '竹林', z: 'forest' }, { n: '滝つぼ', z: 'forest' }, { n: '難破船', z: 'beach' },
   { n: '灯台', z: 'beach' }, { n: '岩場の入り江', z: 'beach' }, { n: 'マングローブ', z: 'forest' }, { n: '見張り台', z: 'forest' }, { n: '漂着物の浜', z: 'beach' }, { n: 'キノコの谷', z: 'forest' }];
 // 宇宙船の部屋 (サーバーの ROOM_TH 20〜30)。h = 床の色相
+// 空島の島 (サーバーの ROOM_TH 40〜50)。s = 地面の種類 (草地/石畳/水晶/木の甲板)
+[['天空の広場', 'stone'], ['浮遊庭園', 'grass'], ['風車の丘', 'grass'], ['古代遺跡', 'stone'], ['浮遊石の鉱床', 'crystal'], ['飛行船の港', 'wood'], ['風の祠', 'stone'], ['天文台', 'stone'], ['巨鳥の巣', 'grass'], ['天空の泉', 'grass'], ['鐘楼', 'stone']].forEach(([n, st], i) => THEMES[40 + i] = { n, s: st, z: 'sky' });
 [['食堂', 30], ['貯蔵庫', 35], ['上部エンジン', 8], ['下部エンジン', 8], ['原子炉', 0], ['操舵室', 210], ['医務室', 150], ['警備室', 320], ['電気室', 55], ['酸素室', 120], ['通信室', 240]].forEach(([n, h], i) => THEMES[20 + i] = { n, h, z: 'space' });
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
@@ -892,8 +895,8 @@ function drawTaskProps(g, m) {
       g.strokeStyle = '#ced4da'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 36, y + 28); g.quadraticCurveTo(x + 52, y + 20, x + 70, y + 30); g.stroke(); },
   };
   g.save(); g.textAlign = 'center'; g.textBaseline = 'middle';
-  if (m.TPOS) for (const id in m.TPOS) { const p = m.TPOS[id], f = props[id]; if (!p) continue; g.save(); if (f) f(p.x, p.y); else spaceProp(g, +id, p.x, p.y); g.restore(); }
-  if (m.STATIONS) for (const it in m.STATIONS) { const p = m.STATIONS[it], f = stations[it]; if (!p) continue; g.save(); if (f) f(p.x, p.y); else spaceStationProp(g, it, p.x, p.y); g.restore(); }
+  if (m.TPOS) for (const id in m.TPOS) { const p = m.TPOS[id], f = props[id]; if (!p) continue; g.save(); if (f) f(p.x, p.y); else if (+id > 200) skyProp(g, +id, p.x, p.y); else spaceProp(g, +id, p.x, p.y); g.restore(); }
+  if (m.STATIONS) for (const it in m.STATIONS) { const p = m.STATIONS[it], f = stations[it]; if (!p) continue; g.save(); if (f) f(p.x, p.y); else if (m.theme === 'sky') skyStationProp(g, it, p.x, p.y); else spaceStationProp(g, it, p.x, p.y); g.restore(); }
   g.restore();
 }
 // ===== 宇宙船マップの描画 (金属の床・パネル壁・配線・ロッカー等) =====
@@ -1027,9 +1030,139 @@ function spaceStationProp(g, it, x, y) {
   for (const [dx, dy] of [[-56, -6], [-50, 18], [56, 8]]) { g.fillStyle = '#2a3243'; rrg(g, x + dx - 14, y + dy - 10, 28, 20, 3); g.fill(); g.strokeStyle = col; g.lineWidth = 2; g.stroke(); g.fillStyle = col; g.fillRect(x + dx - 8, y + dy - 2, 16, 3); }
   if (it === 'core') { E(x + 56, y - 22, 10, 10, 'rgba(177,151,252,.35)'); E(x + 56, y - 22, 5, 5, '#e5dbff'); }
 }
+// ===== 空島マップの描画 (雲海に浮かぶ島々 + 崖 + 吊り橋) =====
+function buildSkyCanvas(m) {
+  const C = init.CELL, rows = m.rows, NR = rows.length, NC = rows[0].length;
+  const wall = (c, r) => r < 0 || c < 0 || r >= NR || c >= NC || rows[r].charCodeAt(c) === 49;
+  const cvs = document.createElement('canvas'); cvs.width = NC * C; cvs.height = NR * C;
+  const g = cvs.getContext('2d'), rng = mulberry32(m.seed ^ 0x7f4a7c15);
+  const room = Array.from({ length: NR }, () => new Int8Array(NC).fill(-1));
+  for (const [x, y, w, h, t] of m.rooms) for (let r = y; r < y + h; r++) for (let c = x; c < x + w; c++) room[r][c] = t;
+  // 壁の連結成分: 外周に触れない小さな塊は島の上の障害物 (柱・木・水晶)
+  const obst = Array.from({ length: NR }, () => new Uint8Array(NC)), seen = Array.from({ length: NR }, () => new Uint8Array(NC));
+  for (let r = 0; r < NR; r++) for (let c = 0; c < NC; c++) {
+    if (!wall(c, r) || seen[r][c]) continue;
+    const comp = [[c, r]]; seen[r][c] = 1; let edge = false;
+    for (let i = 0; i < comp.length; i++) { const [cc, rr] = comp[i]; if (cc === 0 || rr === 0 || cc === NC - 1 || rr === NR - 1) edge = true;
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nc = cc + dc, nr = rr + dr; if (nc < 0 || nr < 0 || nc >= NC || nr >= NR || seen[nr][nc] || !wall(nc, nr)) continue; seen[nr][nc] = 1; comp.push([nc, nr]); } }
+    if (!edge && comp.length <= 6) for (const [cc, rr] of comp) obst[rr][cc] = 1;
+  }
+  const isVoid = (c, r) => wall(c, r) && !(c >= 0 && r >= 0 && c < NC && r < NR && obst[r][c]);
+  const style = (c, r) => { const t = room[r][c]; return t >= 0 && THEMES[t] ? THEMES[t].s : 'bridge'; };
+  // 1) 空と雲海
+  const sky = g.createLinearGradient(0, 0, 0, cvs.height); sky.addColorStop(0, '#6ec3f5'); sky.addColorStop(.6, '#a9dcfb'); sky.addColorStop(1, '#e3f3ff');
+  g.fillStyle = sky; g.fillRect(0, 0, cvs.width, cvs.height);
+  const puff = (x, y, s, a) => { g.fillStyle = `rgba(255,255,255,${a})`; for (const [dx, dy, rr] of [[0, 0, 1], [-.8, .2, .7], [.8, .25, .75], [-.3, -.35, .65], [.4, -.3, .6]]) { g.beginPath(); g.arc(x + dx * s, y + dy * s, rr * s, 0, 7); g.fill(); } };
+  for (let i = 0; i < 70; i++) puff(rng() * cvs.width, rng() * cvs.height, 30 + rng() * 70, .25 + rng() * .35);
+  for (let i = 0; i < 10; i++) { const x = rng() * cvs.width, y = rng() * cvs.height, s = 20 + rng() * 30; // 遠くの小さな浮島
+    g.fillStyle = 'rgba(120,150,110,.35)'; elg(g, x, y, s, s * .35); g.fill(); g.fillStyle = 'rgba(110,90,70,.3)'; g.beginPath(); g.moveTo(x - s, y); g.lineTo(x, y + s * 1.2); g.lineTo(x + s, y); g.fill(); }
+  // 2) 島の崖 (床の下側が空なら、下へ垂れる岩肌を描く)
+  for (let r = 0; r < NR; r++) for (let c = 0; c < NC; c++) {
+    if (wall(c, r) || !isVoid(c, r + 1)) continue;
+    const x = c * C, y = (r + 1) * C, depth = room[r][c] >= 0 ? 34 + ((c * 7 + r * 3) % 4) * 6 : 10;
+    const gr = g.createLinearGradient(0, y, 0, y + depth); gr.addColorStop(0, '#8a6a4a'); gr.addColorStop(1, 'rgba(90,70,55,0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x, y); g.lineTo(x + C, y); g.lineTo(x + C - 6, y + depth * .7); g.lineTo(x + C / 2, y + depth); g.lineTo(x + 6, y + depth * .8); g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(60,45,30,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 4, y + 8); g.lineTo(x + C - 4, y + 10); g.stroke();
+    if (room[r][c] >= 0 && rng() < .3) { g.strokeStyle = '#4f7d3a'; g.lineWidth = 2; g.beginPath(); const vx = x + 8 + rng() * 34; g.moveTo(vx, y); g.quadraticCurveTo(vx + 6, y + 14, vx - 2, y + 22 + rng() * 14); g.stroke(); } // 垂れる蔓
+  }
+  // 3) 床 (島の地面 / 吊り橋)
+  const FLOOR = { grass: ['#7cc36a', '#74bb62', '#84c972'], stone: ['#cfc8b8', '#c6bfae', '#d6cfc0'], crystal: ['#b7a6dd', '#ad9bd6', '#c0b0e4'], wood: ['#b98a56', '#b0824f', '#c2925d'] };
+  for (let r = 0; r < NR; r++) for (let c = 0; c < NC; c++) {
+    if (wall(c, r) && !obst[r][c]) continue;
+    const x = c * C, y = r * C, st = style(c, r), v = (r * 7 + c * 13) % 3;
+    if (st === 'bridge') { // 吊り橋: 進行方向に直角な板。空に面した側にロープの手すり
+      const horiz = isVoid(c, r - 1) || isVoid(c, r + 1) ? !(isVoid(c - 1, r) || isVoid(c + 1, r)) : (!wall(c - 1, r) && !wall(c + 1, r));
+      g.fillStyle = '#6b4a2b'; g.fillRect(x, y, C, C);
+      g.fillStyle = ['#c08a52', '#b77f48', '#c9955d'][v];
+      for (let k = 0; k < 5; k++) { if (horiz) g.fillRect(x + k * 10 + 1, y + 2, 8, C - 4); else g.fillRect(x + 2, y + k * 10 + 1, C - 4, 8); }
+      g.fillStyle = 'rgba(60,35,15,.5)'; for (let k = 0; k < 5; k++) { if (horiz) g.fillRect(x + k * 10 + 4, y + C / 2, 2, 2); else g.fillRect(x + C / 2, y + k * 10 + 4, 2, 2); }
+      continue;
+    }
+    g.fillStyle = FLOOR[st][v]; g.fillRect(x, y, C, C);
+    for (let k = 0; k < 4; k++) { const px = x + rng() * C, py = y + rng() * C;
+      if (st === 'grass') { g.fillStyle = rng() < .15 ? ['#fff', '#ffd43b', '#ff8fab'][Math.floor(rng() * 3)] : 'rgba(40,90,30,.35)'; g.fillRect(px, py, 3, 3); }
+      else if (st === 'stone') { g.strokeStyle = 'rgba(90,80,65,.25)'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, C - 1, C - 1); }
+      else if (st === 'crystal') { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(px, py, 2, 2); }
+      else { g.fillStyle = 'rgba(60,35,15,.35)'; g.fillRect(x, y + (k + 1) * 10, C, 1.5); } }
+  }
+  // 島の縁 (空に面した辺に明るい縁取り)
+  for (let r = 0; r < NR; r++) for (let c = 0; c < NC; c++) {
+    if (wall(c, r) || style(c, r) === 'bridge') continue; const x = c * C, y = r * C, st = style(c, r);
+    const lip = st === 'grass' ? '#a5dd8a' : st === 'crystal' ? '#e0d4ff' : st === 'wood' ? '#d9a86c' : '#ece6d8';
+    g.fillStyle = lip; if (isVoid(c, r - 1)) g.fillRect(x, y, C, 4); if (isVoid(c - 1, r)) g.fillRect(x, y, 4, C); if (isVoid(c + 1, r)) g.fillRect(x + C - 4, y, 4, C);
+    g.fillStyle = 'rgba(70,50,30,.5)'; if (isVoid(c, r + 1)) g.fillRect(x, y + C - 5, C, 5);
+  }
+  // 吊り橋のロープと支柱 (空に面した側)
+  g.strokeStyle = '#e8d3a8'; g.lineWidth = 3;
+  for (let r = 0; r < NR; r++) for (let c = 0; c < NC; c++) {
+    if (wall(c, r) || style(c, r) !== 'bridge') continue; const x = c * C, y = r * C;
+    for (const [dc, dr, x0, y0, x1, y1] of [[0, -1, 0, 3, C, 3], [0, 1, 0, C - 3, C, C - 3], [-1, 0, 3, 0, 3, C], [1, 0, C - 3, 0, C - 3, C]]) {
+      if (!isVoid(c + dc, r + dr)) continue;
+      g.beginPath(); g.moveTo(x + x0, y + y0); g.quadraticCurveTo(x + (x0 + x1) / 2 + dr * 0, y + (y0 + y1) / 2 + (dc ? 0 : 4), x + x1, y + y1); g.stroke();
+      g.fillStyle = '#5c3d22'; g.fillRect(x + x0 - 3, y + y0 - 3, 6, 6);
+    }
+  }
+  // 4) 障害物 (島ごと: 石柱 / 木 / 水晶 / 木箱)
+  for (let r = 0; r < NR; r++) for (let c = 0; c < NC; c++) {
+    if (!obst[r][c]) continue; const x = c * C + C / 2, y = r * C + C / 2;
+    let st = 'stone'; for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const cc = c + dc, rr = r + dr; if (cc >= 0 && rr >= 0 && cc < NC && rr < NR && room[rr][cc] >= 0) st = THEMES[room[rr][cc]].s; }
+    g.fillStyle = 'rgba(0,0,0,.25)'; elg(g, x + 4, y + 10, 22, 10); g.fill();
+    if (st === 'grass') { g.fillStyle = '#7a5532'; g.fillRect(x - 4, y - 4, 8, 16); for (const [dx, dy, rr, col] of [[0, -12, 18, '#3f8f35'], [-8, -6, 12, '#4fa33f'], [8, -8, 12, '#5ab447']]) { g.fillStyle = col; elg(g, x + dx, y + dy, rr, rr); g.fill(); } }
+    else if (st === 'crystal') { for (const [dx, h, col] of [[-8, 26, '#9775fa'], [4, 34, '#b197fc'], [12, 20, '#d0bfff']]) { g.fillStyle = col; g.beginPath(); g.moveTo(x + dx - 6, y + 12); g.lineTo(x + dx, y + 12 - h); g.lineTo(x + dx + 6, y + 12); g.fill(); } }
+    else if (st === 'wood') { g.fillStyle = '#9a7442'; g.fillRect(x - 15, y - 15, 30, 30); g.strokeStyle = '#5b4220'; g.lineWidth = 2; g.strokeRect(x - 14, y - 14, 28, 28); g.beginPath(); g.moveTo(x - 14, y - 14); g.lineTo(x + 14, y + 14); g.stroke(); }
+    else { g.fillStyle = '#e9e3d3'; g.fillRect(x - 11, y - 20, 22, 34); g.fillStyle = '#d2cab6'; g.fillRect(x - 14, y - 24, 28, 7); g.fillRect(x - 14, y + 10, 28, 6); g.fillStyle = 'rgba(0,0,0,.12)'; for (let k = -6; k <= 6; k += 6) g.fillRect(x + k - 1, y - 16, 2, 26); }
+  }
+  // 5) 島ごとの大きな飾り
+  for (const [rx, ry, rw, rh, t] of m.rooms) {
+    const x0 = rx * C, y0 = ry * C, W = rw * C, H = rh * C, cx = x0 + W / 2, cy = y0 + H / 2;
+    g.save();
+    if (t === 40) { g.strokeStyle = 'rgba(160,140,110,.6)'; g.lineWidth = 6; g.beginPath(); g.arc(m.BUTTON.x, m.BUTTON.y, 150, 0, 7); g.stroke(); g.lineWidth = 2; for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; g.beginPath(); g.moveTo(m.BUTTON.x + Math.cos(a) * 150, m.BUTTON.y + Math.sin(a) * 150); g.lineTo(m.BUTTON.x + Math.cos(a) * 190, m.BUTTON.y + Math.sin(a) * 190); g.stroke(); } }
+    else if (t === 41) { for (let k = 0; k < 5; k++) { const fx = x0 + 60 + rng() * (W - 120), fy = y0 + 60 + rng() * (H - 120); g.fillStyle = '#6b8e23'; elg(g, fx, fy, 34, 20); g.fill(); for (let j = 0; j < 9; j++) { g.fillStyle = ['#ff8fab', '#ffd43b', '#fff', '#b197fc'][j % 4]; elg(g, fx - 24 + (j % 3) * 24, fy - 10 + Math.floor(j / 3) * 10, 4, 4); g.fill(); } } }
+    else if (t === 42) { const wx = x0 + W - 80, wy = y0 + 70; g.fillStyle = '#e9e3d3'; g.beginPath(); g.moveTo(wx - 22, wy + 50); g.lineTo(wx - 14, wy - 30); g.lineTo(wx + 14, wy - 30); g.lineTo(wx + 22, wy + 50); g.fill(); g.fillStyle = '#c0392b'; g.beginPath(); g.moveTo(wx - 18, wy - 30); g.lineTo(wx, wy - 50); g.lineTo(wx + 18, wy - 30); g.fill();
+      g.fillStyle = '#7a5532'; for (let k = 0; k < 4; k++) { g.save(); g.translate(wx, wy - 30); g.rotate(k * Math.PI / 2 + .4); g.fillRect(-4, 0, 8, 62); g.fillStyle = '#f1e3c6'; g.fillRect(-12, 18, 24, 40); g.fillStyle = '#7a5532'; g.restore(); } elg(g, wx, wy - 30, 7, 7); g.fill(); }
+    else if (t === 43) { g.fillStyle = 'rgba(200,190,170,.85)'; for (const ax of [x0 + 50, x0 + W - 90]) { g.fillRect(ax, y0 + 30, 14, 60); g.fillRect(ax + 40, y0 + 30, 14, 60); g.beginPath(); g.arc(ax + 27, y0 + 30, 27, Math.PI, 0); g.lineWidth = 12; g.strokeStyle = 'rgba(200,190,170,.85)'; g.stroke(); } }
+    else if (t === 44) { for (let k = 0; k < 6; k++) { const qx = x0 + 40 + rng() * (W - 80), qy = y0 + 40 + rng() * (H - 80); g.fillStyle = 'rgba(177,151,252,.35)'; elg(g, qx, qy, 26, 26); g.fill(); g.fillStyle = '#d0bfff'; g.beginPath(); g.moveTo(qx - 6, qy + 8); g.lineTo(qx, qy - 16); g.lineTo(qx + 6, qy + 8); g.fill(); } }
+    else if (t === 45) { const bx = x0 + W - 90, by = y0 + 60; g.fillStyle = 'rgba(0,0,0,.2)'; elg(g, bx, by + 70, 50, 12); g.fill(); g.fillStyle = '#e8590c'; elg(g, bx, by, 56, 34); g.fill(); g.fillStyle = '#ffd43b'; g.fillRect(bx - 56, by - 4, 112, 8); g.strokeStyle = '#5c3d22'; g.lineWidth = 2; g.beginPath(); g.moveTo(bx - 30, by + 26); g.lineTo(bx - 18, by + 48); g.moveTo(bx + 30, by + 26); g.lineTo(bx + 18, by + 48); g.stroke(); g.fillStyle = '#8a6239'; g.fillRect(bx - 24, by + 46, 48, 18); }
+    else if (t === 46) { g.fillStyle = '#c92a2a'; g.fillRect(cx - 40, cy - 60, 8, 50); g.fillRect(cx + 32, cy - 60, 8, 50); g.fillRect(cx - 50, cy - 66, 100, 8); g.fillRect(cx - 44, cy - 52, 88, 6); }
+    else if (t === 47) { g.fillStyle = '#dee2e6'; g.beginPath(); g.arc(cx + 50, cy - 20, 34, Math.PI, 0); g.fill(); g.fillRect(cx + 16, cy - 20, 68, 30); g.fillStyle = '#495057'; g.save(); g.translate(cx + 50, cy - 34); g.rotate(-.6); g.fillRect(-4, -40, 8, 40); g.restore(); }
+    else if (t === 48) { g.fillStyle = '#8a6a48'; elg(g, cx - 40, cy + 10, 46, 26); g.fill(); g.fillStyle = '#5c3d22'; elg(g, cx - 40, cy + 6, 34, 16); g.fill(); g.fillStyle = '#f8f9fa'; for (const dx of [-12, 0, 12]) { elg(g, cx - 40 + dx, cy + 4, 7, 9); g.fill(); } g.strokeStyle = '#6b4a2b'; g.lineWidth = 2; for (let k = 0; k < 10; k++) { const a = k * .6; g.beginPath(); g.moveTo(cx - 40 + Math.cos(a) * 40, cy + 10 + Math.sin(a) * 22); g.lineTo(cx - 40 + Math.cos(a + .5) * 48, cy + 10 + Math.sin(a + .5) * 26); g.stroke(); } }
+    else if (t === 49) { g.fillStyle = 'rgba(80,180,230,.75)'; elg(g, cx, y0 + 40, W * .3, 22); g.fill(); g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; elg(g, cx, y0 + 40, W * .24, 15); g.stroke(); }
+    else if (t === 50) { g.fillStyle = '#d2cab6'; g.fillRect(cx - 30, y0 + 16, 60, 70); g.fillStyle = '#8a6239'; g.beginPath(); g.moveTo(cx - 38, y0 + 18); g.lineTo(cx, y0 - 10); g.lineTo(cx + 38, y0 + 18); g.fill(); g.fillStyle = '#e8a33a'; g.beginPath(); g.moveTo(cx - 12, y0 + 30); g.quadraticCurveTo(cx - 14, y0 + 52, cx - 18, y0 + 56); g.lineTo(cx + 18, y0 + 56); g.quadraticCurveTo(cx + 14, y0 + 52, cx + 12, y0 + 30); g.fill(); }
+    g.restore();
+  }
+  drawTaskProps(g, m);
+  // 6) 島の名前
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const [rx, ry, rw, rh, t] of m.rooms) { g.font = 'bold 30px sans-serif'; g.fillStyle = 'rgba(60,50,40,.22)'; g.fillText(THEMES[t].n, (rx + rw / 2) * C, (ry + rh / 2) * C + (t === 40 ? 120 : 0)); }
+  return cvs;
+}
+// 空島のタスク地点の小道具
+function skyProp(g, id, x, y) {
+  const E = (px, py, rx, ry, c) => { g.fillStyle = c; elg(g, px, py, rx, ry); g.fill(); };
+  const sh = (px, py, rx) => E(px, py, rx, rx * .35, 'rgba(0,0,0,.22)');
+  switch (id) {
+    case 201: sh(x - 54, y + 18, 20); for (const [dx, dy] of [[-62, 6], [-46, 10], [-54, -4]]) { E(x + dx, y + dy, 10, 8, '#b197fc'); E(x + dx - 3, y + dy - 3, 4, 3, '#e5dbff'); } break; // 浮遊石の台座
+    case 202: g.strokeStyle = '#868e96'; g.lineWidth = 5; for (const [dx, r] of [[-56, 14], [-34, 9]]) { g.beginPath(); g.arc(x + dx, y + 6, r, 0, 7); g.stroke(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; g.fillStyle = '#868e96'; g.fillRect(x + dx + Math.cos(a) * r - 2, y + 6 + Math.sin(a) * r - 2, 4, 4); } } break; // 歯車
+    case 203: g.fillStyle = '#7a5532'; g.fillRect(x + 36, y - 2, 40, 18); for (let k = 0; k < 3; k++) { E(x + 44 + k * 12, y + 2, 4, 3, '#5c3d22'); g.strokeStyle = '#51cf66'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 44 + k * 12, y + 2); g.lineTo(x + 44 + k * 12, y - 10); g.stroke(); } break; // 花壇
+    case 204: case 211: g.strokeStyle = id === 204 ? '#e8d3a8' : '#dee2e6'; g.lineWidth = 4; for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(x - 56 + k * 6, y + 6 + k * 4, 16, 8, 0, 0, 7); g.stroke(); } if (id === 211) for (let k = 0; k < 4; k++) E(x + 50 + (k % 2) * 16, y - 6 + k * 8, 12, 8, 'rgba(255,255,255,.85)'); break; // ロープ / 雲の茨
+    case 205: case 210: E(x - 56, y + 4, 16, 16, id === 205 ? '#adb5bd' : '#4dabf7'); g.strokeStyle = '#5c3d22'; g.lineWidth = 4; g.beginPath(); g.moveTo(x - 56, y + 4); g.lineTo(x - 36, y - 14); g.stroke(); E(x - 34, y - 16, 4, 4, '#5c3d22'); break; // ハンドル / 井戸
+    case 206: case 213: g.fillStyle = '#adb5bd'; g.fillRect(x + 38, y - 22, 30, 40); g.fillStyle = '#495057'; for (let k = 0; k < 3; k++) g.fillRect(x + 43, y - 16 + k * 11, 20, 3); break; // 石板 / 暗証盤
+    case 207: case 215: E(x - 52, y + 8, 22, 10, 'rgba(200,190,170,.9)'); g.strokeStyle = '#5c3d22'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 72, y + 8); g.lineTo(x - 32, y + 8); g.moveTo(x - 52, y - 2); g.lineTo(x - 52, y + 18); g.stroke(); E(x - 52, y - 4, 3, 3, '#c92a2a'); break; // 星図盤 / 風見
+    case 208: for (let k = 0; k < 3; k++) { g.fillStyle = '#f8f9fa'; g.fillRect(x + 40 + k * 12, y - 4 - k * 3, 6, 18 + k * 3); E(x + 43 + k * 12, y - 8 - k * 3, 3, 5, '#ffa94d'); } break; // ろうそく
+    case 209: case 214: E(x - 54, y + 6, 18, 10, id === 209 ? '#e8a33a' : '#8a6a48'); if (id === 214) for (const dx of [-8, 4]) E(x - 54 + dx, y + 2, 5, 6, '#ffe066'); break; // 小鐘 / ヒナ
+    case 212: for (const [dx, h] of [[46, 24], [58, 32], [68, 18]]) { g.fillStyle = '#b197fc'; g.beginPath(); g.moveTo(x + dx - 6, y + 12); g.lineTo(x + dx, y + 12 - h); g.lineTo(x + dx + 6, y + 12); g.fill(); } g.fillStyle = '#5c3d22'; g.fillRect(x + 30, y + 10, 4, 14); g.fillStyle = '#868e96'; g.fillRect(x + 24, y + 6, 16, 5); break; // 浮遊石とつるはし
+  }
+}
+function skyStationProp(g, it, x, y) {
+  const E = (px, py, rx, ry, c) => { g.fillStyle = c; elg(g, px, py, rx, ry); g.fill(); };
+  if (it === 'stone') for (const [dx, dy] of [[-56, 0], [-44, 14], [56, 6]]) { E(x + dx, y + dy, 11, 9, '#9775fa'); E(x + dx - 3, y + dy - 3, 4, 3, '#e5dbff'); }
+  else if (it === 'gear') { g.strokeStyle = '#868e96'; g.lineWidth = 4; for (const [dx, r] of [[-54, 12], [54, 10]]) { g.beginPath(); g.arc(x + dx, y + 6, r, 0, 7); g.stroke(); } }
+  else if (it === 'seed') { E(x - 52, y + 8, 20, 12, '#8a6a48'); for (let k = 0; k < 5; k++) E(x - 62 + k * 5, y + 4, 3, 4, '#82c91e'); }
+}
 function buildMap(m) { mapCv = buildMapCanvas(m); }
 function buildMapCanvas(m) {
   if (m.theme === 'space') return buildSpaceCanvas(m);
+  if (m.theme === 'sky') return buildSkyCanvas(m);
   const C = init.CELL, rows = m.rows, NR = rows.length, NC = rows[0].length;
   const wall = (c, r) => r < 0 || c < 0 || r >= NR || c >= NC || rows[r].charCodeAt(c) === 49;
   const cvs = document.createElement('canvas'); cvs.width = NC * C; cvs.height = NR * C;
@@ -1236,23 +1369,23 @@ function drawMapPreview(i) {
   g.clearRect(0, 0, W, H); g.drawImage(previewCache[i], 0, 0, W, H);
   g.textAlign = 'center'; g.textBaseline = 'middle';
   for (const [x, y, w, h, t] of M.rooms) { // 部屋名をプレビュー用に大きく
-    const cx = (x + w / 2) * init.CELL * k, cy = (y + h / 2) * init.CELL * k, z = THEMES[t].z, col = z === 'space' ? '#8ecbff' : z === 'beach' ? '#ffe8a3' : z === 'camp' ? '#ffd43b' : '#b2f2bb', hub = t === 0 || t === 20;
+    const cx = (x + w / 2) * init.CELL * k, cy = (y + h / 2) * init.CELL * k, z = THEMES[t].z, col = z === 'space' ? '#8ecbff' : z === 'sky' ? '#fff3bf' : z === 'beach' ? '#ffe8a3' : z === 'camp' ? '#ffd43b' : '#b2f2bb', hub = t === 0 || t === 20 || t === 40;
     g.font = `bold ${hub ? 14 : 12}px sans-serif`; g.lineWidth = 4; g.strokeStyle = '#000c'; g.strokeText(THEMES[t].n, cx, cy + (hub ? 16 : 0)); g.fillStyle = col; g.fillText(THEMES[t].n, cx, cy + (hub ? 16 : 0));
   }
   g.font = '20px serif'; g.fillStyle = '#000'; g.fillText(M.theme === 'space' ? '🚨' : '🔔', M.BUTTON.x * k, M.BUTTON.y * k - 4);
 }
 const themeMaps = th => init.MAPS.map((m, i) => m.theme === th ? i : -1).filter(i => i >= 0);
-let lastIsland = 0;
+let lastIsland = 0; const lastByTheme = {}; const TH_ICON = { island: '🏝', sky: '☁', space: '🚀' };
 function renderMapPanel(i, isHost) {
   const M = init.MAPS[i], th = M.theme, list = themeMaps(th);
   if (i !== shownMap) {
-    shownMap = i; drawMapPreview(i); if (th === 'island') lastIsland = i;
-    $('mpName').textContent = th === 'space' ? '🚀 宇宙船' : `🏝 ${list.indexOf(i) + 1}/${list.length}  ${M.name}`; $('mpDesc').textContent = M.desc;
+    shownMap = i; drawMapPreview(i); lastByTheme[th] = i; if (th === 'island') lastIsland = i;
+    $('mpName').textContent = list.length > 1 ? `${TH_ICON[th]} ${list.indexOf(i) + 1}/${list.length}  ${M.name}` : `${TH_ICON[th]} ${M.name}`; $('mpDesc').textContent = M.desc;
   }
   $('mpTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.th === th)); $('mpTabs').classList.toggle('ro', !isHost);
   const multi = list.length > 1;
   $('mpPrev').classList.toggle('hidden', !isHost || !multi); $('mpNext').classList.toggle('hidden', !isHost || !multi);
-  $('mpNote').textContent = isHost ? (multi ? '孤島 / 宇宙船 を選択。◀ ▶ で島の形を切り替え (全員に反映)' : '孤島 / 宇宙船 を選択 (全員に反映)') : 'マップはホストが選択中 (切り替えると自動で反映)';
+  $('mpNote').textContent = isHost ? (multi ? '孤島 / 空島 / 宇宙船 を選び、◀ ▶ で形を切り替え (全員に反映)' : '孤島 / 空島 / 宇宙船 を選択 (全員に反映)') : 'マップはホストが選択中 (切り替えると自動で反映)';
 }
 const stepMap = d => { const cur = S.lobby.map || 0, list = themeMaps(init.MAPS[cur].theme), k = list.indexOf(cur); socket.emit('setMap', list[(k + d + list.length) % list.length]); };
 $('mpPrev').onclick = () => { stepMap(-1); $('mpPrev').blur(); };
@@ -1260,7 +1393,7 @@ $('mpNext').onclick = () => { stepMap(1); $('mpNext').blur(); };
 $('mpTabs').querySelectorAll('button').forEach(b => b.onclick = () => {
   const cur = S.lobby.map || 0, th = b.dataset.th; b.blur();
   if (!S.me.host || init.MAPS[cur].theme === th) return;
-  socket.emit('setMap', th === 'island' ? (init.MAPS[lastIsland] && init.MAPS[lastIsland].theme === 'island' ? lastIsland : themeMaps('island')[0]) : themeMaps(th)[0]);
+  const prev = lastByTheme[th]; socket.emit('setMap', prev != null && init.MAPS[prev] && init.MAPS[prev].theme === th ? prev : themeMaps(th)[0]); // そのテーマで前に選んでいた形を復元
 });
 $('codeBox').onclick = () => { $('codeBig').textContent = $('codeBox').textContent; $('codePop').classList.remove('hidden'); SFX.click(); };
 $('codePop').onclick = () => $('codePop').classList.add('hidden');
@@ -1400,7 +1533,7 @@ function nearHint(me, e) {
   const fz = sb.flood && me.alive && sb.flood.zones.find(z => rectDist(e, z) <= init.REACH);
   const sp = sb.short && sb.short.spots.find(q => !q.done && hyp(q.x - e.x, q.y - e.y) <= init.REACH);
   if (body) text = 'R: 死体を報告';
-  else if (fz) text = `🌊 SPACE 連打で水を掻き出す (${fz.bail}/${sb.flood.need})`;
+  else if (fz) text = isSky() ? `☁ SPACE 連打で雲を吹き払う (${fz.bail}/${sb.flood.need})` : `🌊 SPACE 連打で水を掻き出す (${fz.bail}/${sb.flood.need})`;
   else if (sp) text = !me.alive ? '幽霊は修理できない' : me.role === 'imposter' ? 'インポスターは配線を修理できない' : 'SPACE: ⚡ ショートした配線を直す';
   else if (sb.short && (me.tasks.some(id => hyp(TB[id].x - e.x, TB[id].y - e.y) <= init.REACH) || hyp(MAP.BUTTON.x - e.x, MAP.BUTTON.y - e.y) <= 90)) text = '⚡ 電気がショート中! 先に配線を直そう';
   else {
@@ -1422,7 +1555,7 @@ function renderSab(s) { // 画面上部の警報バナー + 妨害メニュー�
   const sb = s.sab || {}, el = $('sabBanner'), imp = s.me.role === 'imposter';
   let cls = '', html = '';
   if (sb.short) { cls = 'short'; html = `⚡ 電気がショート! 酸素切れまで ${mmss(sb.short.left)} ・ 修理 ${sb.short.fixed}/${sb.short.need}<small>${imp ? 'クルーが直す前に時間切れを狙え' : '赤く光る配線を直そう (タスクは一時停止)'}</small>`; }
-  else if (sb.flood) { cls = 'flood'; html = `🌊 水が氾濫! 残り ${sb.flood.zones.length}か所<small>水たまりの前で SPACE を${sb.flood.need}回連打すると通れる</small>`; }
+  else if (sb.flood) { cls = 'flood'; html = isSky() ? `☁ 雲海が吊り橋を覆った! 残り ${sb.flood.zones.length}か所<small>雲の前で SPACE を${sb.flood.need}回連打すると吹き払える</small>` : `🌊 水が氾濫! 残り ${sb.flood.zones.length}か所<small>水たまりの前で SPACE を${sb.flood.need}回連打すると通れる</small>`; }
   else if (sb.dark > 0) { cls = 'dark'; html = `🌑 暗闇 あと${Math.ceil(sb.dark / 1000)}秒<small>${imp ? 'インポスターは普段どおり見える' : '自分のまわりしか見えない'}</small>`; }
   el.className = cls; el.classList.toggle('hidden', !cls); if (cls && el.innerHTML !== html) el.innerHTML = html;
   if (sabOpen) buildSabList(); if (warpOpen) buildWarpList();
@@ -1566,11 +1699,12 @@ const SAB_DEFS = { prog: { ic: '📉', name: '進捗妨害', desc: 'タスクの
   short: { ic: '⚡', name: '電気のショート', desc: 'クルーのタスクが配線修理に変わる。2分で5か所直せないと酸素切れでクルー全滅' },
   flood: { ic: '🌊', name: '水の氾濫', desc: '通路3か所が水没して通れなくなる。SPACE30回連打で掻き出せる' } };
 const sabKinds = () => ['prog', 'dark', isSpace() ? 'short' : 'flood'];
+const floodDef = () => isSky() ? { ic: '☁', name: '雲海の侵入', desc: '吊り橋3か所が雲に覆われて通れなくなる。SPACE30回連打で吹き払える' } : SAB_DEFS.flood;
 function buildSabList() {
   const me = S.me, sb = S.sab || {}, busy = !!(sb.short || sb.flood || sb.dark > 0), cd = me.scd > 0, pcd = me.pcd > 0;
   const sig = sabKinds().join() + busy + Math.ceil(me.scd / 1000) + '/' + Math.ceil(me.pcd / 1000); if (buildSabList.sig === sig) return; buildSabList.sig = sig;
   const note = k => k === 'prog' ? (pcd ? `あと${Math.ceil(me.pcd / 1000)}秒` : '') : busy ? '別の妨害が進行中' : cd ? `あと${Math.ceil(me.scd / 1000)}秒` : '';
-  $('sabList').innerHTML = sabKinds().map((k, i) => { const d = SAB_DEFS[k], off = k === 'prog' ? pcd : (busy || cd), n = note(k);
+  $('sabList').innerHTML = sabKinds().map((k, i) => { const d = k === 'flood' ? floodDef() : SAB_DEFS[k], off = k === 'prog' ? pcd : (busy || cd), n = note(k);
     return `<button class="sabItem" data-k="${k}" ${off ? 'disabled' : ''}><big>${d.ic}</big><span><b>${d.name} ${k === 'prog' ? '<span style="color:#ff8787">進捗 −20%</span>' : ''}${n ? ` <span style="color:#ffd43b;font-size:13px">(${n})</span>` : ''}</b><small>${d.desc}</small></span><kbd>${i + 1}</kbd></button>`; }).join('');
   $('sabList').querySelectorAll('[data-k]').forEach(b => b.onclick = () => useSab(b.dataset.k));
 }
@@ -1642,7 +1776,7 @@ function drawMeeting(now) {
   const cx = w / 2, cy = h * .5, R = Math.min(w * .38, h * .34);
   // 背景: 宇宙船=金属の床と円卓 / 孤島=夜の砂浜とたき火
   const bg = g.createRadialGradient(cx, cy, 10, cx, cy, Math.max(w, h) * .7);
-  if (space) { bg.addColorStop(0, '#2b3550'); bg.addColorStop(1, '#0a0f1c'); } else { bg.addColorStop(0, '#3a3020'); bg.addColorStop(1, '#0a1520'); }
+  if (space) { bg.addColorStop(0, '#2b3550'); bg.addColorStop(1, '#0a0f1c'); } else if (m.theme === 'sky') { bg.addColorStop(0, '#4b5e8a'); bg.addColorStop(1, '#141c33'); } else { bg.addColorStop(0, '#3a3020'); bg.addColorStop(1, '#0a1520'); }
   g.fillStyle = bg; g.fillRect(0, 0, w, h);
   if (space) { g.strokeStyle = 'rgba(255,255,255,.05)'; g.lineWidth = 1; for (let x = (w % 60) / 2; x < w; x += 60) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y < h; y += 60) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }
   else { g.fillStyle = 'rgba(255,255,255,.6)'; for (const st of STARS.slice(0, 50)) g.fillRect(st.x * w, st.y * h * .35, 1.5, 1.5); }
@@ -1721,7 +1855,7 @@ function drawBigMap(now) {
     if (b.name) { g.font = 'bold 34px sans-serif'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText(b.name, b.x, b.y - 52); g.fillStyle = '#ff8787'; g.fillText(b.name, b.x, b.y - 52); }
   }
   { const sb = S.sab || {}, C = init.CELL; // 妨害の状況
-    if (sb.flood) for (const z of sb.flood.zones) { g.fillStyle = 'rgba(60,160,230,.85)'; g.fillRect(z.c0 * C, z.r0 * C, (z.c1 - z.c0 + 1) * C, (z.r1 - z.r0 + 1) * C); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText('🌊', (z.c0 + 1.5) * C, (z.r0 + 1.5) * C); }
+    if (sb.flood) for (const z of sb.flood.zones) { g.fillStyle = isSky() ? 'rgba(255,255,255,.95)' : 'rgba(60,160,230,.85)'; g.fillRect(z.c0 * C, z.r0 * C, (z.c1 - z.c0 + 1) * C, (z.r1 - z.r0 + 1) * C); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText(isSky() ? '☁' : '🌊', (z.c0 + 1.5) * C, (z.r0 + 1.5) * C); }
     if (sb.short) for (const q of sb.short.spots) if (!q.done) { g.fillStyle = '#ff3b3b'; elg(g, q.x, q.y, 30, 30); g.fill(); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText('⚡', q.x, q.y); }
     if (S.me.role === 'imposter' && S.me.warps) for (const wp of S.me.warps) { g.fillStyle = '#9775fa'; elg(g, wp.x, wp.y, 26, 18); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 4; g.stroke(); }
   }
@@ -1784,7 +1918,14 @@ function fxSpace(t, speed) {
   fxg.fillStyle = '#03040a'; fxg.fillRect(0, 0, w, h); fxg.fillStyle = '#fff';
   for (const s of STARS) { const x = ((s.x * w - t * speed * s.z * 200) % w + w) % w; fxg.globalAlpha = s.z; fxg.fillRect(x, s.y * h, 1 + s.z * 2, 1 + s.z); } fxg.globalAlpha = 1;
 }
-const fxStars = (t, speed) => isSpace() ? fxSpace(t, speed || 3) : fxSea(t);
+function fxSky(t) { // 夕暮れの空と流れる雲
+  const w = fxc.width / DPR, h = fxc.height / DPR;
+  const sky = fxg.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#3a5fa8'); sky.addColorStop(.55, '#f4a582'); sky.addColorStop(1, '#ffe8c8'); fxg.fillStyle = sky; fxg.fillRect(0, 0, w, h);
+  fxg.fillStyle = '#fff4d6'; fxg.beginPath(); fxg.arc(w * .78, h * .3, Math.min(w, h) * .07, 0, 7); fxg.fill();
+  for (let i = 0; i < 14; i++) { const s = STARS[i], x = ((s.x * w * 1.4 - t * 30 * (1 + s.z)) % (w * 1.4) + w * 1.4) % (w * 1.4) - w * .2, y = h * (.45 + s.y * .55), r = 40 + s.z * 70;
+    fxg.fillStyle = `rgba(255,255,255,${.5 + s.z * .4})`; for (const [dx, dy, k] of [[0, 0, 1], [-.8, .2, .7], [.8, .25, .75], [-.3, -.35, .65]]) { fxg.beginPath(); fxg.arc(x + dx * r, y + dy * r, k * r, 0, 7); fxg.fill(); } }
+}
+const fxStars = (t, speed) => isSpace() ? fxSpace(t, speed || 3) : isSky() ? fxSky(t) : fxSea(t);
 function fxText(txt, x, y, size, col, a, maxW) { fxg.save(); fxg.globalAlpha = clamp(a, 0, 1); fxg.font = `900 ${size}px sans-serif`;
   if (maxW) { const tw = fxg.measureText(txt).width; if (tw > maxW) { size = Math.max(10, size * maxW / tw); fxg.font = `900 ${size}px sans-serif`; } }
   fxg.textAlign = 'center'; fxg.textBaseline = 'middle'; fxg.lineWidth = 6; fxg.strokeStyle = '#000'; fxg.strokeText(txt, x, y); fxg.fillStyle = col; fxg.fillText(txt, x, y); fxg.restore(); }
@@ -1826,7 +1967,11 @@ function drawFx(now) {
   } else if (fx.kind === 'eject') {
     fxStars(t, 3); const ej = d.res.ej, dur = fx.dur / 1000;
     if (ej) {
-      if (isSpace()) { // 宇宙へ放り出されて回転しながら流れていく
+      if (isSky()) { // 空島の縁から足を踏み外し、回転しながら雲の下へ落ちていく
+        const p = clamp((t - .5) / (dur - 2.2), 0, 1), sc = u * 2.4 * (1 - .5 * p);
+        drawAstro(fxg, { x: w * .5 + Math.sin(t * 2) * 30, y: h * .2 + p * h * .75, f: 1, ph: 0, mv: false, a: true, c: ej.c, acc: ej.acc, rot: t * 4 }, sc);
+        fxg.fillStyle = 'rgba(255,255,255,.9)'; for (let i = 0; i < 6; i++) { const cx = (i / 5) * w, cy = h * .82 + Math.sin(t + i) * 8; fxg.beginPath(); fxg.arc(cx, cy, 90, 0, 7); fxg.fill(); } // 手前の雲海
+      } else if (isSpace()) { // 宇宙へ放り出されて回転しながら流れていく
         const p = clamp((t - .5) / (dur - 2.2), 0, 1), sc = u * 2.6 * (1 - .55 * p);
         drawAstro(fxg, { x: -w * .1 + p * w * 1.2, y: h * .42 + Math.sin(t * 2) * 20 - p * 40, f: 1, ph: 0, mv: false, a: true, c: ej.c, acc: ej.acc, rot: t * 3.2 }, sc);
       } else {
@@ -1859,7 +2004,7 @@ const SEAM_AMP = 55, TORCH_DOWN = 36, TORCH_SIDE = 140, WELD_END = 304, SEAM_TOL
 const seamX = (y, ph) => 260 + Math.sin(y / 55 + ph) * SEAM_AMP;
 function initWeld(body) {
   const c = document.createElement('canvas'); c.width = 520; c.height = 330; body.appendChild(c);
-  $('miniHelp').textContent = isSpace() ? 'A / D (← →) でトーチを左右に動かし、赤い線に合わせたまま下まで溶接 (Escで中止)' : 'A / D (← →) でノコギリを左右に動かし、赤い線に沿って丸太を最後まで切る (Escで中止)';
+  $('miniHelp').textContent = isSpace() ? 'A / D (← →) でトーチを左右に動かし、赤い線に合わせたまま下まで溶接 (Escで中止)' : isSky() ? 'A / D (← →) でつるはしを左右に動かし、赤い線に沿って浮遊石を削り出す (Escで中止)' : 'A / D (← →) でノコギリを左右に動かし、赤い線に沿って丸太を最後まで切る (Escで中止)';
   const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:10px;justify-content:center;margin-top:8px';
   row.innerHTML = '<button class="blue" id="wdL">◀ 左へ</button><button class="blue" id="wdR">右へ ▶</button>'; body.appendChild(row);
   for (const [id, d] of [['wdL', -1], ['wdR', 1]]) { const b = $(id); b.onpointerdown = e => { e.preventDefault(); if (mini) mini.dir = d; }; b.onpointerup = b.onpointerleave = b.onpointercancel = () => { if (mini) mini.dir = 0; }; }
@@ -1872,7 +2017,7 @@ function updateWeld(dt) {
   const ok = Math.abs(m.tx - seamX(m.ty, m.ph)) <= SEAM_TOL; if (!ok) m.off += dt; m.trail.push([m.tx, m.ty, ok]);
   const sp = isSpace();
   if (sp) { g.fillStyle = '#2a303d'; g.fillRect(0, 0, 520, 330); g.fillStyle = '#343c4d'; g.fillRect(0, 0, 258, 330); g.fillRect(262, 0, 258, 330); }
-  else { g.fillStyle = '#2c1f12'; g.fillRect(0, 0, 520, 330); g.fillStyle = '#b07a43'; rrg(g, 40, 10, 440, 300, 18); g.fill();
+  else { g.fillStyle = isSky() ? '#3b2f5c' : '#2c1f12'; g.fillRect(0, 0, 520, 330); g.fillStyle = isSky() ? '#a78bdb' : '#b07a43'; rrg(g, 40, 10, 440, 300, 18); g.fill();
   g.strokeStyle = 'rgba(90,55,25,.5)'; g.lineWidth = 2; for (let i = 0; i < 9; i++) { g.beginPath(); g.ellipse(260, 160, 30 + i * 26, 18 + i * 15, 0, 0, 7); g.stroke(); } }
   g.strokeStyle = '#ff5a3c'; g.lineWidth = 5; g.setLineDash([10, 6]); g.beginPath();
   for (let y = 24; y <= WELD_END; y += 4) { const x = seamX(y, m.ph); y === 24 ? g.moveTo(x, y) : g.lineTo(x, y); } g.stroke(); g.setLineDash([]);
@@ -2326,7 +2471,7 @@ function drawGame(dt, now) {
   if (!me.late) for (const id of me.tasks) { const d = TB[id], dest = me.item && d.item === me.item; if (me.item && !dest) continue; mmx.fillStyle = dest ? '#ff922b' : '#ffd43b'; mmx.beginPath(); mmx.arc(d.x * kx, d.y * ky, dest ? 5 : 3, 0, 7); mmx.fill(); }
   mmx.fillStyle = '#ff3b3b'; mmx.fillRect(B.x * kx - 2, B.y * ky - 2, 4, 4);
   if (sbx.short) for (const q of sbx.short.spots) if (!q.done) { mmx.fillStyle = (now / 300 | 0) % 2 ? '#ff3b3b' : '#ffd43b'; mmx.beginPath(); mmx.arc(q.x * kx, q.y * ky, 4, 0, 7); mmx.fill(); }
-  if (sbx.flood) for (const z of sbx.flood.zones) { mmx.fillStyle = '#4dabf7'; mmx.fillRect(z.c0 * init.CELL * kx, z.r0 * init.CELL * ky, (z.c1 - z.c0 + 1) * init.CELL * kx, (z.r1 - z.r0 + 1) * init.CELL * ky); }
+  if (sbx.flood) for (const z of sbx.flood.zones) { mmx.fillStyle = isSky() ? '#fff' : '#4dabf7'; mmx.fillRect(z.c0 * init.CELL * kx, z.r0 * init.CELL * ky, (z.c1 - z.c0 + 1) * init.CELL * kx, (z.r1 - z.r0 + 1) * init.CELL * ky); }
   if (me.role === 'imposter' && me.warps) for (const wp of me.warps) { mmx.fillStyle = '#b197fc'; mmx.beginPath(); mmx.arc(wp.x * kx, wp.y * ky, 3, 0, 7); mmx.fill(); }
   for (const b of S.bodies) { mmx.fillStyle = '#f33'; mmx.fillRect(b.x * kx - 3, b.y * ky - 3, 6, 6); }
   if (mine) { mmx.fillStyle = '#fff'; mmx.beginPath(); mmx.arc(mine.x * kx, mine.y * ky, 3, 0, 7); mmx.fill(); }
@@ -2335,14 +2480,18 @@ function drawSabWorld(now, me) {
   const sb = S.sab || {}, C = init.CELL;
   if (sb.flood) for (const z of sb.flood.zones) { // 水たまり (通行不可)
     const x = z.c0 * C, y = z.r0 * C, ww = (z.c1 - z.c0 + 1) * C, hh = (z.r1 - z.r0 + 1) * C;
+    if (isSky()) { // 雲海: もこもこの雲の塊
+      ctx.fillStyle = 'rgba(255,255,255,.96)'; for (let i = 0; i < 9; i++) { const px = x + ((i * 37) % ww), py = y + ((i * 53) % hh), r = 22 + Math.sin(now / 500 + i) * 4; ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill(); }
+      ctx.fillStyle = 'rgba(230,240,255,.95)'; rrg(ctx, x - 4, y - 4, ww + 8, hh + 8, 30); ctx.fill();
+    } else {
     const wg = ctx.createLinearGradient(x, y, x, y + hh); wg.addColorStop(0, 'rgba(40,140,210,.92)'); wg.addColorStop(1, 'rgba(20,90,170,.95)');
-    ctx.fillStyle = wg; rrg(ctx, x - 4, y - 4, ww + 8, hh + 8, 18); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2;
+    ctx.fillStyle = wg; rrg(ctx, x - 4, y - 4, ww + 8, hh + 8, 18); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 3; ctx.stroke(); }
+    ctx.strokeStyle = isSky() ? 'rgba(160,180,210,.5)' : 'rgba(255,255,255,.35)'; ctx.lineWidth = 2;
     for (let i = 0; i < 6; i++) { const t = (now / 900 + i * .37) % 1, rx = x + ((i * 53) % ww), ry = y + ((i * 37) % hh); ctx.globalAlpha = 1 - t; ctx.beginPath(); ctx.ellipse(rx, ry, 6 + t * 22, 3 + t * 9, 0, 0, 7); ctx.stroke(); }
     ctx.globalAlpha = 1;
     const r = z.bail / sb.flood.need; ctx.fillStyle = '#000a'; ctx.fillRect(x, y - 22, ww, 10); ctx.fillStyle = '#74c0fc'; ctx.fillRect(x, y - 22, ww * r, 10);
     ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-    const lb = `🌊 SPACE連打 ${z.bail}/${sb.flood.need}`; ctx.strokeText(lb, x + ww / 2, y + hh / 2); ctx.fillStyle = '#fff'; ctx.fillText(lb, x + ww / 2, y + hh / 2);
+    const lb = `${isSky() ? '☁' : '🌊'} SPACE連打 ${z.bail}/${sb.flood.need}`; ctx.strokeText(lb, x + ww / 2, y + hh / 2); ctx.fillStyle = isSky() ? '#4a6fa5' : '#fff'; ctx.fillText(lb, x + ww / 2, y + hh / 2);
   }
   if (sb.short) for (const q of sb.short.spots) { // ショートした配線 (火花)
     if (q.done) { ctx.font = '18px serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.fillText('✅', q.x, q.y - 26); continue; }
