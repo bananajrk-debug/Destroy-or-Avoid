@@ -508,7 +508,7 @@ function genMap(layoutIdx, seedIn) {
 
 // ロビーのプレビュー用 (固定シードで1回だけ生成)
 let MAP_PREVIEWS = null;
-const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
+const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, WARPS: (m.warps || []).map(w => ({ x: w.x, y: w.y, th: w.th })), BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
 
 function resolveWalls(grid, p, extra) {
   const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : (grid[r][c] || (extra ? extra(c, r) : false));
@@ -816,7 +816,7 @@ function doKill(R, p) {
 function sendDetTrace(R, victim, now) {
   const path = (victim.trail || []).filter(q => now - q.t <= TRAIL_MS).map(q => [q.x, q.y, now - q.t]); // [x, y, 死亡の何ms前か]
   path.push([Math.round(victim.x), Math.round(victim.y), 0]);
-  const msg = { id: victim.id, name: victim.name, c: victim.color, path, ttl: DET_TRACE_MS };
+  const msg = { path, ttl: DET_TRACE_MS }; // 誰が殺されたかは伏せる (名前・色・IDを送らない)。死亡の事実と最期5秒の足跡だけ
   for (const d of participants(R)) if (d.sub === 'detective' && d.alive && d !== victim) io.to(d.id).emit('detTrace', msg);
 }
 // ---------- 妨害 (サボタージュ) ----------
