@@ -22,9 +22,9 @@ const MIN_PLAYERS = 2, MAX_PLAYERS = 10, MAX_IMP = 3;
 const KILL_RANGE = 95, REPORT_RANGE = 110, BTN_RANGE = 90;
 const KILL_CD = 20000, FIRST_KILL_CD = 15000;
 // 妨害: 「進捗妨害」は単体の独立した妨害 (進捗 -20% / 専用クールタイム30秒)
-//       暗闇・電気のショート・水の氾濫は別枠 (進捗は減らさない / 共通クールタイム30秒 / 同時に1つまで)
+//       暗闇・電気のショート・水の氾濫は別枠 (進捗は減らさない / 共通クールタイム30秒は妨害が終わってから開始 / 同時に1つまで / インポスターも解除できる)
 const SAB_CD = 30000, SAB_PCT = 20, PROG_CD = 30000;
-const DARK_MS = 30000;                       // 暗闇の長さ
+const DARK_MS = 15000;                       // 暗闇の長さ (15秒で自動的に視界が戻る)
 const SHORT_MS = 120000, SHORT_NEED = 5;     // 電気のショート: 2分以内に5か所直さないとクルー全滅
 const FLOOD_N = 3, BAIL_NEED = 30, FLOOD_MAX_MS = 150000; // 水の氾濫: 3か所。SPACE30回で1か所解消 (150秒で自然に引く)
 const WARP_CD = 6000, WARP_RANGE = 70;       // インポスター専用ワープ
@@ -741,7 +741,6 @@ function doAction(R, p) {
     const i = sb.short.spots.findIndex(q => !q.done && near(p, q, REACH));
     if (i >= 0) {
       if (!p.alive) { toast(p, '幽霊は修理できない', 'error'); return; }
-      if (p.role === 'imposter') { toast(p, 'インポスターは配線を修理できない', 'error'); return; }
       p.mini = { wire: i, kind: 'wire', start: now }; p.input = { x: 0, y: 0 }; p.moving = false;
       io.to(p.id).emit('miniStart', { wire: i }); return;
     }
@@ -821,7 +820,14 @@ function sendDetTrace(R, victim, now) {
   for (const d of participants(R)) if (d.sub === 'detective' && d.alive && d !== victim) io.to(d.id).emit('detTrace', msg);
 }
 // ---------- 妨害 (サボタージュ) ----------
-function resetSab(R) { R.sab = { dark: 0, short: null, flood: null, cells: new Set() }; }
+function resetSab(R) { R.sab = { dark: 0, short: null, flood: null, cells: new Set(), on: null }; }
+// 妨害 (暗闇・ショート・氾濫) が完全に終わった瞬間から、インポスター共通のクールタイムを開始する
+function sabEnded(R, now) {
+  const kind = R.sab.on; R.sab.on = null;
+  for (const q of participants(R)) if (q.role === 'imposter') q.sabReady = now + SAB_CD;
+  for (const q of participants(R)) if (q.role === 'imposter' && !q.late) toast(q, `妨害が終了 — 次の妨害まで${SAB_CD / 1000}秒`, 'info');
+  return kind;
+}
 const sabActive = (R, now) => R.sab.dark > now || !!R.sab.short || !!R.sab.flood;
 function nearRect(p, z, rng) { // 点と矩形(マス単位)の距離
   const x0 = z.c0 * CELL, y0 = z.r0 * CELL, x1 = (z.c1 + 1) * CELL, y1 = (z.r1 + 1) * CELL;
@@ -843,15 +849,15 @@ function doSabotage(R, p, kind) {
     rEmit(R, 'sfx', 'alarm'); rEmit(R, 'toast', { text: `📉 妨害工作! タスク進捗が${SAB_PCT}%低下`, kind: 'error' });
     return;
   }
+  if (sabActive(R, now) || R.sab.on) { toast(p, 'ほかの妨害が進行中 (終わってからクールタイムが始まる)', 'error'); return; }
   if (now < p.sabReady) { toast(p, `妨害はあと${Math.ceil((p.sabReady - now) / 1000)}秒で使える`, 'error'); return; }
-  if (sabActive(R, now)) { toast(p, 'ほかの妨害が進行中', 'error'); return; }
   let zones = null;
   if (kind === 'flood') { // 誰も立っていない通路を選んで水没させる
     const empty = R.map.floods.filter(z => !participants(R).some(q => nearRect(q, z, PR + 4)));
     zones = empty.sort(() => Math.random() - .5).slice(0, FLOOD_N).map(z => ({ ...z, bail: 0, done: false }));
     if (!zones.length) { toast(p, '今は水を氾濫させられる通路がない', 'error'); return; }
   }
-  for (const q of participants(R)) if (q.role === 'imposter') q.sabReady = now + SAB_CD; // インポスター共通のクールタイム (進捗は減らさない)
+  R.sab.on = kind; for (const q of participants(R)) if (q.role === 'imposter') q.sabReady = Infinity; // 発動中はクールタイム停止 → 終了時に sabEnded() で開始
   if (kind === 'dark') R.sab.dark = now + DARK_MS;
   else if (kind === 'short') {
     R.sab.short = { endsAt: now + SHORT_MS, need: SHORT_NEED, fixed: 0, spots: R.map.shorts.slice(0, SHORT_NEED).map(q => ({ x: q.x, y: q.y, th: q.th, done: false })) };
@@ -864,12 +870,14 @@ function doSabotage(R, p, kind) {
 }
 function tickSab(R, now) {
   const sb = R.sab;
+  if (sb.dark && now >= sb.dark) { sb.dark = 0; rEmit(R, 'toast', { text: '🌑 暗闇が晴れた! 視界が元に戻った', kind: 'good' }); }
   if (sb.short && now >= sb.short.endsAt) { // 時間切れ: 酸素が尽きてクルー全滅
     sb.short = null;
     for (const q of participants(R)) if (q.role === 'crew' && q.alive) { q.alive = false; cancelMini(q); }
     endGame(R, 'imposter', '⚡ ショートを直しきれず酸素が尽きた… クルー全滅');
   }
   if (sb.flood && now >= sb.flood.endsAt) { sb.flood = null; rebuildFlood(R); rEmit(R, 'toast', { text: R.map.theme === 'sky' ? '☁ 雲海が自然に晴れた' : '🌊 水が自然に引いた', kind: 'info' }); }
+  if (sb.on && R.phase === 'playing' && !sabActive(R, now)) sabEnded(R, now); // 解除・時間切れ どの終わり方でもここで検知
 }
 function doWarp(R, p, idx) {
   if (R.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter' || p.mini) return;
@@ -956,7 +964,7 @@ function broadcast(R, now) {
       me: {
         role: v.role, det: v.sub === 'detective', alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
         tasks: v.tasks, item: v.item || null,
-        kcd: Math.max(0, (v.killReady || 0) - now), scd: Math.max(0, (v.sabReady || 0) - now), pcd: Math.max(0, (v.progReady || 0) - now),
+        kcd: Math.max(0, (v.killReady || 0) - now), scd: v.sabReady === Infinity ? 0 : Math.max(0, (v.sabReady || 0) - now), sabOn: !!(R.sab && R.sab.on), pcd: Math.max(0, (v.progReady || 0) - now),
         em: v.emUsed, emLock: Math.max(0, R.noMeetingUntil - now),
         mates: v.role === 'imposter' ? part.filter(x => x.role === 'imposter' && x !== v).map(x => x.id) : [],
         warps: v.role === 'imposter' && R.map ? R.map.warps : null, wcd: Math.max(0, (v.warpReady || 0) - now), // ワープ地点はインポスターだけに送る
