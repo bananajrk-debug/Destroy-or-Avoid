@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const { Server } = require('socket.io');
 
 const app = express();
@@ -21,7 +22,8 @@ const MIN_PLAYERS = 2, MAX_PLAYERS = 10, MAX_IMP = 3;
 const KILL_RANGE = 95, REPORT_RANGE = 110, BTN_RANGE = 90;
 const KILL_CD = 20000, FIRST_KILL_CD = 15000, SAB_CD = 45000, SAB_PCT = 5;
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
-const DISCUSS_MS = 20000, VOTE_MS = 30000, RESULT_MS = 6500, END_AUTO_MS = 25000;
+const DISCUSS_MS = process.env.DOA_TEST === '1' ? 4000 : 20000; // 自動テスト時だけ議論を短く
+const VOTE_MS = 30000, RESULT_MS = 9500, END_AUTO_MS = 25000;
 const ACTIVE_TASKS = 3, ACTION_MIN = 60;
 const MIN_MINI = { weld: 6000, seq: 1000, alt: 1200, space: 800, fire: 1800, vine: 2000, compass: 1500 };
 const MINI_TIMEOUT = 90000;
@@ -36,7 +38,8 @@ function lobbySpawn(i, n) {
 
 const cp = (c, r) => ({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 });
 // 運搬アイテム (孤島サバイバル)
-const ITEM_NAME = { wood: '薪', nut: '木の実', sos: 'SOS信号機', scrap: '漂流資材' };
+// 運搬アイテム: 孤島 (薪など) + 宇宙船 (ヒューズなど)
+const ITEM_NAME = { wood: '薪', nut: '木の実', sos: 'SOS信号機', scrap: '漂流資材', fuse: 'ヒューズ', battery: 'バッテリー', core: 'プラズマコア' };
 const COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac', '#a9e34b', '#c08457'];
 const ACCS = ['', '🐥', '💩', '👑', '🎩', '😎', '🌸', '🔥', '🎀', '🍕'];
 
@@ -59,6 +62,27 @@ const TASK_DEFS = [
   { id: 14, name: '魚を釣り上げる',           pct: 5,  kind: 'space',   n: 8, icon: '🎣' },
   { id: 15, name: 'ヤシの実を割る',           pct: 5,  kind: 'space',   n: 6, icon: '🥥' },
 ];
+TASK_DEFS.forEach(d => d.theme = 'island');
+// 宇宙船のタスク (id 101〜)
+const SPACE_TASKS = [
+  { id: 101, name: 'プラズマコアの搬入',   pct: 20, kind: 'carry', item: 'core',    icon: '⚛️' },
+  { id: 102, name: 'ヒューズの装着',       pct: 10, kind: 'carry', item: 'fuse',    icon: '🔌' },
+  { id: 103, name: '予備バッテリーの装着', pct: 10, kind: 'carry', item: 'battery', icon: '🔋' },
+  { id: 104, name: '外壁フレーム溶接',     pct: 10, kind: 'weld',  icon: '🔥' },
+  { id: 105, name: '駆動アームの溶接',     pct: 10, kind: 'weld',  icon: '🦾' },
+  { id: 106, name: '配電盤の番号入力',     pct: 5,  kind: 'seq',   n: 5, icon: '🔢' },
+  { id: 107, name: 'パスコード解除',       pct: 5,  kind: 'seq',   n: 6, icon: '🔐' },
+  { id: 108, name: '配線の接続コード入力', pct: 5,  kind: 'seq',   n: 5, icon: '🧵' },
+  { id: 109, name: '冷却ファンの回転',     pct: 5,  kind: 'alt',   n: 20, icon: '🌀' },
+  { id: 110, name: '発電機のクランク',     pct: 10, kind: 'alt',   n: 30, icon: '⚙️' },
+  { id: 111, name: 'ポンプの加圧',         pct: 5,  kind: 'alt',   n: 16, icon: '🛢️' },
+  { id: 112, name: 'コンテナの封印',       pct: 5,  kind: 'space', n: 6, icon: '📦' },
+  { id: 113, name: 'バルブの調整',         pct: 5,  kind: 'space', n: 8, icon: '🎛️' },
+  { id: 114, name: 'アンテナの調整',       pct: 5,  kind: 'space', n: 6, icon: '📡' },
+  { id: 115, name: '点火システムの調整',   pct: 5,  kind: 'space', n: 10, icon: '🚀' },
+];
+SPACE_TASKS.forEach(d => { d.theme = 'space'; TASK_DEFS.push(d); });
+const tasksOf = (theme) => TASK_DEFS.filter(d => d.theme === theme);
 const defOf = (id) => TASK_DEFS.find(d => d.id === id);
 
 // <<GENMAP
@@ -76,10 +100,12 @@ function mulberry32(a) {
 //  0 キャンプ(拠点)[camp] 1 大きな浜辺[beach] 2 深い森[forest] 3 竹林[forest] 4 滝つぼ[forest]
 //  5 難破船[beach] 6 灯台[beach] 7 岩場の入り江[beach] 8 マングローブ[forest] 9 見張り台[forest] 10 漂着物の浜[beach]
 // 大: camp, beach / 中: forest, bamboo, wreck, light / 小: falls, mangrove, tower, rocks, drift
-const ROOM_TH = { camp: 0, beach: 1, forest: 2, bamboo: 3, falls: 4, wreck: 5, light: 6, rocks: 7, mangrove: 8, tower: 9, drift: 10 };
+const ROOM_TH = { camp: 0, beach: 1, forest: 2, bamboo: 3, falls: 4, wreck: 5, light: 6, rocks: 7, mangrove: 8, tower: 9, drift: 10,
+  // 宇宙船の部屋 (クライアントの THEMES[20〜30])
+  cafeteria: 20, storage: 21, upperEngine: 22, lowerEngine: 23, reactor: 24, nav: 25, medbay: 26, security: 27, electrical: 28, o2: 29, comms: 30 };
 const LAYOUTS = [
   {
-    name: 'ヤシの入り江', desc: '拠点が北にある基本の島。南に大きな浜辺、西に灯台と難破船。',
+    theme: 'island', name: 'ヤシの入り江', desc: '拠点が北にある基本の島。南に大きな浜辺、西に灯台と難破船。',
     rooms: {
       camp:     { x: 22, y: 2,  w: 14, h: 10 }, // 【大】拠点 (集合の鐘)
       beach:    { x: 28, y: 22, w: 12, h: 12 }, // 【大】大きな浜辺
@@ -105,7 +131,7 @@ const LAYOUTS = [
     pillars: [[31, 26, 1, 4], [34, 29, 2, 2], [5, 18, 2, 2], [46, 14, 2, 1], [18, 30, 1, 2], [26, 8, 1, 2], [33, 8, 1, 2]],
   },
   {
-    name: '双子の浜', desc: '拠点が島の真ん中。北東の灯台と南東の浜辺、2つの海岸を結ぶ環状ルート。',
+    theme: 'island', name: '双子の浜', desc: '拠点が島の真ん中。北東の灯台と南東の浜辺、2つの海岸を結ぶ環状ルート。',
     rooms: {
       camp:     { x: 25, y: 14, w: 14, h: 11 },
       beach:    { x: 46, y: 27, w: 15, h: 11 },
@@ -131,7 +157,7 @@ const LAYOUTS = [
     pillars: [[29, 16, 1, 2], [35, 22, 1, 2], [50, 31, 2, 2], [56, 29, 1, 3], [8, 20, 2, 2], [55, 5, 2, 1], [6, 5, 1, 2]],
   },
   {
-    name: '霧の密林', desc: '西半分が深い森。道が細く曲がりくねり、見通しの悪い行き止まりが多い。',
+    theme: 'island', name: '霧の密林', desc: '西半分が深い森。道が細く曲がりくねり、見通しの悪い行き止まりが多い。',
     rooms: {
       camp:     { x: 25, y: 15, w: 14, h: 10 },
       beach:    { x: 44, y: 27, w: 17, h: 11 },
@@ -157,6 +183,37 @@ const LAYOUTS = [
     pillars: [[27, 6, 1, 1], [30, 4, 1, 2], [48, 31, 2, 2], [55, 34, 2, 1], [7, 18, 2, 2], [54, 6, 1, 2], [24, 32, 1, 1]],
   },
 ];
+
+// ===== 宇宙船レイアウト (船の形: 左が機関部、右端が艦橋。11部屋: 大2 中4 小5) =====
+LAYOUTS.push({
+  theme: 'space', name: '宇宙船', desc: 'SF風の宇宙船。左に2基のエンジンと原子炉、右端に操舵室。中央の食堂に緊急会議ボタン。',
+  hub: 'cafeteria', crates: ['storage', 'upperEngine', 'lowerEngine', 'comms'],
+  rooms: {
+    cafeteria:   { x: 24, y: 4,  w: 14, h: 10 }, // 【大】食堂 (緊急会議ボタン)
+    storage:     { x: 26, y: 24, w: 13, h: 11 }, // 【大】貯蔵庫
+    upperEngine: { x: 2,  y: 4,  w: 10, h: 8 },  // 【中】上部エンジン
+    lowerEngine: { x: 2,  y: 28, w: 10, h: 8 },  // 【中】下部エンジン
+    reactor:     { x: 2,  y: 15, w: 9,  h: 10 }, // 【中】原子炉
+    nav:         { x: 52, y: 14, w: 10, h: 11 }, // 【中】操舵室 (船首)
+    medbay:      { x: 15, y: 12, w: 7,  h: 6 },  // 【小】医務室
+    security:    { x: 14, y: 19, w: 6,  h: 5 },  // 【小】警備室
+    electrical:  { x: 15, y: 26, w: 8,  h: 5 },  // 【小】電気室 (袋小路)
+    o2:          { x: 42, y: 6,  w: 7,  h: 6 },  // 【小】酸素室
+    comms:       { x: 42, y: 28, w: 8,  h: 6 },  // 【小】通信室
+  },
+  corridors: [
+    [[24, 8], [12, 8]], [[6, 12], [6, 15]], [[6, 25], [6, 28]], [[12, 33], [26, 33]], [[18, 8], [18, 12]],
+    [[11, 21], [14, 21]], [[19, 30], [19, 33]], [[31, 14], [31, 24]], [[38, 8], [42, 8]],
+    [[48, 9], [55, 9], [55, 14]], [[56, 25], [56, 31], [50, 31]], [[42, 30], [39, 30]],
+  ],
+  optional: [[[17, 17], [17, 19]], [[39, 19], [52, 19]], [[23, 28], [26, 28]], [[50, 29], [53, 29], [53, 25]], [[8, 12], [8, 13], [12, 13], [12, 12]]],
+  pillars: [[27, 6, 1, 2], [34, 6, 1, 2], [27, 11, 1, 1], [35, 11, 1, 1], [29, 27, 2, 2], [34, 30, 2, 2], [8, 19, 2, 2], [57, 18, 2, 1], [4, 6, 2, 1], [4, 31, 2, 1]],
+  taskRooms: {
+    stations: { fuse: 'electrical', battery: 'lowerEngine', core: 'reactor' },
+    101: 'nav', 102: 'nav', 103: 'o2', 104: 'upperEngine', 105: 'storage', 106: 'electrical', 107: 'comms', 108: 'security',
+    109: 'medbay', 110: 'upperEngine', 111: 'o2', 112: 'storage', 113: 'reactor', 114: 'comms', 115: 'lowerEngine',
+  },
+});
 
 // タスク・置き場をどの部屋に置くか (森ゾーン: forest/bamboo/falls/mangrove/tower)
 const TASK_ROOMS = {
@@ -193,7 +250,7 @@ function genMap(layoutIdx, seedIn) {
   const R = {};
   for (const key in L.rooms) {
     const o = L.rooms[key];
-    const fixed = key === 'camp';
+    const fixed = key === (L.hub || 'camp');
     const jx = fixed ? 0 : ri(-1, 0), jw = fixed ? 0 : ri(0, 1);
     const jy = fixed ? 0 : ri(-1, 0), jh = fixed ? 0 : ri(0, 1);
     const [x, y, w, h] = trect([o.x + jx, o.y + jy, o.w + jw - jx, o.h + jh - jy]);
@@ -211,7 +268,7 @@ function genMap(layoutIdx, seedIn) {
     for (let r = y; r < y + h; r++) for (let c = x; c < x + w; c++) if (r > 0 && c > 0 && r < ROWS - 1 && c < COLS - 1) g[r][c] = true;
   }
   // 大部屋にランダムな木箱 (1x1) を少し
-  for (const key of ['beach', 'forest', 'light', 'drift']) {
+  for (const key of (L.crates || ['beach', 'forest', 'light', 'drift'])) {
     const rm = R[key];
     for (let n = ri(0, 2); n > 0; n--) {
       const c = ri(rm.x + 2, rm.x + rm.w - 3), r = ri(rm.y + 2, rm.y + rm.h - 3);
@@ -219,7 +276,7 @@ function genMap(layoutIdx, seedIn) {
     }
   }
 
-  const hall = R.camp;
+  const hall = R[L.hub || 'camp'];
   const bc = { c: hall.x + (hall.w >> 1), r: hall.y + (hall.h >> 1) };
   // 会議ルーム中央のクリアゾーン (ボタンとスポーンリング用)
   for (let r = hall.y; r < hall.y + hall.h; r++) for (let c = hall.x; c < hall.x + hall.w; c++)
@@ -284,12 +341,13 @@ function genMap(layoutIdx, seedIn) {
     return cp(bc.c + 4, bc.r);
   }
   const stations = {};
-  for (const it in TASK_ROOMS.stations) stations[it] = spot(TASK_ROOMS.stations[it]);
+  const TR = L.taskRooms || TASK_ROOMS, theme = L.theme || 'island';
+  for (const it in TR.stations) stations[it] = spot(TR.stations[it]);
   const tasks = {};
-  for (const d of TASK_DEFS) tasks[d.id] = spot(TASK_ROOMS[d.id]);
+  for (const d of tasksOf(theme)) tasks[d.id] = spot(TR[d.id]);
 
   return {
-    seed, layout: layoutIdx, name: L.name, grid: g, rows: g.map(row => row.map(v => (v ? '1' : '0')).join('')),
+    seed, layout: layoutIdx, name: L.name, theme, grid: g, rows: g.map(row => row.map(v => (v ? '1' : '0')).join('')),
     rooms: Object.values(R).map(r => [r.x, r.y, r.w, r.h, r.th]),
     button: cp(bc.c, bc.r), stations, tasks,
   };
@@ -298,7 +356,7 @@ function genMap(layoutIdx, seedIn) {
 
 // ロビーのプレビュー用 (固定シードで1回だけ生成)
 let MAP_PREVIEWS = null;
-const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, rows: m.rows, rooms: m.rooms, BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
+const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
 
 function resolveWalls(grid, p) {
   const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : grid[r][c];
@@ -359,8 +417,9 @@ function ringPos(R, i, n, rad) {
 
 // ---------- タスク ----------
 function newTask(p) {
-  let pool = TASK_DEFS.filter(t => !p.tasks.includes(t.id) && !p.doneTasks.has(t.id));
-  if (!pool.length) { p.doneTasks.clear(); pool = TASK_DEFS.filter(t => !p.tasks.includes(t.id)); }
+  const all = tasksOf(p.theme || 'island'); // 試合のマップのテーマのタスクだけ
+  let pool = all.filter(t => !p.tasks.includes(t.id) && !p.doneTasks.has(t.id));
+  if (!pool.length) { p.doneTasks.clear(); pool = all.filter(t => !p.tasks.includes(t.id)); }
   return pool[Math.floor(Math.random() * pool.length)].id;
 }
 function fillTasks(p) { while (p.tasks.length < ACTIVE_TASKS) p.tasks.push(newTask(p)); }
@@ -400,7 +459,7 @@ function startGame(R) {
   R.crewTotal = n;
   const imps = new Set(part.slice().sort(() => Math.random() - 0.5).slice(0, R.impN));
   part.forEach((p, i) => {
-    resetPlayer(R, p, i, n);
+    resetPlayer(R, p, i, n); p.theme = R.map.theme;
     p.role = imps.has(p) ? 'imposter' : 'crew';
     p.killReady = now + FIRST_KILL_CD; p.sabReady = now + 30000;
     fillTasks(p);
@@ -473,7 +532,8 @@ function resolveVotes(R, now) {
     if (t) { t.alive = false; cancelMini(t); ej = { id: t.id, name: t.name, c: t.color, acc: t.acc, imp: t.role === 'imposter' }; }
   }
   const left = participants(R).filter(p => p.role === 'imposter' && p.alive).length;
-  m.result = { ej, tally: Object.entries(counts), skip, left };
+  const votes = [...m.votes].filter(([vid]) => R.players.has(vid)); // 結果発表で全員の指さしを公開する
+  m.result = { ej, tally: Object.entries(counts), skip, left, votes };
   m.mode = 'result'; m.modeEnds = now + RESULT_MS;
 }
 
@@ -648,7 +708,7 @@ function broadcast(R, now) {
         const m = R.meeting;
         msg.meet = {
           mode: m.mode, t: Math.max(0, m.modeEnds - now), reason: m.reason, caller: m.callerName, victim: m.victim || null,
-          roster: part.map(p => ({ id: p.id, name: p.name, c: p.color, a: p.alive, voted: m.votes.has(p.id) })),
+          roster: part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, a: p.alive, voted: m.votes.has(p.id) })), theme: R.map.theme,
           my: m.votes.get(v.id) || null, res: m.result,
         };
       }
@@ -658,7 +718,7 @@ function broadcast(R, now) {
   }
 }
 
-MAP_PREVIEWS = LAYOUTS.map((L, i) => ({ name: L.name, desc: L.desc, ...mapPayload(genMap(i, 12345 + i)) }));
+MAP_PREVIEWS = LAYOUTS.map((L, i) => ({ name: L.name, desc: L.desc, ...mapPayload(genMap(i, 12345 + i)) })); // theme も含む
 
 let lastTick = Date.now();
 setInterval(() => {
@@ -668,7 +728,34 @@ setInterval(() => {
 }, 1000 / TICK_RATE);
 
 // ---------- Socket.io ----------
+function sendReqs(pid) { // 届いているフレンド申請を本人に送る
+  const u = userOf(pid), e = presence.get(pid); if (!u || !e) return;
+  io.to(e.sid).emit('friendReqs', (u.reqs || []).map(x => ({ pid: x, name: nameOf(x) })).filter(r => r.name));
+}
+function sendAcks(pid) { // 承認された通知を本人に送って消す
+  const u = userOf(pid), e = presence.get(pid); if (!u || !e || !(u.acks || []).length) return;
+  io.to(e.sid).emit('friendAcks', u.acks); u.acks = []; saveUsers();
+}
 const presence = new Map(); // pid -> { sid, name, known:Set<pid> }
+
+// ---------- ユーザーネーム登録 (全体で重複禁止。サーバーのファイルに保存) ----------
+// 比較は NFKC 正規化 + 小文字化 + 空白除去 (例: 「Ｋｅｉｔａ」「keita」「KEITA」は同じ名前とみなす)
+const DATA_DIR = process.env.DOA_DATA_DIR || path.join(__dirname, 'data');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+let users = { byName: {}, byPid: {} }; // byName[norm] = { pid, name, reqs:[pid], acks:[{pid,name}] } / byPid[pid] = norm
+try { const j = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')); if (j && j.byName && j.byPid) users = j; } catch (e) {}
+let saveT = 0;
+function saveUsers() {
+  clearTimeout(saveT);
+  saveT = setTimeout(() => {
+    try { fs.mkdirSync(DATA_DIR, { recursive: true }); const tmp = USERS_FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(users)); fs.renameSync(tmp, USERS_FILE); }
+    catch (e) { console.error('users.json save failed', e.message); }
+  }, 500);
+}
+const normName = (n) => String(n || '').normalize('NFKC').toLowerCase().replace(/\s+/g, '');
+const NAME_RE = /^[\p{L}\p{N}_ー・]{2,10}$/u;
+const userOf = (pid) => { const k = users.byPid[pid]; return k ? users.byName[k] : null; };
+const nameOf = (pid) => { const u = userOf(pid); return u ? u.name : null; };
 const validPid = (v) => typeof v === 'string' && /^[a-z0-9]{8,40}$/i.test(v);
 const cleanName = (v) => String(v || '').replace(/[<>]/g, '').trim().slice(0, 10);
 function addPlayer(socket, R, d) {
@@ -694,16 +781,20 @@ function addPlayer(socket, R, d) {
 io.on('connection', (socket) => {
   socket.emit('init', {
     you: socket.id, W, H, CELL, COLS, ROWS, REACH, GAME_MS, ITEM_NAME, ACCS, COLORS, LOBBY, CLOSET, MAPS: MAP_PREVIEWS,
-    TASKS: TASK_DEFS.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon })),
+    TASKS: TASK_DEFS.map(d => ({ id: d.id, name: d.name, pct: d.pct, kind: d.kind, item: d.item || null, n: d.n || 0, icon: d.icon, theme: d.theme })),
   });
 
+  // ルームに入るときは登録済みのユーザーネームを使う
+  const withName = (d) => { const nm = nameOf(socket.data.pid); if (!nm) { socket.emit('joinError', '先にユーザーネームを登録してください'); socket.emit('needName'); return null; } return { ...(d || {}), name: nm }; };
   socket.on('createRoom', (d) => {
     if (sockRoom.has(socket.id)) return;
+    d = withName(d); if (!d) return;
     addPlayer(socket, newRoom(), d || {});
   });
   socket.on('joinRoom', (d) => {
     if (sockRoom.has(socket.id)) return;
     const code = String((d && d.code) || '').replace(/\D/g, '').slice(0, 5);
+    d = withName(d); if (!d) return;
     const R = rooms.get(code);
     if (!R) { socket.emit('joinError', 'そのコードのロビーは見つかりません'); return; }
     if (R.players.size >= MAX_PLAYERS) { socket.emit('joinError', 'ロビーが満員です'); return; }
@@ -719,7 +810,50 @@ io.on('connection', (socket) => {
     socket.data.pid = d.pid;
     presence.set(d.pid, { sid: socket.id, name: cleanName(d.name), known: new Set((Array.isArray(d.known) ? d.known : []).filter(validPid).slice(0, 300)) });
     const { p } = C(); if (p) p.pid = d.pid;
+    const reg = nameOf(d.pid);
+    if (reg) presence.get(d.pid).name = reg;
+    socket.emit('me', { name: reg });
+    sendReqs(d.pid); sendAcks(d.pid);
     if (old && old.sid !== socket.id) { /* 別タブ/再接続: 新しい接続を優先 */ }
+  });
+  // ユーザーネームを登録/変更 (重複は拒否)
+  socket.on('claimName', (d, ack) => {
+    if (typeof ack !== 'function') return;
+    const pid = socket.data.pid;
+    if (!pid) return ack({ ok: false, msg: '接続を確認中です。もう一度押してください' });
+    const name = String((d && d.name) || '').normalize('NFKC').replace(/[<>]/g, '').trim();
+    if (!NAME_RE.test(name)) return ack({ ok: false, msg: '名前は2〜10文字 (文字・数字・_ のみ、空白や記号は不可)' });
+    const key = normName(name), owner = users.byName[key], cur = users.byPid[pid];
+    if (owner && owner.pid !== pid) return ack({ ok: false, msg: `「${name}」はすでに使われています。別の名前にしてください` });
+    if (cur !== key && sockRoom.has(socket.id)) return ack({ ok: false, msg: 'ロビーやゲームの途中では名前を変えられません' });
+    if (cur && cur !== key) { const old = users.byName[cur]; delete users.byName[cur]; users.byName[key] = { ...old, pid, name }; }
+    else users.byName[key] = { reqs: [], acks: [], ...(owner || {}), pid, name };
+    users.byPid[pid] = key; saveUsers();
+    const e = presence.get(pid); if (e) e.name = name;
+    ack({ ok: true, name });
+  });
+  // 名前でユーザーを探す (フレンド追加用)
+  socket.on('findUser', (name, ack) => {
+    if (typeof ack !== 'function') return;
+    const u = users.byName[normName(name)];
+    if (!u) return ack({ ok: false, msg: 'そのユーザーネームは見つかりません' });
+    if (u.pid === socket.data.pid) return ack({ ok: false, msg: 'それはあなた自身の名前です' });
+    ack({ ok: true, pid: u.pid, name: u.name });
+  });
+  // フレンド申請 → 相手が承認すると、お互いの一覧に登録される
+  socket.on('friendReq', (pid, ack) => {
+    const me = socket.data.pid, myName = nameOf(me), u = userOf(pid);
+    const done = (r) => typeof ack === 'function' && ack(r);
+    if (!myName) return done({ ok: false, msg: '先にユーザーネームを登録してください' });
+    if (!u || pid === me) return done({ ok: false, msg: '相手が見つかりません' });
+    u.reqs = (u.reqs || []).filter(x => x !== me); u.reqs.push(me); u.reqs = u.reqs.slice(-50); saveUsers();
+    sendReqs(pid); done({ ok: true, name: u.name });
+  });
+  socket.on('friendAnswer', (d) => {
+    const me = socket.data.pid, mine = userOf(me); if (!mine || !d || !validPid(d.pid)) return;
+    mine.reqs = (mine.reqs || []).filter(x => x !== d.pid);
+    if (d.ok) { const u = userOf(d.pid); if (u) { u.acks = (u.acks || []).filter(a => a.pid !== me); u.acks.push({ pid: me, name: mine.name }); sendAcks(d.pid); } }
+    saveUsers();
   });
   socket.on('known', (arr) => { const e = presence.get(socket.data.pid); if (e && e.sid === socket.id && Array.isArray(arr)) e.known = new Set(arr.filter(validPid).slice(0, 300)); });
   socket.on('friendStatus', (pids, ack) => {
@@ -734,6 +868,7 @@ io.on('connection', (socket) => {
   });
   socket.on('joinFriend', (d) => {
     if (sockRoom.has(socket.id) || !d || !validPid(d.pid)) return;
+    const fp = d.pid; d = withName(d); if (!d) return; d.pid = fp;
     const e = presence.get(d.pid), R = e && sockRoom.get(e.sid);
     if (!e || !io.sockets.sockets.get(e.sid)) { socket.emit('joinError', 'そのフレンドはオフラインです'); return; }
     if (!e.known.has(socket.data.pid)) { socket.emit('joinError', '相手のフレンドリストにまだ登録されていません (一度コードで一緒に遊ぶか、招待してもらおう)'); return; }
@@ -778,7 +913,8 @@ io.on('connection', (socket) => {
   // 自動テスト専用 (DOA_TEST=1 のときだけ有効): 指定タスク/置き場へワープ
   if (process.env.DOA_TEST === '1') socket.on('__tp', (d) => {
     const { R, p } = C(); if (!p || R.phase !== 'playing' || !d) return;
-    const pos = d.station ? R.map.stations[d.station] : R.map.tasks[d.task];
+    if (d.button) R.noMeetingUntil = 0;
+    const pos = d.button ? { x: R.map.button.x + 40, y: R.map.button.y } : d.station ? R.map.stations[d.station] : R.map.tasks[d.task];
     const slot = () => { const i = p.tasks.findIndex(t => defOf(t).kind !== 'carry'); return i >= 0 ? i : p.tasks.length - 1; };
     if (d.task && !p.tasks.includes(d.task)) p.tasks[slot()] = d.task;
     if (d.station) { const t = TASK_DEFS.find(x => x.item === d.station); if (t && !p.tasks.includes(t.id)) p.tasks[slot()] = t.id; }
@@ -860,4 +996,4 @@ io.on('connection', (socket) => {
 });
 
 if (require.main === module) server.listen(PORT, () => console.log(`Destroy or Avoid v7.1 running on :${PORT}`));
-module.exports = { genMap, LAYOUTS, TASK_ROOMS, TASK_DEFS, COLS, ROWS, CELL };
+module.exports = { genMap, LAYOUTS, TASK_ROOMS, TASK_DEFS, tasksOf, COLS, ROWS, CELL };
