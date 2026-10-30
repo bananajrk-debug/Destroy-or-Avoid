@@ -91,7 +91,7 @@ button.fr{background:linear-gradient(#f59f00,#d9480f);box-shadow:0 4px 0 #8a3c0a
 #menu button:hover,#menu button:active{background:#ffffff14;transform:none}
 #menu button .bdg{position:static;margin-left:6px}
 body[data-ph=playing] #top{left:calc(max(12px,env(safe-area-inset-left)) + 58px)}
-#nameDlg,#helpDlg,#votePop{position:fixed;inset:0;z-index:47;background:#000b;display:flex;align-items:center;justify-content:center}
+#nameDlg,#helpDlg,#votePop,#sabPop,#warpPop{position:fixed;inset:0;z-index:47;background:#000b;display:flex;align-items:center;justify-content:center}
 .dlgBox{background:#14212b;border:3px solid #c9a26b;border-radius:18px;padding:20px 24px;display:flex;flex-direction:column;gap:12px;align-items:center;width:min(460px,92vw);max-height:90vh;overflow:auto;text-align:center}
 .dlgBox h2{color:#ffe8a3;font-size:22px}
 #nameDlgIn{width:min(280px,80vw)}
@@ -114,6 +114,19 @@ body.touch[data-ph=playing] #joyZone,body.touch[data-ph=lobby] #joyZone{display:
 #joyKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#ffffffaa;box-shadow:0 2px 10px #0008}
 body.touch #roleTag{left:auto;right:14px;bottom:calc(86px + env(safe-area-inset-bottom))}
 body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'}
+#sabBanner{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:6;padding:8px 18px;border-radius:14px;font-size:17px;font-weight:900;text-align:center;white-space:nowrap;text-shadow:0 2px 4px #000;box-shadow:0 4px 18px #000a;border:3px solid}
+#sabBanner.short{background:#5c0d0dee;border-color:#ff6b6b;animation:sabBlink 1s infinite}
+#sabBanner.flood{background:#0b3a5ccc;border-color:#4dabf7}
+#sabBanner.dark{background:#111c;border-color:#868e96}
+#sabBanner small{display:block;font-size:12px;font-weight:700;opacity:.9}
+@keyframes sabBlink{50%{box-shadow:0 0 28px #ff3b3b}}
+#sabList,#warpList{display:flex;flex-direction:column;gap:8px;width:100%}
+.sabItem{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:12px 14px;font-size:17px;background:#0d1720;border:2px solid #2b3856;box-shadow:none;border-radius:12px;color:#fff}
+.sabItem:hover:not(:disabled){border-color:#ff6b6b}
+.sabItem big{font-size:30px}.sabItem b{display:block}.sabItem small{font-size:12px;opacity:.75;font-weight:400}
+.sabItem kbd{margin-left:auto;padding:2px 8px;border-radius:6px;background:#2b3552;font-family:inherit}
+#bWarp{background:linear-gradient(#9775fa,#6741d9);box-shadow:0 4px 0 #3b1f8f}
+@media (max-width:1000px){#sabBanner{left:auto;right:max(12px,env(safe-area-inset-right));transform:none;top:168px;white-space:normal;max-width:46vw;font-size:14px}}
 #codePop{position:fixed;inset:0;z-index:46;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;animation:popIn .18s ease-out}
 #codeBig{font-size:clamp(80px,20vw,240px);font-weight:900;letter-spacing:.18em;padding-left:.18em;color:#ffd43b;text-shadow:0 0 40px #ffd43b88;font-variant-numeric:tabular-nums;line-height:1.1}
 #btnLeave{position:absolute;top:12px;right:12px;padding:8px 16px;font-size:15px}
@@ -319,8 +332,10 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
     <button id="bRep" class="green">報告<small>R</small></button>
     <button id="bSab" class="hidden">妨害<small>F</small></button>
     <button id="bKill" class="hidden">キル<small>E</small></button>
+    <button id="bWarp" class="hidden">ワープ<small>G</small></button>
   </div>
   <div id="roleTag"></div><div id="spec" class="hidden"></div>
+  <div id="sabBanner" class="hidden"></div>
 </div>
 
 <div id="mini" class="hidden"><div id="miniBox"><div id="miniTitle"></div><div id="miniBody"></div><div id="miniHelp"></div><button id="miniX" style="margin-top:12px;padding:8px 20px;font-size:15px;background:#555;box-shadow:0 4px 0 #333">✕ 中止 (Esc)</button></div></div>
@@ -333,6 +348,18 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
     <div id="mChat"><div id="chatLog"></div>
       <form id="chatForm"><input type="text" id="chatIn" maxlength="60" autocomplete="off" placeholder="発言する…"><button type="submit" class="blue">送信</button></form></div></div>
 </div>
+<div id="sabPop" class="hidden"><div class="dlgBox">
+  <h2>🔪 妨害 (サボタージュ)</h2>
+  <div class="sub">どれを使っても全体進捗 −20%・クールタイム30秒 (インポスター共通)</div>
+  <div id="sabList"></div>
+  <button id="sabClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc)</button>
+</div></div>
+<div id="warpPop" class="hidden"><div class="dlgBox">
+  <h2>🕳 ワープ先を選ぶ</h2>
+  <div class="sub">インポスターだけが使える抜け穴。数字キーでも選べます</div>
+  <div id="warpList"></div>
+  <button id="warpClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc)</button>
+</div></div>
 <div id="votePop" class="hidden"><div class="dlgBox">
   <h2>🗳 誰に投票する？</h2>
   <div class="sub">投票した相手を指さします。全員の指さしは結果発表で一斉に公開されます</div>
@@ -1284,7 +1311,7 @@ cv.addEventListener('click', ev => { // クローゼットを直接クリック/
 // ---------- フェーズ ----------
 function onPhase(old, now) {
   const hide = (...ids) => ids.forEach(i => $(i).classList.add('hidden')), show = (...ids) => ids.forEach(i => $(i).classList.remove('hidden'));
-  document.body.dataset.ph = now; $('codePop').classList.add('hidden');
+  document.body.dataset.ph = now; $('codePop').classList.add('hidden'); openSab(false); openWarp(false);
   if (now !== 'playing' && now !== 'meeting') openMap(false);
   openStats(false);
   if (now === 'lobby') { hide('hud', 'meeting', 'endscr', 'mini'); show('lobby'); mini = null; ents.clear(); fx = null; fxc.classList.add('hidden'); trail = []; deathPos = null; releaseFocus(); sendInput(true); return; }
@@ -1325,7 +1352,13 @@ function nearHint(me, e) {
   const body = me.alive && S.bodies.some(b => hyp(b.x - e.x, b.y - e.y) <= 110);
   const tgt = me.role === 'imposter' && S.players.some(p => p.id !== init.you && p.a && !me.mates.includes(p.id) && hyp(p.x - e.x, p.y - e.y) <= 95);
   let text = '';
+  const sb = S.sab || {};
+  const fz = sb.flood && me.alive && sb.flood.zones.find(z => rectDist(e, z) <= init.REACH);
+  const sp = sb.short && sb.short.spots.find(q => !q.done && hyp(q.x - e.x, q.y - e.y) <= init.REACH);
   if (body) text = 'R: 死体を報告';
+  else if (fz) text = `🌊 SPACE 連打で水を掻き出す (${fz.bail}/${sb.flood.need})`;
+  else if (sp) text = !me.alive ? '幽霊は修理できない' : me.role === 'imposter' ? 'インポスターは配線を修理できない' : 'SPACE: ⚡ ショートした配線を直す';
+  else if (sb.short && (me.tasks.some(id => hyp(TB[id].x - e.x, TB[id].y - e.y) <= init.REACH) || hyp(MAP.BUTTON.x - e.x, MAP.BUTTON.y - e.y) <= 90)) text = '⚡ 電気がショート中! 先に配線を直そう';
   else {
     const dest = me.item && me.tasks.map(id => TB[id]).find(d => d.item === me.item && hyp(d.x - e.x, d.y - e.y) <= init.REACH);
     if (dest) text = `SPACE: ${init.ITEM_NAME[me.item]}を設置する`;
@@ -1334,17 +1367,32 @@ function nearHint(me, e) {
     if (!text) for (const id of me.tasks) { const d = TB[id]; if (d.kind !== 'carry') continue; const st = MAP.STATIONS[d.item]; if (hyp(st.x - e.x, st.y - e.y) <= init.REACH) { text = me.item ? '手がふさがっている (先に設置するか、Q長押しで運搬をやめる)' : `SPACE: ${init.ITEM_NAME[d.item]}を取る`; break; } }
     if (!text && me.alive && hyp(MAP.BUTTON.x - e.x, MAP.BUTTON.y - e.y) <= 90) text = me.em ? '' : (me.emLock > 0 ? `${isSpace() ? '会議ボタン' : '集合の鐘'} (あと${Math.ceil(me.emLock / 1000)}秒)` : (isSpace() ? 'SPACE: 緊急会議ボタン' : 'SPACE: 集合の鐘を鳴らす (緊急会議)'));
   }
-  return { text, body, tgt };
+  const warp = me.role === 'imposter' && me.alive && me.warps && me.warps.some(w => hyp(w.x - e.x, w.y - e.y) <= 70);
+  if (warp) text = (text ? text + ' ・ ' : '') + 'G: 🕳 ワープ';
+  return { text, body, tgt, warp };
+}
+// マス単位の矩形 (水たまり) と点の距離
+function rectDist(p, z) { const C = init.CELL, x0 = z.c0 * C, y0 = z.r0 * C, x1 = (z.c1 + 1) * C, y1 = (z.r1 + 1) * C; return Math.hypot(Math.max(x0 - p.x, 0, p.x - x1), Math.max(y0 - p.y, 0, p.y - y1)); }
+const mmss = ms => { const t = Math.ceil(ms / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+function renderSab(s) { // 画面上部の警報バナー + 妨害メニューの更新
+  const sb = s.sab || {}, el = $('sabBanner'), imp = s.me.role === 'imposter';
+  let cls = '', html = '';
+  if (sb.short) { cls = 'short'; html = `⚡ 電気がショート! 酸素切れまで ${mmss(sb.short.left)} ・ 修理 ${sb.short.fixed}/${sb.short.need}<small>${imp ? 'クルーが直す前に時間切れを狙え' : '赤く光る配線を直そう (タスクは一時停止)'}</small>`; }
+  else if (sb.flood) { cls = 'flood'; html = `🌊 水が氾濫! 残り ${sb.flood.zones.length}か所<small>水たまりの前で SPACE を${sb.flood.need}回連打すると通れる</small>`; }
+  else if (sb.dark > 0) { cls = 'dark'; html = `🌑 暗闇 あと${Math.ceil(sb.dark / 1000)}秒<small>${imp ? 'インポスターは普段どおり見える' : '懐中電灯の明かりだけが頼り'}</small>`; }
+  el.className = cls; el.classList.toggle('hidden', !cls); if (cls && el.innerHTML !== html) el.innerHTML = html;
+  if (sabOpen) buildSabList(); if (warpOpen) buildWarpList();
 }
 function renderHud(s) {
   const me = s.me, e = myEnt();
   $('pfill').style.width = s.prog + '%'; $('ptxt').textContent = 'タスク進捗 ' + Math.floor(s.prog) + '%';
   const sec = Math.ceil(s.remain / 1000);
   $('timer').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; $('timer').style.color = sec < 60 ? '#ff6b6b' : '#fff';
-  const tsig = me.tasks.join() + me.role + (me.item || '');
+  const sh = s.sab && s.sab.short;
+  const tsig = me.tasks.join() + me.role + (me.item || '') + (sh ? 'S' + sh.spots.map(q => +q.done).join('') : '');
   if (tsig !== taskSig) {
     taskSig = tsig;
-    $('tasks').innerHTML = me.late ? '<h4>観戦中</h4>' : '<h4>タスク</h4>' + me.tasks.map(id => { const d = TB[id];
+    $('tasks').innerHTML = me.late ? '<h4>観戦中</h4>' : sh ? '<h4 style="color:#ff8787;opacity:1">⚡ 緊急: ショートした配線を直せ!</h4>' + sh.spots.map(q => `<div class="tk" style="${q.done ? 'opacity:.45;text-decoration:line-through' : ''}">${q.done ? '✅' : '⚡'} ${THEMES[q.th] ? THEMES[q.th].n : ''}の配線</div>`).join('') : '<h4>タスク</h4>' + me.tasks.map(id => { const d = TB[id];
       const sub = d.kind === 'carry' ? (me.item === d.item ? '→設置' : '→取りに行く') : '';
       return `<div class="tk">${d.icon} ${d.name}<b>+${d.pct}%</b><small>${sub}</small></div>`; }).join('');
   }
@@ -1355,7 +1403,9 @@ function renderHud(s) {
   $('hint').textContent = h.text;
   $('bRep').classList.toggle('rdy', h.body); $('bRep').classList.toggle('hidden', !me.alive || me.late); $('bUse').classList.toggle('hidden', me.late);
   const imp = me.role === 'imposter' && me.alive;
-  $('bKill').classList.toggle('hidden', !imp); $('bSab').classList.toggle('hidden', !imp);
+  $('bKill').classList.toggle('hidden', !imp); $('bSab').classList.toggle('hidden', !imp); $('bWarp').classList.toggle('hidden', !imp || !h.warp);
+  if (imp && h.warp) { $('bWarp').classList.toggle('cd', me.wcd > 0); $('bWarp').classList.toggle('rdy', me.wcd <= 0); $('bWarp').innerHTML = `ワープ<small>${me.wcd > 0 ? Math.ceil(me.wcd / 1000) + 's' : 'G'}</small>`; }
+  renderSab(s);
   if (imp) {
     $('bKill').classList.toggle('cd', me.kcd > 0); $('bKill').classList.toggle('rdy', me.kcd <= 0 && h.tgt);
     $('bKill').innerHTML = `キル<small>${me.kcd > 0 ? Math.ceil(me.kcd / 1000) + 's' : 'E'}</small>`;
@@ -1367,7 +1417,40 @@ function renderHud(s) {
   $('spec').textContent = me.late ? '👀 ゲーム進行中のため観戦中 (次のロビーから参加)' : '👻 霊: 壁を通り抜けられる・移動1.5倍・タスクは続行可';
 }
 const press = ev => () => { if (!mini) { socket.emit(ev); if (document.activeElement) document.activeElement.blur(); } };
-$('bUse').onclick = press('action'); $('bRep').onclick = press('report'); $('bKill').onclick = press('kill'); $('bSab').onclick = press('sabotage');
+$('bUse').onclick = press('action'); $('bRep').onclick = press('report'); $('bKill').onclick = press('kill');
+$('bSab').onclick = () => { openSab(true); $('bSab').blur(); };
+$('bWarp').onclick = () => { openWarp(true); $('bWarp').blur(); };
+// ---------- 妨害メニュー (F) / ワープ (G) ----------
+let sabOpen = false, warpOpen = false;
+const SAB_DEFS = { dark: { ic: '🌑', name: '暗闇', desc: '30秒間、クルーの視界が懐中電灯の明かりだけになる' },
+  short: { ic: '⚡', name: '電気のショート', desc: 'クルーのタスクが配線修理に変わる。2分で5か所直せないと酸素切れでクルー全滅' },
+  flood: { ic: '🌊', name: '水の氾濫', desc: '通路3か所が水没して通れなくなる。SPACE30回連打で掻き出せる' } };
+const sabKinds = () => ['dark', isSpace() ? 'short' : 'flood'];
+function buildSabList() {
+  const me = S.me, sb = S.sab || {}, busy = !!(sb.short || sb.flood || sb.dark > 0), cd = me.scd > 0;
+  const sig = sabKinds().join() + busy + Math.ceil(me.scd / 1000); if (buildSabList.sig === sig) return; buildSabList.sig = sig;
+  $('sabList').innerHTML = sabKinds().map((k, i) => { const d = SAB_DEFS[k];
+    return `<button class="sabItem" data-k="${k}" ${busy || cd ? 'disabled' : ''}><big>${d.ic}</big><span><b>${d.name} <span style="color:#ff8787">進捗 −20%</span></b><small>${d.desc}</small></span><kbd>${i + 1}</kbd></button>`; }).join('')
+    + (busy ? '<div class="sub" style="color:#ffd43b">ほかの妨害が進行中…</div>' : cd ? `<div class="sub" style="color:#ffd43b">クールタイム あと${Math.ceil(me.scd / 1000)}秒</div>` : '');
+  $('sabList').querySelectorAll('[data-k]').forEach(b => b.onclick = () => useSab(b.dataset.k));
+}
+function useSab(k) { socket.emit('sabotage', k); openSab(false); }
+function openSab(v) { if (v && !(S && S.ph === 'playing' && S.me.role === 'imposter' && S.me.alive)) return; sabOpen = v; $('sabPop').classList.toggle('hidden', !v); if (v) { buildSabList.sig = ''; buildSabList(); releaseFocus(); } }
+function buildWarpList() {
+  const ws = S.me.warps || [], e = myEnt(), sig = ws.length + '|' + Math.ceil(S.me.wcd / 1000); if (buildWarpList.sig === sig) return; buildWarpList.sig = sig;
+  $('warpList').innerHTML = ws.map((w, i) => { const here = e && hyp(w.x - e.x, w.y - e.y) <= 70;
+    return `<button class="sabItem" data-w="${i}" ${here || S.me.wcd > 0 ? 'disabled' : ''}><big>🕳</big><span><b>${THEMES[w.th] ? THEMES[w.th].n : 'ワープ' + (i + 1)}</b><small>${here ? 'いまここにいる' : 'ここへワープ'}</small></span><kbd>${i + 1}</kbd></button>`; }).join('')
+    + (S.me.wcd > 0 ? `<div class="sub" style="color:#ffd43b">ワープはあと${Math.ceil(S.me.wcd / 1000)}秒</div>` : '');
+  $('warpList').querySelectorAll('[data-w]').forEach(b => b.onclick = () => useWarp(+b.dataset.w));
+}
+function useWarp(i) { socket.emit('warp', i); openWarp(false); }
+function openWarp(v) {
+  if (v) { const e = myEnt(); if (!(S && S.ph === 'playing' && S.me.role === 'imposter' && S.me.alive && S.me.warps && e && S.me.warps.some(w => hyp(w.x - e.x, w.y - e.y) <= 70))) { if (S && S.me.role === 'imposter') toast('ワープ地点 (🕳) の上で使おう', 'error'); return; } }
+  warpOpen = v; $('warpPop').classList.toggle('hidden', !v); if (v) { buildWarpList.sig = ''; buildWarpList(); releaseFocus(); }
+}
+$('sabClose').onclick = () => openSab(false); $('warpClose').onclick = () => openWarp(false);
+$('sabPop').onclick = e => { if (e.target.id === 'sabPop') openSab(false); };
+$('warpPop').onclick = e => { if (e.target.id === 'warpPop') openWarp(false); };
 
 // ---------- 会議 (全員を円形に並べて表示。投票はリストから選び、投票先を指さす) ----------
 let resultT0 = 0, ejectT = 0, voteOpen = false;
@@ -1496,6 +1579,11 @@ function drawBigMap(now) {
     g.strokeStyle = '#ff3b3b'; g.lineWidth = 12; g.beginPath(); g.moveTo(b.x - 26, b.y - 26); g.lineTo(b.x + 26, b.y + 26); g.moveTo(b.x + 26, b.y - 26); g.lineTo(b.x - 26, b.y + 26); g.stroke();
     if (b.name) { g.font = 'bold 34px sans-serif'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText(b.name, b.x, b.y - 52); g.fillStyle = '#ff8787'; g.fillText(b.name, b.x, b.y - 52); }
   }
+  { const sb = S.sab || {}, C = init.CELL; // 妨害の状況
+    if (sb.flood) for (const z of sb.flood.zones) { g.fillStyle = 'rgba(60,160,230,.85)'; g.fillRect(z.c0 * C, z.r0 * C, (z.c1 - z.c0 + 1) * C, (z.r1 - z.r0 + 1) * C); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText('🌊', (z.c0 + 1.5) * C, (z.r0 + 1.5) * C); }
+    if (sb.short) for (const q of sb.short.spots) if (!q.done) { g.fillStyle = '#ff3b3b'; elg(g, q.x, q.y, 30, 30); g.fill(); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText('⚡', q.x, q.y); }
+    if (S.me.role === 'imposter' && S.me.warps) for (const wp of S.me.warps) { g.fillStyle = '#9775fa'; elg(g, wp.x, wp.y, 26, 18); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 4; g.stroke(); }
+  }
   if (trail.length > 1) { // 古いほど薄く
     g.lineCap = 'round'; g.lineJoin = 'round';
     for (let i = 1; i < trail.length; i++) { g.strokeStyle = `rgba(142,203,255,${.15 + .85 * i / trail.length})`; g.lineWidth = 14; g.beginPath(); g.moveTo(trail[i - 1].x, trail[i - 1].y); g.lineTo(trail[i].x, trail[i].y); g.stroke(); }
@@ -1608,7 +1696,7 @@ function drawFx(now) {
 }
 
 // ---------- ミニゲーム ----------
-socket.on('miniStart', d => openMini(TB[d.taskId]));
+socket.on('miniStart', d => openMini(d.wire != null ? { kind: 'wire', name: 'ショートした配線を直す', icon: '⚡', n: 4 } : TB[d.taskId]));
 socket.on('miniCancel', () => closeMini());
 function closeMini() { mini = null; $('mini').classList.add('hidden'); sendInput(true); }
 function finishMini(ok) { if (!mini) return; socket.emit('miniEnd', { ok }); closeMini(); if (!ok) toast('失敗… もう一度挑戦しよう', 'error'); }
@@ -1616,7 +1704,7 @@ function cancelMini() { if (!mini) return; socket.emit('miniEnd', { cancel: true
 function openMini(d) {
   if (!d) return; mini = { d, kind: d.kind, t: 0 };
   const body = $('miniBody'); body.innerHTML = ''; $('mini').classList.remove('hidden'); $('miniTitle').textContent = `${d.icon} ${d.name}`; sendInput(true);
-  ({ weld: initWeld, seq: initSeq, alt: initAlt, space: initSpace, fire: initFire, vine: initVine, compass: initCompass })[d.kind](body, d.n);
+  ({ weld: initWeld, seq: initSeq, alt: initAlt, space: initSpace, fire: initFire, vine: initVine, compass: initCompass, wire: initWire })[d.kind](body, d.n);
 }
 const later = (m, fn, ms) => setTimeout(() => { if (mini === m) fn(); }, ms);
 const SEAM_AMP = 55, TORCH_DOWN = 36, TORCH_SIDE = 140, WELD_END = 304, SEAM_TOL = 24, OFF_LIMIT = 2.0;
@@ -1786,6 +1874,39 @@ function updateCompass(dt) {
   g.font = '15px sans-serif'; g.fillStyle = close ? '#8ce99a' : '#adb5bd'; g.fillText(`いまの針: ${Math.round(m.ang)}°`, 330, 192); g.fillText(close ? 'ぴったり! SPACE で決定' : '針を目標に合わせよう', 330, 216);
   g.fillStyle = '#fff'; g.fillText(`成功 ${m.ok} / ${m.n}`, 330, 252);
 }
+// --- ショート修理: 左右の同じ色の線をつなぐ (左→右の順にクリック/タップ、または数字キー 1〜4 → 1〜4) ---
+const WIRE_COLS = ['#ff5d5d', '#5db7ff', '#ffd24d', '#c77dff'];
+function initWire(body) {
+  const c = document.createElement('canvas'); c.width = 520; c.height = 300; body.appendChild(c);
+  const sh = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+  Object.assign(mini, { g: c.getContext('2d'), L: sh([0, 1, 2, 3]), Rt: sh([0, 1, 2, 3]), sel: null, done: new Set(), bad: 0 });
+  c.onpointerdown = e => { const r = c.getBoundingClientRect(), x = (e.clientX - r.left) * 520 / r.width, y = (e.clientY - r.top) * 300 / r.height, i = Math.floor((y - 20) / 68);
+    if (i < 0 || i > 3) return; if (x < 200) wirePick(i, 'L'); else if (x > 320) wirePick(i, 'R'); };
+  $('miniHelp').textContent = '左の線 → 同じ色の右の端子 の順にタップ (キーボードは 1〜4 で左、続けて 1〜4 で右) ・ Escで中止';
+}
+function wirePick(i, side) {
+  const m = mini; if (!m || m.kind !== 'wire') return;
+  if (side === 'R' || (side !== 'L' && m.sel !== null)) {
+    if (m.sel === null) return;
+    if (m.Rt[i] === m.L[m.sel]) { m.done.add(m.L[m.sel]); beep(600 + m.done.size * 80, .07); m.sel = null; if (m.done.size >= 4) later(m, () => finishMini(true), 350); }
+    else { m.bad = .3; m.sel = null; SFX.error(); }
+  } else if (!m.done.has(m.L[i])) { m.sel = i; beep(420, .03); }
+}
+function updateWire() {
+  const m = mini, g = m.g; m.bad = Math.max(0, m.bad - 1 / 60);
+  g.fillStyle = m.bad ? '#3a1010' : '#151a24'; g.fillRect(0, 0, 520, 300);
+  g.fillStyle = '#2a3243'; g.fillRect(20, 10, 70, 280); g.fillRect(430, 10, 70, 280);
+  const y = i => 54 + i * 68;
+  for (let i = 0; i < 4; i++) {
+    const cl = m.L[i], cr = m.Rt[i], ok = m.done.has(cl);
+    g.fillStyle = WIRE_COLS[cl]; g.fillRect(40, y(i) - 8, 70, 16); if (m.sel === i) { g.strokeStyle = '#fff'; g.lineWidth = 3; g.strokeRect(38, y(i) - 11, 74, 22); }
+    g.fillStyle = WIRE_COLS[cr]; g.fillRect(410, y(i) - 8, 70, 16);
+    g.fillStyle = '#fff'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(i + 1, 28, y(i)); g.fillText(i + 1, 492, y(i));
+    if (ok) { const j = m.Rt.indexOf(cl); g.strokeStyle = WIRE_COLS[cl]; g.lineWidth = 9; g.lineCap = 'round'; g.beginPath(); g.moveTo(110, y(i)); g.bezierCurveTo(260, y(i), 260, y(j), 410, y(j)); g.stroke(); }
+    else if (Math.random() < .25) { g.fillStyle = '#fff59d'; for (let k = 0; k < 3; k++) g.fillRect(112 + Math.random() * 14, y(i) - 8 + Math.random() * 16, 3, 3); } // 火花
+  }
+  g.fillStyle = '#fff'; g.font = 'bold 15px sans-serif'; g.fillText(`接続 ${m.done.size} / 4`, 260, 284);
+}
 function miniKey(k) {
   if (!mini) return;
   if (mini.kind === 'seq' && /^[1-9]$/.test(k)) seqPress(+k);
@@ -1793,6 +1914,7 @@ function miniKey(k) {
   else if (mini.kind === 'space' && k === 'space') spacePress();
   else if (mini.kind === 'fire' && k === 'space') firePress();
   else if (mini.kind === 'compass' && k === 'space') compassConfirm();
+  else if (mini.kind === 'wire' && /^[1-4]$/.test(k)) wirePick(+k - 1);
 }
 $('miniX').onclick = () => { cancelMini(); $('miniX').blur(); };
 
@@ -1874,9 +1996,16 @@ function onKeyDown(e) {
   if (S.ph !== 'playing') return;
   if (GAMEKEYS.includes(k)) { e.preventDefault(); e.stopPropagation(); } // フォーカス中ボタンの二重発火・スクロールを防ぐ
   if (mapOpen) { sendInput(); return; } // マップ表示中もキャラは動かせる(アクションは無効)
+  if (sabOpen || warpOpen) { // メニュー表示中: 数字で選択 / Esc・同じキーで閉じる
+    if (!rep) {
+      if (k === 'escape' || (sabOpen && k === 'f') || (warpOpen && k === 'g')) { openSab(false); openWarp(false); }
+      else if (/^[1-9]$/.test(k)) { const i = +k - 1; if (sabOpen) { const kk = sabKinds()[i]; if (kk && !$('sabList').querySelector(`[data-k=${kk}]`).disabled) useSab(kk); } else if (S.me.warps && S.me.warps[i]) useWarp(i); }
+    }
+    sendInput(); return;
+  }
   if (!rep) {
     if (k === 'space') socket.emit('action'); else if (k === 'r') socket.emit('report'); else if (k === 'e') socket.emit('kill');
-    else if (k === 'f') socket.emit('sabotage'); else if (k === 'm') toggleMap();
+    else if (k === 'f') openSab(true); else if (k === 'g') openWarp(true); else if (k === 'm') toggleMap();
   }
   sendInput();
 }
@@ -1998,14 +2127,27 @@ function drawGame(dt, now) {
     else if (act && !dim) { ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(d.x, d.y, 30 * pulse, 0, 7); ctx.stroke(); ctx.fillStyle = 'rgba(255,212,59,.15)'; ctx.fill(); }
     drawMachine(d, act || me.late, now);
   }
+  drawSabWorld(now, me);
   for (const b of S.bodies) drawBody(b);
   [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff')));
   ctx.restore();
   if (me.alive && !me.late) {
     const g = ctx.createRadialGradient(w / 2, h / 2, 190 * sc * .8, w / 2, h / 2, 330 * sc); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.93)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
   }
+  // 暗闇: クルーは足元の明かりと進行方向の懐中電灯だけ見える
+  const sbx = S.sab || {};
+  if (sbx.dark > 0 && me.alive && !me.late && me.role !== 'imposter') drawDarkness(w, h, sc);
+  // ショート中は修理地点への矢印 (クルーのみ)
+  if (sbx.short && !me.late && me.role !== 'imposter' && me.alive) {
+    const R = Math.min(w, h) * .38;
+    for (const q of sbx.short.spots) { if (q.done) continue;
+      const dx = q.x - cam.x, dy = q.y - cam.y; if (hyp(dx, dy) * sc < R) continue;
+      const a = Math.atan2(dy, dx), px = w / 2 + Math.cos(a) * R, py = h / 2 + Math.sin(a) * R;
+      ctx.save(); ctx.translate(px, py); ctx.rotate(a); ctx.scale(1.3, 1.3); ctx.fillStyle = '#ff3b3b'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-8, -11); ctx.lineTo(-8, 11); ctx.closePath(); ctx.stroke(); ctx.fill(); ctx.restore();
+      ctx.font = '20px serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('⚡', px - Math.cos(a) * 34, py - Math.sin(a) * 34); }
+  }
   // タスク方向インジケーター (三角マーカー)
-  if (!me.late) {
+  if (!me.late && !(sbx.short && me.role !== 'imposter')) {
     const R = Math.min(w, h) * .38;
     const carryDest = me.item ? me.tasks.filter(id => TB[id].item === me.item) : null; // 運搬中は届け先だけを指す
     for (const id of (carryDest && carryDest.length ? carryDest : me.tasks)) {
@@ -2024,8 +2166,55 @@ function drawGame(dt, now) {
   const kx = 200 / mapCv.width, ky = 125 / mapCv.height;
   if (!me.late) for (const id of me.tasks) { const d = TB[id], dest = me.item && d.item === me.item; if (me.item && !dest) continue; mmx.fillStyle = dest ? '#ff922b' : '#ffd43b'; mmx.beginPath(); mmx.arc(d.x * kx, d.y * ky, dest ? 5 : 3, 0, 7); mmx.fill(); }
   mmx.fillStyle = '#ff3b3b'; mmx.fillRect(B.x * kx - 2, B.y * ky - 2, 4, 4);
+  if (sbx.short) for (const q of sbx.short.spots) if (!q.done) { mmx.fillStyle = (now / 300 | 0) % 2 ? '#ff3b3b' : '#ffd43b'; mmx.beginPath(); mmx.arc(q.x * kx, q.y * ky, 4, 0, 7); mmx.fill(); }
+  if (sbx.flood) for (const z of sbx.flood.zones) { mmx.fillStyle = '#4dabf7'; mmx.fillRect(z.c0 * init.CELL * kx, z.r0 * init.CELL * ky, (z.c1 - z.c0 + 1) * init.CELL * kx, (z.r1 - z.r0 + 1) * init.CELL * ky); }
+  if (me.role === 'imposter' && me.warps) for (const wp of me.warps) { mmx.fillStyle = '#b197fc'; mmx.beginPath(); mmx.arc(wp.x * kx, wp.y * ky, 3, 0, 7); mmx.fill(); }
   for (const b of S.bodies) { mmx.fillStyle = '#f33'; mmx.fillRect(b.x * kx - 3, b.y * ky - 3, 6, 6); }
   if (mine) { mmx.fillStyle = '#fff'; mmx.beginPath(); mmx.arc(mine.x * kx, mine.y * ky, 3, 0, 7); mmx.fill(); }
+}
+function drawSabWorld(now, me) {
+  const sb = S.sab || {}, C = init.CELL;
+  if (sb.flood) for (const z of sb.flood.zones) { // 水たまり (通行不可)
+    const x = z.c0 * C, y = z.r0 * C, ww = (z.c1 - z.c0 + 1) * C, hh = (z.r1 - z.r0 + 1) * C;
+    const wg = ctx.createLinearGradient(x, y, x, y + hh); wg.addColorStop(0, 'rgba(40,140,210,.92)'); wg.addColorStop(1, 'rgba(20,90,170,.95)');
+    ctx.fillStyle = wg; rrg(ctx, x - 4, y - 4, ww + 8, hh + 8, 18); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) { const t = (now / 900 + i * .37) % 1, rx = x + ((i * 53) % ww), ry = y + ((i * 37) % hh); ctx.globalAlpha = 1 - t; ctx.beginPath(); ctx.ellipse(rx, ry, 6 + t * 22, 3 + t * 9, 0, 0, 7); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    const r = z.bail / sb.flood.need; ctx.fillStyle = '#000a'; ctx.fillRect(x, y - 22, ww, 10); ctx.fillStyle = '#74c0fc'; ctx.fillRect(x, y - 22, ww * r, 10);
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+    const lb = `🌊 SPACE連打 ${z.bail}/${sb.flood.need}`; ctx.strokeText(lb, x + ww / 2, y + hh / 2); ctx.fillStyle = '#fff'; ctx.fillText(lb, x + ww / 2, y + hh / 2);
+  }
+  if (sb.short) for (const q of sb.short.spots) { // ショートした配線 (火花)
+    if (q.done) { ctx.font = '18px serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.fillText('✅', q.x, q.y - 26); continue; }
+    const pu = 1 + Math.sin(now / 120) * .15; ctx.strokeStyle = '#ff3b3b'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(q.x, q.y, 34 * pu, 0, 7); ctx.stroke(); ctx.fillStyle = 'rgba(255,59,59,.18)'; ctx.fill();
+    ctx.fillStyle = '#2a3243'; rrg(ctx, q.x - 16, q.y - 12, 32, 24, 4); ctx.fill(); ctx.strokeStyle = '#566080'; ctx.lineWidth = 2; ctx.stroke();
+    for (let k = 0; k < 6; k++) { const a = Math.random() * 6.28, l = 6 + Math.random() * 18; ctx.strokeStyle = Math.random() < .5 ? '#fff59d' : '#ffd43b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(q.x, q.y - 4); ctx.lineTo(q.x + Math.cos(a) * l, q.y - 4 + Math.sin(a) * l); ctx.stroke(); }
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText('⚡ ショート', q.x, q.y - 46); ctx.fillStyle = '#ff8787'; ctx.fillText('⚡ ショート', q.x, q.y - 46);
+  }
+  if (me.role === 'imposter' && me.warps) for (const wp of me.warps) { // ワープ穴 (インポスターだけに見える)
+    const gl = ctx.createRadialGradient(wp.x, wp.y, 4, wp.x, wp.y, 34); gl.addColorStop(0, 'rgba(151,117,250,.55)'); gl.addColorStop(1, 'rgba(151,117,250,0)'); ctx.fillStyle = gl; ctx.fillRect(wp.x - 36, wp.y - 36, 72, 72);
+    if (isSpace()) { ctx.fillStyle = '#1a1f2b'; rrg(ctx, wp.x - 22, wp.y - 14, 44, 28, 4); ctx.fill(); ctx.strokeStyle = '#6b7799'; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = '#3b4252'; for (let k = 0; k < 4; k++) ctx.fillRect(wp.x - 18, wp.y - 10 + k * 6, 36, 3); }
+    else { ctx.fillStyle = '#5c3d22'; elg(ctx, wp.x, wp.y, 24, 15); ctx.fill(); ctx.fillStyle = '#120a04'; elg(ctx, wp.x, wp.y + 1, 15, 9); ctx.fill(); }
+    ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText('🕳 ワープ', wp.x, wp.y - 24); ctx.fillStyle = '#d0bfff'; ctx.fillText('🕳 ワープ', wp.x, wp.y - 24);
+  }
+}
+// 暗闇: 画面全体を闇で覆い、足元の円と進行方向の懐中電灯の光だけを抜く
+const darkCv = document.createElement('canvas'), darkG = darkCv.getContext('2d'); let lookA = 0;
+function drawDarkness(w, h, sc) {
+  const jx = joy ? joy.dx : 0, jy = joy ? joy.dy : 0;
+  const ix = ((keysDown.d || keysDown.right) ? 1 : 0) - ((keysDown.a || keysDown.left) ? 1 : 0) + jx / JOY_R, iy = ((keysDown.s || keysDown.down) ? 1 : 0) - ((keysDown.w || keysDown.up) ? 1 : 0) + jy / JOY_R;
+  if (Math.abs(ix) + Math.abs(iy) > .3) lookA = Math.atan2(iy, ix);
+  if (darkCv.width !== cv.width || darkCv.height !== cv.height) { darkCv.width = cv.width; darkCv.height = cv.height; }
+  const g = darkG; g.setTransform(DPR, 0, 0, DPR, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, h);
+  g.fillStyle = 'rgba(0,0,0,.97)'; g.fillRect(0, 0, w, h);
+  g.globalCompositeOperation = 'destination-out';
+  const cx = w / 2, cy = h / 2, r0 = 62 * sc, L = 270 * sc;
+  let gr = g.createRadialGradient(cx, cy, r0 * .3, cx, cy, r0); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r0, 0, 7); g.fill();
+  gr = g.createRadialGradient(cx, cy, 10, cx, cy, L); gr.addColorStop(0, 'rgba(0,0,0,.95)'); gr.addColorStop(.75, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, L, lookA - .42, lookA + .42); g.closePath(); g.fill();
+  g.globalCompositeOperation = 'source-over';
+  ctx.drawImage(darkCv, 0, 0, w, h);
 }
 let lastT = performance.now(), pvPh = 0;
 function frame(t) {
@@ -2040,6 +2229,7 @@ function frame(t) {
   else if (mini && mini.kind === 'fire') updateFire(dt);
   else if (mini && mini.kind === 'vine') updateVine(dt);
   else if (mini && mini.kind === 'compass') updateCompass(dt);
+  else if (mini && mini.kind === 'wire') updateWire();
   drawFx(t);
   if (!joined) { // タイトルの等身大アバタープレビュー
     pvPh += dt * 7; pvg.clearRect(0, 0, 340, 420);
