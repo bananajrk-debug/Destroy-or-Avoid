@@ -46,24 +46,23 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 #codeBox{font-size:clamp(40px,9vw,84px);font-weight:900;letter-spacing:.25em;padding-left:.25em;color:#ffd43b;text-shadow:0 0 20px #ffd43b66}
 #lobby{position:fixed;inset:0;z-index:20;pointer-events:none}
 #lobby button,#lobby .lbPanel{pointer-events:auto}
-#lobbyTop{position:absolute;top:10px;left:calc(25% + 30px);transform:translateX(-50%);text-align:center;background:var(--lbTop,#000a);border:2px solid var(--lbBd,#fff2);transition:background .5s,border-color .5s;border-radius:16px;padding:6px 18px;max-width:calc(50% - 100px)}
-#lobbyTop #codeBox{font-size:clamp(26px,4.4vw,44px);cursor:pointer;color:var(--lbA,#ffd43b);text-shadow:0 0 20px var(--lbGlow,#ffd43b66);transition:color .5s}
+#lobbyTop{position:absolute;top:10px;left:calc(25% + 30px);transform:translateX(-50%);text-align:center;background:#000a;border:2px solid #fff2;border-radius:16px;padding:6px 18px;max-width:calc(50% - 100px)}
+#lobbyTop #codeBox{font-size:clamp(26px,4.4vw,44px);cursor:pointer}
 #lobbyTop #codeBox:active{transform:scale(.96)}
 #lobbyMsg{font-size:12px}
-#mapPanel{position:absolute;top:66px;right:14px;bottom:96px;width:calc(50% - 28px);background:var(--lbPanel,#0b1a24e6);border:2px solid var(--lbBd2,#c9a26b88);box-shadow:0 0 24px var(--lbGlow,transparent);transition:background .5s,border-color .5s,box-shadow .5s;border-radius:18px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-.mpHead{font-size:18px;font-weight:800;color:var(--lbHead,#ffe8a3);transition:color .5s}
-#lbTheme{font-size:12px;font-weight:800;padding:2px 12px;border-radius:99px;background:var(--lbA,#ffd43b);color:var(--lbOnTxt,#2b1d00);margin-left:8px;vertical-align:middle;transition:background .5s}
-#mapPrev{display:block;width:100%;max-width:640px;aspect-ratio:8/5;height:auto;border:3px solid var(--lbFrame,#8a6239);transition:border-color .5s;border-radius:12px;background:#0a4a72}
+#mapPanel{position:absolute;top:66px;right:14px;bottom:96px;width:calc(50% - 28px);background:#0b1a24e6;border:2px solid #c9a26b88;border-radius:18px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.mpHead{font-size:18px;font-weight:800;color:#ffe8a3}
+#mapPrev{display:block;width:100%;max-width:640px;aspect-ratio:8/5;height:auto;border:3px solid #8a6239;border-radius:12px;background:#0a4a72}
 #mpRow{display:flex;align-items:center;gap:12px}
 #mpTabs{display:flex;gap:8px}
 #mpTabs button{padding:8px 16px;font-size:16px;background:#26333f;box-shadow:0 3px 0 #111;border:2px solid transparent;color:#cfd8dc}
-#mpTabs button.on{background:linear-gradient(var(--lbA,#ffd43b),var(--lbA2,#f59f00));color:var(--lbOnTxt,#2b1d00);box-shadow:0 3px 0 var(--lbA3,#8a5a00);border-color:#fff8}
+#mpTabs button.on{background:linear-gradient(#ffd43b,#f59f00);color:#2b1d00;box-shadow:0 3px 0 #8a5a00;border-color:#fff8}
 #mpTabs.ro button{pointer-events:none}
 #mpTabs.ro button:not(.on){opacity:.45}
 #mpRow button{padding:8px 18px;font-size:20px}
-#mpName{font-size:22px;font-weight:900;min-width:200px;color:var(--lbA,#ffd43b);transition:color .5s}
+#mpName{font-size:22px;font-weight:900;min-width:200px;color:#ffd43b}
 #mpDesc{font-size:13px;min-height:2.6em;max-width:560px}
-#mpNote{font-size:12px;color:var(--lbNote,#8ecbff)}
+#mpNote{font-size:12px;color:#8ecbff}
 #mapPanel #impBox{font-size:15px;padding:6px 12px}
 #detBox{display:flex;gap:12px;align-items:center;font-size:15px;font-weight:700;background:#12192b;border:2px solid #2b3856;padding:6px 12px;border-radius:14px}
 #detBox button{padding:4px 14px;font-size:20px;box-shadow:0 3px 0 #8f2323}
@@ -123,24 +122,7 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
 #sabBanner.dark{background:#111c;border-color:#868e96}
 #sabBanner small{display:block;font-size:12px;font-weight:700;opacity:.9}
 @keyframes sabBlink{50%{box-shadow:0 0 28px #ff3b3b}}
-#sabList{display:flex;flex-direction:column;gap:8px;width:100%}
-#warpBox{width:min(900px,96vw);gap:8px;padding:14px 16px;border-color:#9775fa}
-#warpBox h2{color:#d0bfff}
-#warpWrap{position:relative;border:3px solid #9775fa;border-radius:12px;overflow:hidden;box-shadow:0 0 30px #7048e866;flex:none;animation:wpIn .22s ease-out}
-@keyframes wpIn{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
-#warpMap{display:block;width:100%;height:100%}
-#warpPins{position:absolute;inset:0}
-.wpPin{position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;min-width:0;padding:0;border-radius:50%;font-size:22px;font-weight:900;color:#fff;background:radial-gradient(circle at 35% 30%,#b197fc,#6741d9 70%);border:3px solid #fff;box-shadow:0 0 0 0 #b197fcaa,0 3px 8px #000a;animation:wpPulse 1.4s infinite;touch-action:manipulation;z-index:2}
-.wpPin:hover:not(:disabled){transform:translate(-50%,-50%) scale(1.15)}
-.wpPin small{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;white-space:nowrap;font-size:11px;font-weight:800;background:#000c;color:#fff;border-radius:6px;padding:1px 6px;pointer-events:none}
-.wpPin.here{background:radial-gradient(circle at 35% 30%,#ffe066,#f59f00 70%);color:#2b1d00;animation:none}
-.wpPin:disabled{opacity:1;cursor:default;filter:none}
-.wpPin.cd:not(.here){filter:grayscale(.85) brightness(.7);animation:none}
-.wpPin.go{animation:wpGo .2s ease-in forwards}
-@keyframes wpPulse{0%{box-shadow:0 0 0 0 #b197fcaa,0 3px 8px #000a}70%{box-shadow:0 0 0 14px #b197fc00,0 3px 8px #000a}100%{box-shadow:0 0 0 0 #b197fc00,0 3px 8px #000a}}
-@keyframes wpGo{to{transform:translate(-50%,-50%) scale(1.6);box-shadow:0 0 0 30px #b197fc00;background:#fff}}
-#warpCd{min-height:1.3em;color:#ffd43b;font-weight:800}
-body.touch .wpPin{width:54px;height:54px;font-size:26px}
+#sabList,#warpList{display:flex;flex-direction:column;gap:8px;width:100%}
 .sabItem{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:12px 14px;font-size:17px;background:#0d1720;border:2px solid #2b3856;box-shadow:none;border-radius:12px;color:#fff}
 .sabItem:hover:not(:disabled){border-color:#ff6b6b}
 .sabItem big{font-size:30px}.sabItem b{display:block}.sabItem small{font-size:12px;opacity:.75;font-weight:400}
@@ -158,7 +140,7 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
 .ewItem:hover{background:#ffd43b44;border-color:#ffd43b}
 #ewClose{position:absolute;width:64px;height:64px;border-radius:50%;padding:0;font-size:24px;background:#555;box-shadow:none}
 #ewTip{position:absolute;bottom:calc(50% - min(170px,40vw) - 34px);font-size:12px;opacity:.8}
-#lobbyChat{position:absolute;left:max(12px,env(safe-area-inset-left));bottom:calc(84px + env(safe-area-inset-bottom));width:min(360px,calc(50% - 60px));background:var(--lbChat,#06121cdd);border:2px solid var(--lbBd,#fff3);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;z-index:2;transition:background .5s,border-color .5s}
+#lobbyChat{position:absolute;left:max(12px,env(safe-area-inset-left));bottom:calc(84px + env(safe-area-inset-bottom));width:min(360px,calc(50% - 60px));background:#06121cdd;border:2px solid #fff3;border-radius:14px;display:flex;flex-direction:column;overflow:hidden;z-index:2}
 #lcHead{padding:6px 10px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px}
 #lcHead .bdg{position:static;background:#fa5252;color:#fff;font-size:11px;border-radius:99px;padding:1px 6px}
 #lcMin{margin-left:auto;opacity:.7}
@@ -342,7 +324,7 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
     <button id="bInvite" class="fr" style="margin-top:4px;padding:6px 14px;font-size:14px">👥 フレンドを招待</button>
   </div>
   <div id="mapPanel" class="lbPanel">
-    <div class="mpHead">ゲーム設定<span id="lbTheme"></span></div>
+    <div class="mpHead">ゲーム設定</div>
     <div id="mpTabs"><button data-th="island">🏝 孤島</button><button data-th="sky">☁ 空島</button><button data-th="space">🚀 宇宙船</button></div>
     <canvas id="mapPrev" width="640" height="400"></canvas>
     <div id="mpRow"><button id="mpPrev" class="blue">◀</button><div id="mpName">-</div><button id="mpNext" class="blue">▶</button></div>
@@ -409,12 +391,11 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
   <div id="sabList"></div>
   <button id="sabClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc)</button>
 </div></div>
-<div id="warpPop" class="hidden"><div class="dlgBox" id="warpBox">
-  <h2>🕳 ワープ先の番号をタップ</h2>
-  <div class="sub">インポスターだけが使える抜け穴。マップ上の番号をタップ (数字キーでも可) するとその地点へワープ</div>
-  <div id="warpWrap"><canvas id="warpMap" width="800" height="600"></canvas><div id="warpPins"></div></div>
-  <div id="warpCd" class="sub"></div>
-  <button id="warpClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc / G)</button>
+<div id="warpPop" class="hidden"><div class="dlgBox">
+  <h2>🕳 ワープ先を選ぶ</h2>
+  <div class="sub">インポスターだけが使える抜け穴。数字キーでも選べます</div>
+  <div id="warpList"></div>
+  <button id="warpClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc)</button>
 </div></div>
 <div id="votePop" class="hidden"><div class="dlgBox">
   <h2>🗳 誰に投票する？</h2>
@@ -1398,7 +1379,7 @@ let lastIsland = 0; const lastByTheme = {}; const TH_ICON = { island: '🏝', sk
 function renderMapPanel(i, isHost) {
   const M = init.MAPS[i], th = M.theme, list = themeMaps(th);
   if (i !== shownMap) {
-    shownMap = i; drawMapPreview(i); applyLobbySkin(i); lastByTheme[th] = i; if (th === 'island') lastIsland = i;
+    shownMap = i; drawMapPreview(i); lastByTheme[th] = i; if (th === 'island') lastIsland = i;
     $('mpName').textContent = list.length > 1 ? `${TH_ICON[th]} ${list.indexOf(i) + 1}/${list.length}  ${M.name}` : `${TH_ICON[th]} ${M.name}`; $('mpDesc').textContent = M.desc;
   }
   $('mpTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.th === th)); $('mpTabs').classList.toggle('ro', !isHost);
@@ -1441,182 +1422,6 @@ function openCloset(v) {
 }
 $('closetX').onclick = () => openCloset(false);
 $('lobbyHint').onclick = () => openCloset(true);
-// ---------- ロビーの見た目 (選択中マップのテーマで変化) ----------
-// css: パネル類の色 (CSS変数) / bg・fx: 画面背景 / wall・floor・win・deco・closet: 部屋の描画
-const LOBBY_SKINS = {
-  island: [
-    { tag: '🏝 浜辺の小屋', label: 'BEACH HUT', fx: ['sea'], bg: ['#0b2b45', '#061a2e'],
-      css: { A: '#ffd43b', A2: '#f59f00', A3: '#8a5a00', OnTxt: '#2b1d00', Head: '#ffe8a3', Bd: '#fff2', Bd2: '#c9a26b88', Frame: '#8a6239', Panel: '#0b1a24e6', Top: '#000a', Chat: '#06121cdd', Note: '#8ecbff', Glow: '#ffd43b33' },
-      outer: '#4a2f17', inner: '#5c3d22', wall: ['#c9a66b', '#a8844b', '#b8955a'], trim: '#6b4a2b', floor: ['#a07040', '#9a6a3a', '#a67646'], seam: 'rgba(60,35,15,.55)',
-      rug: ['rgba(200,80,60,.35)', 'rgba(255,230,180,.35)'], win: 'day', deco: 'palm', closet: ['#6b4a2b', '#8a6239', '#3d2914', '#ffd43b'] },
-    { tag: '🌅 夕焼けの浜小屋', label: 'SUNSET HUT', fx: ['sea', 'embers'], bg: ['#5a2234', '#1c0a18'],
-      css: { A: '#ff922b', A2: '#e8590c', A3: '#7a2e05', OnTxt: '#2b1000', Head: '#ffd8a8', Bd: '#ffa94d44', Bd2: '#ff922b88', Frame: '#9c4a26', Panel: '#2a1220e6', Top: '#1a0810b0', Chat: '#1d0a14dd', Note: '#ffc078', Glow: '#ff922b33' },
-      outer: '#4a2318', inner: '#62301f', wall: ['#d9935a', '#b8703f', '#c9824c'], trim: '#7a3a22', floor: ['#a5603a', '#9a5532', '#ad6a42'], seam: 'rgba(70,25,10,.55)',
-      rug: ['rgba(255,146,43,.32)', 'rgba(255,224,170,.35)'], win: 'sunset', deco: 'shells', closet: ['#7a3a22', '#9c4f2c', '#3d1a0e', '#ffc078'] },
-    { tag: '🌿 密林の樹上小屋', label: 'JUNGLE CABIN', fx: ['fireflies'], bg: ['#123322', '#05120b'],
-      css: { A: '#69db7c', A2: '#2f9e44', A3: '#1b5e2a', OnTxt: '#062b10', Head: '#d3f9d8', Bd: '#69db7c44', Bd2: '#51cf6688', Frame: '#3d6b2a', Panel: '#0a1f14e6', Top: '#03100ab0', Chat: '#06150ddd', Note: '#a9e34b', Glow: '#69db7c33' },
-      outer: '#2b2414', inner: '#3a311b', wall: ['#6f8f4a', '#55733a', '#617f42'], trim: '#3d4f22', floor: ['#6b4a2b', '#5f4126', '#735031'], seam: 'rgba(25,15,5,.6)',
-      rug: ['rgba(47,158,68,.33)', 'rgba(216,245,162,.3)'], win: 'jungle', deco: 'vines', closet: ['#4a3a1f', '#5f4a28', '#22190b', '#a9e34b'] },
-  ],
-  space: [
-    { tag: '🚀 ブリッジ待機室', label: 'CREW LOUNGE', fx: ['stars'], bg: ['#0b1430', '#03060f'],
-      css: { A: '#4dabf7', A2: '#1971c2', A3: '#0b3d73', OnTxt: '#021226', Head: '#d0ebff', Bd: '#4dabf755', Bd2: '#4dabf799', Frame: '#3b5b85', Panel: '#08122ae6', Top: '#020814b8', Chat: '#040b1cdd', Note: '#99e9f2', Glow: '#4dabf744' },
-      outer: '#1c2433', inner: '#283244', wall: ['#3d4a60', '#2c3747', '#344156'], trim: '#4dabf7', floor: ['#3a4456', '#323b4c'], seam: 'rgba(10,15,25,.7)',
-      rug: ['#4dabf7', '#1971c2'], win: 'stars', deco: 'consoles', closet: ['#4a5568', '#5b6779', '#1a202c', '#4dabf7'] },
-    { tag: '📦 貨物ドック', label: 'CARGO BAY', fx: ['stars', 'nebula'], bg: ['#2a1608', '#0a0603'],
-      css: { A: '#ffa94d', A2: '#f76707', A3: '#7a3104', OnTxt: '#2b1200', Head: '#ffe8cc', Bd: '#ffa94d55', Bd2: '#fd7e1499', Frame: '#7a5a36', Panel: '#1c1208e6', Top: '#0f0904b8', Chat: '#140c05dd', Note: '#ffd43b', Glow: '#ffa94d40' },
-      outer: '#2b2622', inner: '#3a332c', wall: ['#5a5148', '#463f37', '#504840'], trim: '#ffd43b', floor: ['#4a4540', '#403b36'], seam: 'rgba(15,10,5,.7)',
-      rug: ['#ffa94d', '#f76707'], win: 'nebula', deco: 'crates', closet: ['#5c4a32', '#6e5a3e', '#1f170e', '#ffd43b'] },
-    { tag: '🧪 研究ラウンジ', label: 'LAB LOUNGE', fx: ['stars'], bg: ['#062a30', '#020d10'],
-      css: { A: '#3bc9db', A2: '#0c8599', A3: '#0b4f5a', OnTxt: '#02222a', Head: '#e3fafc', Bd: '#3bc9db55', Bd2: '#66d9e899', Frame: '#9ab8bf', Panel: '#08202ae6', Top: '#02121ab8', Chat: '#03161cdd', Note: '#c3fae8', Glow: '#3bc9db40' },
-      outer: '#8a9ba3', inner: '#b0c0c6', wall: ['#dfe7ea', '#c5d1d6', '#d3dde1'], trim: '#3bc9db', floor: ['#cfd9dc', '#c2cdd1'], seam: 'rgba(80,100,110,.45)',
-      rug: ['#3bc9db', '#0c8599'], win: 'ringplanet', deco: 'plants', closet: ['#c5d1d6', '#e3eaed', '#7a8c94', '#3bc9db'] },
-  ],
-  sky: [
-    { tag: '🏛 天空の神殿', label: 'SKY TEMPLE', fx: ['clouds'], bg: ['#4ea3e0', '#1f5f9e'],
-      css: { A: '#ffe066', A2: '#fab005', A3: '#8f6400', OnTxt: '#2b2000', Head: '#fff9db', Bd: '#ffffff66', Bd2: '#ffe06699', Frame: '#d4b45a', Panel: '#123a5ee0', Top: '#0b2a48b0', Chat: '#0b2a48dd', Note: '#d0ebff', Glow: '#ffe06644' },
-      outer: '#c9c2b0', inner: '#ddd6c4', wall: ['#f1ece0', '#d9d1bf', '#e7e0d0'], trim: '#e0b84a', floor: ['#ece6d8', '#d8d0bd'], seam: 'rgba(140,125,95,.45)',
-      rug: ['#e0b84a', '#4dabf7'], win: 'clouds', deco: 'pillars', closet: ['#f1ece0', '#fffaf0', '#b59a55', '#e0b84a'] },
-    { tag: '🌸 浮遊庭園の東屋', label: 'SKY GARDEN', fx: ['clouds', 'petals'], bg: ['#74c0fc', '#3b8fd0'],
-      css: { A: '#8ce99a', A2: '#40c057', A3: '#2b6e35', OnTxt: '#062b10', Head: '#ebfbee', Bd: '#ffffff66', Bd2: '#8ce99a99', Frame: '#9bbf7a', Panel: '#1a4a5ae0', Top: '#0f3442b0', Chat: '#0f3442dd', Note: '#fcc2d7', Glow: '#8ce99a44' },
-      outer: '#8a6a48', inner: '#a6845c', wall: ['#f8f3e6', '#e6dcc4', '#efe7d4'], trim: '#74b85a', floor: ['#c9a678', '#bb966a'], seam: 'rgba(100,70,40,.4)',
-      rug: ['#f783ac', '#8ce99a'], win: 'windmill', deco: 'flowers', closet: ['#f8f3e6', '#fffdf6', '#8a6a48', '#74b85a'] },
-    { tag: '🔮 螺旋の塔', label: 'SPIRAL TOWER', fx: ['stars', 'clouds'], bg: ['#3b2a6b', '#140c2e'],
-      css: { A: '#b197fc', A2: '#7048e8', A3: '#3b1f8f', OnTxt: '#160a33', Head: '#f3f0ff', Bd: '#b197fc55', Bd2: '#b197fc99', Frame: '#7c6bb0', Panel: '#1c1440e6', Top: '#0e0a24b8', Chat: '#110b2add', Note: '#ffc9e3', Glow: '#b197fc44' },
-      outer: '#3a3158', inner: '#4a4070', wall: ['#7d70a8', '#685c92', '#72669e'], trim: '#d0bfff', floor: ['#5f5590', '#544a82'], seam: 'rgba(20,10,45,.55)',
-      rug: ['#b197fc', '#f783ac'], win: 'twilight', deco: 'crystals', closet: ['#5f5590', '#7568a8', '#251c48', '#d0bfff'] },
-  ],
-};
-const lbSkin = { cur: null, prev: null, t0: 0 };
-function lobbySkinOf(i) {
-  const M = init.MAPS[i] || init.MAPS[0], list = themeMaps(M.theme), set = LOBBY_SKINS[M.theme] || LOBBY_SKINS.island;
-  const sk = set[Math.max(0, list.indexOf(i)) % set.length]; sk.th = M.theme; return sk;
-}
-function applyLobbySkin(i) { // パネル類の色を CSS 変数で切り替える (CSS 側で 0.5 秒かけて変化)
-  const sk = lobbySkinOf(i), el = $('lobby');
-  for (const k in sk.css) el.style.setProperty('--lb' + k, sk.css[k]);
-  $('lbTheme').textContent = sk.tag; el.dataset.theme = sk.th;
-}
-const hsh = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-function drawLobbyBg(sk, w, h, now) {
-  const g = ctx, bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, sk.bg[0]); bg.addColorStop(1, sk.bg[1]); g.fillStyle = bg; g.fillRect(0, 0, w, h);
-  for (const f of sk.fx) {
-    if (f === 'stars') for (let i = 0; i < 110; i++) { const a = .25 + .55 * (.5 + .5 * Math.sin(now / 700 + i * 1.7)); g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(hsh(i) * w, hsh(i + 500) * h, i % 9 ? 1.5 : 2.5, i % 9 ? 1.5 : 2.5); }
-    if (f === 'nebula') for (let i = 0; i < 3; i++) { const x = w * (.2 + .3 * i), y = h * (.3 + .25 * (i % 2)), r = Math.max(w, h) * .35, gr = g.createRadialGradient(x, y, 0, x, y, r);
-      gr.addColorStop(0, ['rgba(255,140,40,.18)', 'rgba(180,60,200,.14)', 'rgba(255,90,60,.12)'][i]); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
-    if (f === 'sea') { g.strokeStyle = 'rgba(165,216,255,.13)'; g.lineWidth = 2; for (let i = 0; i < 14; i++) { const y = h * (.1 + i * .065), o = (now / 40 + i * 90) % 240;
-      g.beginPath(); for (let x = -240 + o; x < w; x += 240) { g.moveTo(x, y); g.quadraticCurveTo(x + 60, y - 6, x + 120, y); } g.stroke(); } }
-    if (f === 'embers') for (let i = 0; i < 30; i++) { const y = h - ((now / 30 + hsh(i) * h) % h), x = hsh(i + 70) * w + Math.sin(now / 900 + i) * 20; g.fillStyle = `rgba(255,${150 + i * 3 % 80},60,${.25 + .3 * hsh(i + 9)})`; g.beginPath(); g.arc(x, y, 1.5 + hsh(i + 3) * 2, 0, 7); g.fill(); }
-    if (f === 'fireflies') for (let i = 0; i < 40; i++) { const x = hsh(i) * w + Math.sin(now / 1300 + i) * 30, y = hsh(i + 40) * h + Math.cos(now / 1100 + i * 2) * 24, a = .2 + .6 * Math.max(0, Math.sin(now / 500 + i * 3));
-      g.fillStyle = `rgba(216,245,100,${a})`; g.beginPath(); g.arc(x, y, 2.2, 0, 7); g.fill(); g.fillStyle = `rgba(216,245,100,${a * .25})`; g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill(); }
-    if (f === 'clouds') for (let i = 0; i < 8; i++) { const sp = .008 + hsh(i) * .012, cw = 160 + hsh(i + 20) * 200, x = ((now * sp + hsh(i + 5) * (w + cw)) % (w + cw * 2)) - cw, y = h * (.08 + hsh(i + 9) * .85);
-      g.fillStyle = sk.th === 'sky' && sk.win === 'twilight' ? 'rgba(220,200,255,.12)' : 'rgba(255,255,255,.35)';
-      for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(x + k * cw / 5, y + Math.sin(k * 2.1) * 8, cw / 4, cw / 9, 0, 0, 7); g.fill(); } }
-    if (f === 'petals') for (let i = 0; i < 26; i++) { const y = (now / 25 + hsh(i) * h) % h, x = (hsh(i + 30) * w + now / 50 + Math.sin(now / 600 + i) * 30) % w;
-      g.save(); g.translate(x, y); g.rotate(now / 500 + i); g.fillStyle = 'rgba(252,194,215,.7)'; g.beginPath(); g.ellipse(0, 0, 5, 2.5, 0, 0, 7); g.fill(); g.restore(); }
-  }
-}
-// 窓の景色 (マップごとに違う)
-function drawWinScene(kind, x, y, w, h, now) {
-  const g = ctx, gr = (stops) => { const q = g.createLinearGradient(0, y, 0, y + h); stops.forEach(([o, c]) => q.addColorStop(o, c)); return q; };
-  if (kind === 'day') { g.fillStyle = gr([[0, '#74c0fc'], [.6, '#a5d8ff'], [.61, '#1c7ed6'], [1, '#1864ab']]); g.fillRect(x, y, w, h);
-    g.fillStyle = '#fff3bf'; g.beginPath(); g.arc(x + 90, y + 16, 8, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(x + 14, y + 38 + Math.sin(now / 500) * 2, 30, 2); g.fillRect(x + 60, y + 46 + Math.cos(now / 600) * 2, 24, 2); }
-  else if (kind === 'sunset') { g.fillStyle = gr([[0, '#5f3dc4'], [.35, '#f06595'], [.6, '#ffa94d'], [.61, '#7a2e3a'], [1, '#3b1424']]); g.fillRect(x, y, w, h);
-    g.fillStyle = '#ffd43b'; g.beginPath(); g.arc(x + 60, y + h * .6, 14, Math.PI, 0); g.fill(); g.fillStyle = 'rgba(255,212,59,.6)'; for (let i = 0; i < 4; i++) g.fillRect(x + 60 - 14 + i * 3, y + h * .64 + i * 5, 28 - i * 6, 2); }
-  else if (kind === 'jungle') { g.fillStyle = gr([[0, '#a9c9a4'], [1, '#4f7a4a']]); g.fillRect(x, y, w, h);
-    for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? '#2f5a2a' : '#3d6b35'; g.beginPath(); g.arc(x + i * 24 + 8, y + h - 8 - (i % 3) * 6, 18, 0, 7); g.fill(); }
-    g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x, y + 24 + Math.sin(now / 900) * 3, w, 8); }
-  else if (kind === 'stars' || kind === 'nebula' || kind === 'ringplanet') { g.fillStyle = kind === 'ringplanet' ? '#06243a' : '#050816'; g.fillRect(x, y, w, h);
-    if (kind === 'nebula') { const q = g.createRadialGradient(x + 40, y + 28, 0, x + 40, y + 28, 60); q.addColorStop(0, 'rgba(255,146,43,.7)'); q.addColorStop(.5, 'rgba(174,62,201,.35)'); q.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = q; g.fillRect(x, y, w, h); }
-    const drift = (now / 60) % w; for (let i = 0; i < 18; i++) { g.fillStyle = '#fff'; g.fillRect(x + ((hsh(i) * w - drift + w) % w), y + hsh(i + 9) * h, 1.5, 1.5); }
-    if (kind === 'stars') { g.fillStyle = '#4dabf7'; g.beginPath(); g.arc(x + 86, y + 34, 14, 0, 7); g.fill(); g.fillStyle = '#a5d8ff'; g.beginPath(); g.arc(x + 82, y + 30, 5, 0, 7); g.fill(); }
-    if (kind === 'ringplanet') { g.fillStyle = '#f59f00'; g.beginPath(); g.arc(x + 60, y + 30, 13, 0, 7); g.fill(); g.strokeStyle = '#ffe8a3'; g.lineWidth = 2.5; g.beginPath(); g.ellipse(x + 60, y + 30, 26, 7, -.25, 0, 7); g.stroke(); }
-    if (kind === 'nebula') { const ax = x + ((now / 25) % (w + 30)) - 15; g.fillStyle = '#868e96'; g.beginPath(); g.arc(ax, y + 40, 5, 0, 7); g.fill(); } }
-  else if (kind === 'clouds' || kind === 'windmill') { g.fillStyle = gr([[0, '#4dabf7'], [1, '#d0ebff']]); g.fillRect(x, y, w, h);
-    for (let i = 0; i < 3; i++) { const cx = x + ((now / (70 + i * 30) + i * 50) % (w + 60)) - 30; g.fillStyle = '#fff'; g.beginPath(); g.ellipse(cx, y + 14 + i * 14, 18, 6, 0, 0, 7); g.ellipse(cx + 12, y + 11 + i * 14, 11, 6, 0, 0, 7); g.fill(); }
-    g.fillStyle = '#69db7c'; g.beginPath(); g.ellipse(x + 60, y + h - 12, 26, 6, 0, 0, 7); g.fill(); g.fillStyle = '#8c6d4a'; g.beginPath(); g.moveTo(x + 36, y + h - 12); g.lineTo(x + 84, y + h - 12); g.lineTo(x + 60, y + h); g.fill();
-    if (kind === 'windmill') { g.fillStyle = '#fff'; g.fillRect(x + 57, y + h - 30, 6, 18); g.save(); g.translate(x + 60, y + h - 30); g.rotate(now / 700); g.fillStyle = '#e9ecef';
-      for (let k = 0; k < 4; k++) { g.rotate(Math.PI / 2); g.fillRect(-2, 0, 4, 16); } g.restore(); } }
-  else if (kind === 'twilight') { g.fillStyle = gr([[0, '#2b1d5c'], [.6, '#9c36b5'], [1, '#ff8787']]); g.fillRect(x, y, w, h);
-    for (let i = 0; i < 10; i++) { g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(x + hsh(i) * w, y + hsh(i + 4) * h * .5, 1.5, 1.5); }
-    g.fillStyle = '#fff3bf'; g.beginPath(); g.arc(x + 88, y + 16, 9, 0, 7); g.fill(); g.fillStyle = '#2b1d5c'; g.beginPath(); g.arc(x + 92, y + 13, 8, 0, 7); g.fill();
-    g.fillStyle = 'rgba(255,200,240,.5)'; g.beginPath(); g.ellipse(x + ((now / 90) % (w + 40)) - 20, y + 42, 22, 5, 0, 0, 7); g.fill(); }
-}
-function lobbyCrate(g, x, y, s, c1, c2) { g.fillStyle = c1; g.fillRect(x - s / 2, y - s / 2, s, s); g.strokeStyle = c2; g.lineWidth = 3; g.strokeRect(x - s / 2 + 2, y - s / 2 + 2, s - 4, s - 4); g.beginPath(); g.moveTo(x - s / 2 + 3, y - s / 2 + 3); g.lineTo(x + s / 2 - 3, y + s / 2 - 3); g.stroke(); }
-function drawLobbyDeco(sk, now) {
-  const g = ctx, L = init.LOBBY, TL = [L.x0 + 36, L.y0 + 46], TR = [L.x1 - 36, L.y0 + 46], BL = [L.x0 + 36, L.y1 - 40], BR = [L.x1 - 36, L.y1 - 40];
-  const sh = (x, y, rx) => { g.fillStyle = 'rgba(0,0,0,.25)'; elg(g, x, y, rx, rx * .35); g.fill(); };
-  if (sk.deco === 'palm') for (const [x, y] of [TL, TR]) { sh(x, y + 14, 20); g.fillStyle = '#c0703a'; g.beginPath(); g.moveTo(x - 14, y - 4); g.lineTo(x + 14, y - 4); g.lineTo(x + 10, y + 14); g.lineTo(x - 10, y + 14); g.fill();
-    g.strokeStyle = '#2f9e44'; g.lineWidth = 5; g.lineCap = 'round'; for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + (k - 2.5) * .5 + Math.sin(now / 900 + k) * .05; g.beginPath(); g.moveTo(x, y - 6); g.quadraticCurveTo(x + Math.cos(a) * 18, y - 6 + Math.sin(a) * 26, x + Math.cos(a) * 30, y - 6 + Math.sin(a) * 18 + 10); g.stroke(); } g.lineCap = 'butt'; }
-  if (sk.deco === 'shells') { for (const [x, y] of [BL, BR]) { sh(x, y + 6, 18); g.fillStyle = '#ff8787'; g.save(); g.translate(x, y); g.beginPath(); for (let k = 0; k < 10; k++) { const r = k % 2 ? 6 : 14, a = k * Math.PI / 5 - Math.PI / 2; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.fill(); g.restore(); }
-    for (const [x, y] of [TL, TR]) { const f = .6 + .4 * Math.sin(now / 300 + x); g.fillStyle = `rgba(255,192,120,${.25 * f})`; g.beginPath(); g.arc(x, y - 6, 28, 0, 7); g.fill(); g.fillStyle = '#5c3d22'; g.fillRect(x - 9, y - 16, 18, 24); g.fillStyle = `rgba(255,212,59,${.7 + .3 * f})`; g.fillRect(x - 6, y - 12, 12, 16); } }
-  if (sk.deco === 'vines') { g.strokeStyle = '#2f9e44'; g.lineWidth = 4; for (let i = 0; i < 9; i++) { const x = L.x0 + 30 + i * 74, len = 30 + hsh(i) * 40, sw = Math.sin(now / 1000 + i) * 4;
-      g.beginPath(); g.moveTo(x, 20); g.quadraticCurveTo(x + sw, 20 + len / 2, x + sw * 1.5, 20 + len); g.stroke(); g.fillStyle = '#51cf66'; g.beginPath(); g.ellipse(x + sw * 1.5, 22 + len, 6, 3, .5, 0, 7); g.fill(); }
-    for (const [x, y] of [BL, BR, TL, TR]) { sh(x, y + 10, 22); g.fillStyle = '#2b8a3e'; for (let k = 0; k < 7; k++) { g.save(); g.translate(x, y + 6); g.rotate((k - 3) * .4); g.beginPath(); g.ellipse(0, -14, 5, 16, 0, 0, 7); g.fill(); g.restore(); } } }
-  if (sk.deco === 'consoles') for (const [x, y] of [TL, TR]) { g.fillStyle = '#2c3747'; rrg(g, x - 26, y - 20, 52, 34, 6); g.fill(); g.fillStyle = '#0b1a33'; g.fillRect(x - 20, y - 15, 40, 16);
-    for (let k = 0; k < 4; k++) { g.fillStyle = (Math.floor(now / 400) + k + (x > 300)) % 3 ? '#4dabf7' : '#ff6b6b'; g.fillRect(x - 18 + k * 10, y + 5, 6, 4); } g.fillStyle = 'rgba(77,171,247,.6)'; g.fillRect(x - 18, y - 12 + ((now / 30) % 12), 36, 1.5); }
-  if (sk.deco === 'crates') { for (const [x, y] of [BL, BR]) { sh(x, y + 22, 30); lobbyCrate(g, x - 8, y, 34, '#8a6a3f', '#5c4425'); lobbyCrate(g, x + 18, y + 6, 28, '#7a5c36', '#4d391f'); lobbyCrate(g, x + 2, y - 26, 26, '#96764a', '#5c4425'); }
-    for (let x = L.x0; x < L.x1; x += 28) { g.fillStyle = (x / 28) % 2 ? '#ffd43b' : '#212529'; g.beginPath(); g.moveTo(x, L.y0); g.lineTo(x + 14, L.y0); g.lineTo(x + 28, L.y0 + 10); g.lineTo(x + 14, L.y0 + 10); g.fill(); } }
-  if (sk.deco === 'plants') for (const [x, y] of [TL, TR, BL, BR]) { sh(x, y + 18, 16); g.fillStyle = 'rgba(200,240,255,.35)'; rrg(g, x - 12, y - 24, 24, 42, 10); g.fill(); g.strokeStyle = '#7a8c94'; g.lineWidth = 2; g.stroke();
-    g.fillStyle = 'rgba(64,192,87,.7)'; g.fillRect(x - 10, y - 4, 20, 20); for (let k = 0; k < 3; k++) { const by = y + 14 - ((now / 25 + k * 13 + x) % 30); g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.arc(x - 5 + k * 5, by, 1.8, 0, 7); g.fill(); }
-    g.fillStyle = '#2f9e44'; g.beginPath(); g.ellipse(x - 4, y - 10, 4, 9, -.4, 0, 7); g.ellipse(x + 4, y - 12, 4, 9, .4, 0, 7); g.fill(); }
-  if (sk.deco === 'pillars') { for (const [x, y] of [TL, TR]) { sh(x, y + 18, 20); g.fillStyle = '#f1ece0'; g.fillRect(x - 12, y - 30, 24, 46); g.fillStyle = '#d9d1bf'; for (let k = 0; k < 3; k++) g.fillRect(x - 8 + k * 7, y - 28, 2, 42); g.fillStyle = '#e0b84a'; g.fillRect(x - 16, y - 34, 32, 6); g.fillRect(x - 16, y + 14, 32, 5); }
-    for (const [x, y] of [BL, BR]) { sh(x, y + 14, 16); g.fillStyle = '#e0b84a'; g.beginPath(); g.moveTo(x - 8, y + 12); g.quadraticCurveTo(x - 18, y - 4, x - 8, y - 14); g.lineTo(x + 8, y - 14); g.quadraticCurveTo(x + 18, y - 4, x + 8, y + 12); g.fill(); g.fillStyle = '#b59a55'; g.fillRect(x - 10, y - 16, 20, 4); } }
-  if (sk.deco === 'flowers') for (const [x, y] of [TL, TR, BL, BR]) { sh(x, y + 12, 24); g.fillStyle = '#8a6a48'; rrg(g, x - 22, y - 2, 44, 14, 4); g.fill();
-    for (let k = 0; k < 5; k++) { const fx = x - 16 + k * 8, fy = y - 6 - (k % 2) * 6 + Math.sin(now / 700 + k) * 1.5; g.fillStyle = '#2f9e44'; g.fillRect(fx - 1, fy, 2, 8); g.fillStyle = ['#f783ac', '#ffd43b', '#fcc2d7', '#f06595', '#fff'][k]; g.beginPath(); g.arc(fx, fy, 4, 0, 7); g.fill(); } }
-  if (sk.deco === 'crystals') for (const [x, y] of [TL, TR, BL, BR]) { const b = Math.sin(now / 600 + x + y) * 5; sh(x, y + 18, 14); g.save(); g.translate(x, y - 6 + b);
-    const q = g.createLinearGradient(0, -22, 0, 18); q.addColorStop(0, '#e5dbff'); q.addColorStop(1, '#7048e8'); g.fillStyle = q; g.beginPath(); g.moveTo(0, -22); g.lineTo(10, -4); g.lineTo(0, 18); g.lineTo(-10, -4); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.moveTo(0, -22); g.lineTo(3, -4); g.lineTo(0, 10); g.lineTo(-4, -4); g.fill(); g.restore(); g.fillStyle = 'rgba(177,151,252,.18)'; g.beginPath(); g.arc(x, y - 6 + b, 24, 0, 7); g.fill(); }
-}
-function drawLobbyRoom(sk, now, near, glow) {
-  const g = ctx, L = init.LOBBY, CL = init.CLOSET, RX0 = L.x0 - 40, RX1 = L.x1 + 40, RY0 = 0, RY1 = L.y1 + 40, th = sk.th, WY = RY0 + 20, WH = L.y0 - RY0 - 20;
-  g.fillStyle = sk.outer; g.fillRect(RX0, RY0, RX1 - RX0, RY1 - RY0); g.fillStyle = sk.inner; g.fillRect(RX0 + 6, RY0 + 6, RX1 - RX0 - 12, RY1 - RY0 - 12);
-  // 奥の壁
-  g.fillStyle = sk.wall[2]; g.fillRect(L.x0, WY, L.x1 - L.x0, WH);
-  if (th === 'island') { for (let x = L.x0; x < L.x1; x += 22) { g.fillStyle = x % 44 ? sk.wall[0] : sk.wall[1]; g.fillRect(x, WY, 20, WH); g.fillStyle = 'rgba(40,25,10,.4)'; g.fillRect(x, 60, 20, 3); } }
-  else if (th === 'space') { for (let x = L.x0; x < L.x1; x += 80) { g.fillStyle = sk.wall[(x / 80) % 2 ? 0 : 1]; g.fillRect(x + 2, WY + 2, 76, WH - 4); g.fillStyle = 'rgba(0,0,0,.35)'; for (const [rx, ry] of [[8, 8], [70, 8], [8, WH - 10], [70, WH - 10]]) { g.beginPath(); g.arc(x + rx, WY + ry, 2, 0, 7); g.fill(); } }
-    const lg = .55 + .25 * Math.sin(now / 800); g.fillStyle = sk.trim; g.globalAlpha *= lg; g.fillRect(L.x0, WY + 2, L.x1 - L.x0, 3); g.globalAlpha /= lg; }
-  else { for (let r = 0, y = WY; y < WY + WH; y += 25, r++) for (let x = L.x0 - (r % 2) * 40; x < L.x1; x += 80) { const x0 = Math.max(L.x0, x), x1 = Math.min(L.x1, x + 80); g.fillStyle = (r + x / 80) % 2 ? sk.wall[0] : sk.wall[2]; g.fillRect(x0, y, x1 - x0, 25); g.strokeStyle = sk.seam; g.lineWidth = 1.5; g.strokeRect(x0 + .5, y + .5, x1 - x0 - 1, 24); }
-    g.fillStyle = sk.trim; g.fillRect(L.x0, WY, L.x1 - L.x0, 6); }
-  g.fillStyle = th === 'space' ? '#1a202c' : sk.trim; g.fillRect(L.x0, L.y0 - 6, L.x1 - L.x0, 6);
-  // 窓 (孤島=四角 / 宇宙船=丸窓 / 空島=アーチ)
-  for (const wx of [L.x0 + 70, L.x1 - 190]) {
-    g.save(); g.beginPath();
-    if (th === 'space') rrg(g, wx, 34, 120, 56, 28); else if (th === 'sky') { g.moveTo(wx, 90); g.lineTo(wx, 62); g.ellipse(wx + 60, 62, 60, 28, 0, Math.PI, 0); g.lineTo(wx + 120, 90); g.closePath(); } else rrg(g, wx, 34, 120, 56, 10);
-    g.clip(); drawWinScene(sk.win, wx, 34, 120, 56, now); g.restore();
-    g.strokeStyle = th === 'island' ? sk.outer : th === 'space' ? '#1a202c' : sk.trim; g.lineWidth = 5; g.beginPath();
-    if (th === 'space') rrg(g, wx, 34, 120, 56, 28); else if (th === 'sky') { g.moveTo(wx, 90); g.lineTo(wx, 62); g.ellipse(wx + 60, 62, 60, 28, 0, Math.PI, 0); g.lineTo(wx + 120, 90); g.closePath(); } else rrg(g, wx, 34, 120, 56, 10);
-    g.stroke(); if (th !== 'space') { g.lineWidth = 3; g.beginPath(); g.moveTo(wx + 60, 34); g.lineTo(wx + 60, 90); g.stroke(); }
-  }
-  // 床
-  if (th === 'island') { for (let y = L.y0; y < L.y1; y += 32) { const off = ((y / 32) % 2) * 60;
-    for (let x = L.x0 - off; x < L.x1; x += 120) { const x0 = Math.max(L.x0, x), x1 = Math.min(L.x1, x + 120); if (x1 <= x0) continue;
-      g.fillStyle = sk.floor[Math.floor((x + y) / 8) % 3]; g.fillRect(x0, y, x1 - x0, 32); g.strokeStyle = sk.seam; g.lineWidth = 2; g.strokeRect(x0 + 1, y + 1, x1 - x0 - 2, 30); g.fillStyle = sk.seam; g.fillRect(x0 + 6, y + 14, 3, 3); } } }
-  else { const T = 64; for (let y = L.y0; y < L.y1; y += T) for (let x = L.x0; x < L.x1; x += T) { const tw = Math.min(T, L.x1 - x), tht = Math.min(T, L.y1 - y);
-      g.fillStyle = sk.floor[((x - L.x0) / T + (y - L.y0) / T) % 2]; g.fillRect(x, y, tw, tht); g.strokeStyle = sk.seam; g.lineWidth = th === 'space' ? 3 : 1.5; g.strokeRect(x + 1, y + 1, tw - 2, tht - 2);
-      if (th === 'space') { g.fillStyle = sk.seam; for (const [a, b] of [[6, 6], [T - 8, 6], [6, T - 8], [T - 8, T - 8]]) if (a < tw && b < tht) g.fillRect(x + a, y + b, 2, 2); }
-      else if (((x * 7 + y * 3) / T) % 5 < 1) { g.strokeStyle = 'rgba(150,130,100,.25)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x + 8, y + 20); g.quadraticCurveTo(x + 30, y + 30, x + 56, y + 44); g.stroke(); } } }
-  // 中央の敷物 / 紋章
-  const cx = (L.x0 + L.x1) / 2, cy = (L.y0 + L.y1) / 2 + 40;
-  if (th === 'island') { g.fillStyle = sk.rug[0]; elg(g, cx, cy, 170, 120); g.fill(); g.strokeStyle = sk.rug[1]; g.lineWidth = 4; elg(g, cx, cy, 150, 104); g.stroke(); }
-  else if (th === 'space') { const p = .5 + .3 * Math.sin(now / 600); g.strokeStyle = sk.rug[1]; g.lineWidth = 6; g.beginPath(); for (let k = 0; k < 7; k++) { const a = k * Math.PI / 3; g.lineTo(cx + Math.cos(a) * 140, cy + Math.sin(a) * 110); } g.stroke();
-    g.strokeStyle = sk.rug[0]; g.lineWidth = 3; g.globalAlpha *= p; elg(g, cx, cy, 110, 84); g.stroke(); g.globalAlpha /= p; }
-  else { g.fillStyle = sk.rug[1] + '33'; g.beginPath(); g.arc(cx, cy, 120, 0, 7); g.fill(); g.strokeStyle = sk.rug[0]; g.lineWidth = 6; g.beginPath(); g.arc(cx, cy, 120, 0, 7); g.stroke(); g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, 100, 0, 7); g.stroke();
-    g.fillStyle = sk.rug[0] + '88'; g.beginPath(); for (let k = 0; k < 16; k++) { const r = k % 2 ? 22 : 80, a = k * Math.PI / 8 + now / 9000; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath(); g.fill(); }
-  const sg = g.createLinearGradient(0, L.y0, 0, L.y0 + 30); sg.addColorStop(0, 'rgba(0,0,0,.45)'); sg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sg; g.fillRect(L.x0, L.y0, L.x1 - L.x0, 30);
-  g.fillStyle = th === 'space' || th === 'sky' && sk.win !== 'twilight' ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.06)'; g.font = 'bold 54px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(sk.label, cx, L.y1 - 70);
-  drawLobbyDeco(sk, now);
-  // クローゼット (奥の壁の中央。孤島=木の箪笥 / 宇宙船=ロッカー / 空島=白い衣装棚)
-  const [cb, cd, cs, ch] = sk.closet;
-  if (near) { g.fillStyle = `rgba(255,212,59,${glow * .35})`; elg(g, CL.x, L.y0 + 10, 110, 34); g.fill(); }
-  g.fillStyle = cb; rrg(g, CL.x - 70, 18, 140, L.y0 - 14, th === 'sky' ? 30 : 8); g.fill(); g.strokeStyle = near ? '#ffd43b' : cs; g.lineWidth = near ? 5 : 4; g.stroke();
-  g.fillStyle = cd; rrg(g, CL.x - 62, 26, 60, L.y0 - 32, 4); g.fill(); rrg(g, CL.x + 2, 26, 60, L.y0 - 32, 4); g.fill();
-  if (th === 'space') { g.fillStyle = 'rgba(0,0,0,.4)'; for (let k = 0; k < 4; k++) { g.fillRect(CL.x - 52, 34 + k * 7, 40, 3); g.fillRect(CL.x + 12, 34 + k * 7, 40, 3); } g.fillStyle = ch; g.fillRect(CL.x - 62, L.y0 - 14, 124, 3); }
-  if (th === 'sky') { g.strokeStyle = ch; g.lineWidth = 2; g.strokeRect(CL.x - 56, 32, 48, L.y0 - 44); g.strokeRect(CL.x + 8, 32, 48, L.y0 - 44); }
-  g.fillStyle = ch; g.fillRect(CL.x - 10, 60, 5, 18); g.fillRect(CL.x + 5, 60, 5, 18);
-  g.fillStyle = '#000'; g.font = '26px serif'; g.fillText('👕', CL.x, 10);
-  g.font = 'bold 15px sans-serif'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText('クローゼット', CL.x, L.y0 + 16); g.fillStyle = near ? '#ffd43b' : '#fff'; g.fillText('クローゼット', CL.x, L.y0 + 16);
-}
 // 床に立つ部屋を描く (正方形の床 + 奥の壁 + クローゼット)
 function drawLobby(dt, now) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const w = cv.width / DPR, h = cv.height / DPR, L = init.LOBBY, CL = init.CLOSET;
@@ -1626,17 +1431,39 @@ function drawLobby(dt, now) {
   const pr = $('mapPanel').getBoundingClientRect(), wide = pr.left > w * .3;
   const TOP = Math.min(150, h * .2), BOT = wide ? 100 : h - pr.top + 10, RW = wide ? pr.left - 10 : w;
   const sc = Math.min((RW - 30) / (RX1 - RX0), (h - TOP - BOT) / (RY1 - RY0)), oy = TOP + (h - TOP - BOT) / 2, ox = RW / 2;
-  // 背景と部屋は選択中マップのテーマ (孤島/空島/宇宙船 × 各3種) で変わる。切り替え時はクロスフェード
-  const sk = lobbySkinOf(S.lobby.map || 0);
-  if (sk !== lbSkin.cur) { lbSkin.prev = lbSkin.cur; lbSkin.cur = sk; lbSkin.t0 = now; }
-  const fa = lbSkin.prev ? Math.min(1, (now - lbSkin.t0) / 450) : 1; if (fa >= 1) lbSkin.prev = null;
-  const near = nearCloset(), glow = near ? .5 + Math.sin(now / 200) * .3 : 0;
-  if (lbSkin.prev) drawLobbyBg(lbSkin.prev, w, h, now);
-  ctx.globalAlpha = fa; drawLobbyBg(sk, w, h, now); ctx.globalAlpha = 1;
+  const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#0b2b45'); bg.addColorStop(1, '#061a2e'); ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
   ctx.save(); ctx.translate(ox, oy); ctx.scale(sc, sc); ctx.translate(-(RX0 + RX1) / 2, -(RY0 + RY1) / 2);
   lobbyLayout = { sc, ox, oy, cx: (RX0 + RX1) / 2, cy: (RY0 + RY1) / 2 };
-  if (lbSkin.prev) drawLobbyRoom(lbSkin.prev, now, near, glow);
-  ctx.globalAlpha = fa; drawLobbyRoom(sk, now, near, glow); ctx.globalAlpha = 1;
+  // 外壁
+  // 浜辺の小屋: 丸太の外壁
+  ctx.fillStyle = '#4a2f17'; ctx.fillRect(RX0, RY0, RX1 - RX0, RY1 - RY0);
+  ctx.fillStyle = '#5c3d22'; ctx.fillRect(RX0 + 6, RY0 + 6, RX1 - RX0 - 12, RY1 - RY0 - 12);
+  // 奥の壁 (竹を並べた壁面)
+  ctx.fillStyle = '#b8955a'; ctx.fillRect(L.x0, RY0 + 20, L.x1 - L.x0, L.y0 - RY0 - 20);
+  for (let x = L.x0; x < L.x1; x += 22) { ctx.fillStyle = x % 44 ? '#c9a66b' : '#a8844b'; ctx.fillRect(x, RY0 + 20, 20, L.y0 - RY0 - 20); ctx.fillStyle = 'rgba(80,55,20,.5)'; ctx.fillRect(x, 60, 20, 3); }
+  ctx.fillStyle = '#6b4a2b'; ctx.fillRect(L.x0, L.y0 - 6, L.x1 - L.x0, 6);
+  // 窓 (昼の海と太陽)
+  for (const wx of [L.x0 + 70, L.x1 - 190]) { const sk = ctx.createLinearGradient(0, 34, 0, 90); sk.addColorStop(0, '#74c0fc'); sk.addColorStop(.6, '#a5d8ff'); sk.addColorStop(.61, '#1c7ed6'); sk.addColorStop(1, '#1864ab');
+    ctx.fillStyle = sk; rrg(ctx, wx, 34, 120, 56, 10); ctx.fill(); ctx.strokeStyle = '#4a2f17'; ctx.lineWidth = 5; ctx.stroke();
+    ctx.fillStyle = '#fff3bf'; ctx.beginPath(); ctx.arc(wx + 90, 50, 8, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(wx + 14, 72 + Math.sin(now / 500) * 2, 30, 2); ctx.fillRect(wx + 60, 80 + Math.cos(now / 600) * 2, 24, 2);
+    ctx.strokeStyle = '#4a2f17'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx + 60, 34); ctx.lineTo(wx + 60, 90); ctx.stroke(); }
+  // 床 (正方形・板張り)
+  for (let y = L.y0; y < L.y1; y += 32) { const off = ((y / 32) % 2) * 60;
+    for (let x = L.x0 - off; x < L.x1; x += 120) { const x0 = Math.max(L.x0, x), x1 = Math.min(L.x1, x + 120); if (x1 <= x0) continue;
+      ctx.fillStyle = ((x + y) / 8) % 3 < 1 ? '#a07040' : ((x + y) / 8) % 3 < 2 ? '#9a6a3a' : '#a67646'; ctx.fillRect(x0, y, x1 - x0, 32);
+      ctx.strokeStyle = 'rgba(60,35,15,.55)'; ctx.lineWidth = 2; ctx.strokeRect(x0 + 1, y + 1, x1 - x0 - 2, 30); ctx.fillStyle = 'rgba(60,35,15,.6)'; ctx.fillRect(x0 + 6, y + 14, 3, 3); } }
+  ctx.fillStyle = 'rgba(200,80,60,.35)'; elg(ctx, (L.x0 + L.x1) / 2, (L.y0 + L.y1) / 2 + 40, 170, 120); ctx.fill(); // ラグ
+  ctx.strokeStyle = 'rgba(255,230,180,.35)'; ctx.lineWidth = 4; elg(ctx, (L.x0 + L.x1) / 2, (L.y0 + L.y1) / 2 + 40, 150, 104); ctx.stroke();
+  const sg = ctx.createLinearGradient(0, L.y0, 0, L.y0 + 30); sg.addColorStop(0, 'rgba(0,0,0,.5)'); sg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = sg; ctx.fillRect(L.x0, L.y0, L.x1 - L.x0, 30);
+  ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.font = 'bold 54px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('LOBBY', (L.x0 + L.x1) / 2, L.y1 - 70);
+  // クローゼット (奥の壁の中央)
+  const near = nearCloset(), glow = near ? .5 + Math.sin(now / 200) * .3 : 0;
+  if (near) { ctx.fillStyle = `rgba(255,212,59,${glow * .35})`; elg(ctx, CL.x, L.y0 + 10, 110, 34); ctx.fill(); }
+  ctx.fillStyle = '#6b4a2b'; rrg(ctx, CL.x - 70, 18, 140, L.y0 - 14, 8); ctx.fill(); ctx.strokeStyle = near ? '#ffd43b' : '#3d2914'; ctx.lineWidth = near ? 5 : 4; ctx.stroke();
+  ctx.fillStyle = '#8a6239'; rrg(ctx, CL.x - 62, 26, 60, L.y0 - 32, 4); ctx.fill(); rrg(ctx, CL.x + 2, 26, 60, L.y0 - 32, 4); ctx.fill();
+  ctx.fillStyle = '#ffd43b'; ctx.fillRect(CL.x - 10, 60, 5, 18); ctx.fillRect(CL.x + 5, 60, 5, 18);
+  ctx.fillStyle = '#000'; ctx.font = '26px serif'; ctx.fillText('👕', CL.x, 4 + 6);
+  ctx.font = 'bold 15px sans-serif'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText('クローゼット', CL.x, L.y0 + 16); ctx.fillStyle = near ? '#ffd43b' : '#fff'; ctx.fillText('クローゼット', CL.x, L.y0 + 16);
   // プレイヤー (READY / HOST 表示つき)
   const list = S.lobby.list;
   [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => {
@@ -1883,67 +1710,18 @@ function buildSabList() {
 }
 function useSab(k) { socket.emit('sabotage', k); openSab(false); }
 function openSab(v) { if (v && !(S && S.ph === 'playing' && S.me.role === 'imposter' && S.me.alive)) return; sabOpen = v; $('sabPop').classList.toggle('hidden', !v); if (v) { buildSabList.sig = ''; buildSabList(); releaseFocus(); } }
-// ワープ: 全体マップを小さくポップアップし、番号ピンをタップした地点へワープ
-const warpG = $('warpMap').getContext('2d');
-function fitWarpMap() {
-  if (!mapCv) return; const ar = mapCv.width / mapCv.height, c = $('warpMap');
-  if (c.width !== 800) c.width = 800; const ch = Math.round(800 / ar); if (c.height !== ch) c.height = ch;
-  let w = Math.min(innerWidth * .96 - 40, 860), h = innerHeight - 190; if (w / h > ar) w = h * ar; else h = w / ar;
-  $('warpWrap').style.width = Math.floor(w) + 'px'; $('warpWrap').style.height = Math.floor(h) + 'px';
+function buildWarpList() {
+  const ws = S.me.warps || [], e = myEnt(), sig = ws.length + '|' + Math.ceil(S.me.wcd / 1000); if (buildWarpList.sig === sig) return; buildWarpList.sig = sig;
+  $('warpList').innerHTML = ws.map((w, i) => { const here = e && hyp(w.x - e.x, w.y - e.y) <= 70;
+    return `<button class="sabItem" data-w="${i}" ${here || S.me.wcd > 0 ? 'disabled' : ''}><big>🕳</big><span><b>${THEMES[w.th] ? THEMES[w.th].n : 'ワープ' + (i + 1)}</b><small>${here ? 'いまここにいる' : 'ここへワープ'}</small></span><kbd>${i + 1}</kbd></button>`; }).join('')
+    + (S.me.wcd > 0 ? `<div class="sub" style="color:#ffd43b">ワープはあと${Math.ceil(S.me.wcd / 1000)}秒</div>` : '');
+  $('warpList').querySelectorAll('[data-w]').forEach(b => b.onclick = () => useWarp(+b.dataset.w));
 }
-addEventListener('resize', () => { if (warpOpen) fitWarpMap(); });
-function buildWarpList() { // ピン (番号ボタン) を並べる。状態が変わったときだけ作り直す
-  const ws = S.me.warps || [], e = myEnt(), cd = S.me.wcd > 0, hereI = e ? ws.findIndex(w => hyp(w.x - e.x, w.y - e.y) <= 70) : -1;
-  $('warpCd').textContent = cd ? `⏳ ワープはあと${Math.ceil(S.me.wcd / 1000)}秒` : (hereI >= 0 ? `いま ${hereI + 1} 番にいます — 行き先の番号をタップ` : '');
-  const sig = ws.length + '|' + cd + '|' + hereI; if (buildWarpList.sig === sig) return; buildWarpList.sig = sig;
-  $('warpPins').innerHTML = ws.map((w, i) => { const here = i === hereI, nm = THEMES[w.th] ? THEMES[w.th].n : 'ワープ' + (i + 1);
-    return `<button class="wpPin ${here ? 'here' : ''} ${cd ? 'cd' : ''}" data-w="${i}" style="left:${w.x / init.W * 100}%;top:${w.y / init.H * 100}%" ${here || cd ? 'disabled' : ''} title="${nm}">${i + 1}<small>${here ? '📍いまここ' : nm}</small></button>`; }).join('');
-  $('warpPins').querySelectorAll('[data-w]').forEach(b => b.onclick = ev => { ev.stopPropagation(); useWarp(+b.dataset.w); });
-}
-function drawWarpMap(now) {
-  if (!warpOpen || !mapCv) return; const g = warpG, W = g.canvas.width, H = g.canvas.height, k = W / mapCv.width;
-  g.clearRect(0, 0, W, H); g.drawImage(mapCv, 0, 0, W, H); g.fillStyle = 'rgba(20,10,40,.35)'; g.fillRect(0, 0, W, H);
-  g.save(); g.scale(k, k); g.textAlign = 'center'; g.textBaseline = 'middle';
-  for (const r of MAP.rooms || []) { const [x, y, w, h, t] = r; if (!THEMES[t]) continue; const C = init.CELL; // 部屋名 (うすく)
-    g.font = 'bold 70px sans-serif'; g.lineWidth = 14; g.strokeStyle = 'rgba(0,0,0,.55)'; g.strokeText(THEMES[t].n, (x + w / 2) * C, (y + h - .6) * C); g.fillStyle = 'rgba(255,255,255,.55)'; g.fillText(THEMES[t].n, (x + w / 2) * C, (y + h - .6) * C); }
-  const ws = S.me.warps || [], sel = useWarp.sel;
-  if (sel != null && ws[sel]) { const e = myEnt(); if (e) { g.strokeStyle = 'rgba(208,191,255,.9)'; g.lineWidth = 16; g.setLineDash([40, 30]); g.lineDashOffset = -now / 4; g.beginPath(); g.moveTo(e.x, e.y); g.lineTo(ws[sel].x, ws[sel].y); g.stroke(); g.setLineDash([]); } }
-  for (const w of ws) { const r = 70 + Math.sin(now / 250) * 10; g.strokeStyle = 'rgba(177,151,252,.7)'; g.lineWidth = 10; g.beginPath(); g.arc(w.x, w.y, r, 0, 7); g.stroke(); }
-  const e = myEnt(); if (e) { const r = 34 + Math.sin(now / 200) * 8; g.fillStyle = '#fff'; g.beginPath(); g.arc(e.x, e.y, r, 0, 7); g.fill(); g.strokeStyle = '#ff6b6b'; g.lineWidth = 12; g.stroke(); }
-  g.restore();
-}
-function useWarp(i) {
-  const ws = S.me.warps || [], e = myEnt(); if (!ws[i] || useWarp.sel != null) return;
-  if (S.me.wcd > 0) { toast(`ワープはあと${Math.ceil(S.me.wcd / 1000)}秒`, 'error'); return; }
-  if (e && hyp(ws[i].x - e.x, ws[i].y - e.y) <= 70) { toast('そこはいまいる地点です', 'error'); return; }
-  useWarp.sel = i; const b = $('warpPins').querySelector(`[data-w="${i}"]`); if (b) b.classList.add('go'); SFX.click();
-  setTimeout(() => { useWarp.sel = null; socket.emit('warp', i); openWarp(false); }, 200); // ピンが弾ける演出のあとワープ
-}
+function useWarp(i) { socket.emit('warp', i); openWarp(false); }
 function openWarp(v) {
   if (v) { const e = myEnt(); if (!(S && S.ph === 'playing' && S.me.role === 'imposter' && S.me.alive && S.me.warps && e && S.me.warps.some(w => hyp(w.x - e.x, w.y - e.y) <= 70))) { if (S && S.me.role === 'imposter') toast('ワープ地点 (🕳) の上で使おう', 'error'); return; } }
-  if (!v) useWarp.sel = null;
-  warpOpen = v; $('warpPop').classList.toggle('hidden', !v); if (v) { fitWarpMap(); buildWarpList.sig = ''; buildWarpList(); drawWarpMap(performance.now()); releaseFocus(); clearKeys(); }
+  warpOpen = v; $('warpPop').classList.toggle('hidden', !v); if (v) { buildWarpList.sig = ''; buildWarpList(); releaseFocus(); }
 }
-// ワープ演出: 吸い込まれる → カメラが目的地へ滑らかに移動 → 吹き出す (自分の画面だけ)
-let warpFx = null; const WFX = { suck: 260, glide: 520, pop: 300 };
-socket.on('warped', d => { warpFx = { t0: performance.now(), from: d.from, to: d.to }; [880, 660, 440, 330].forEach((f, i) => beep(f, .09, 'sine', .06, i * .05)); beep(220, .25, 'triangle', .06, .55); beep(660, .15, 'sine', .05, .78); });
-function warpCam(now) {
-  if (!warpFx) return null; const t = now - warpFx.t0, T = WFX.suck + WFX.glide + WFX.pop; if (t > T || t < -50) { warpFx = null; return null; }
-  const u = Math.min(1, Math.max(0, (t - WFX.suck) / WFX.glide)), e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2, f = warpFx.from, o = warpFx.to;
-  return { x: f.x + (o.x - f.x) * e, y: f.y + (o.y - f.y) * e, t };
-}
-function drawWarpFx(g, now, wc) {
-  if (!wc) return; const { from, to } = warpFx, t = wc.t, vortex = (x, y, s, a) => { if (s <= 0) return;
-    for (let k = 0; k < 3; k++) { g.strokeStyle = `rgba(${k ? 177 : 230},${k ? 151 : 220},252,${a * (1 - k * .25)})`; g.lineWidth = 5 - k; g.beginPath(); g.ellipse(x, y, s * (1 - k * .25), s * .55 * (1 - k * .25), 0, now / 120 + k * 2, now / 120 + k * 2 + 4.6); g.stroke(); }
-    const q = g.createRadialGradient(x, y, 0, x, y, s); q.addColorStop(0, `rgba(30,10,60,${a})`); q.addColorStop(1, 'rgba(30,10,60,0)'); g.fillStyle = q; g.beginPath(); g.ellipse(x, y, s, s * .55, 0, 0, 7); g.fill(); };
-  if (t < WFX.suck + 200) { const p = Math.min(1, t / WFX.suck); vortex(from.x, from.y + 20, 60 * (1 - Math.max(0, (t - WFX.suck) / 200)), .9);
-    if (t < WFX.suck) { const e = myEnt(); if (e) drawAstro(g, { ...e, x: from.x + Math.sin(now / 30) * 2, y: from.y + p * 18, a: true }, 1 - p * .9, null); } }
-  if (t >= WFX.suck && t < WFX.suck + WFX.glide) { // 移動中: 光の玉が飛ぶ
-    for (let k = 0; k < 6; k++) { const back = k * 14; g.fillStyle = `rgba(208,191,255,${.7 - k * .1})`; const a = Math.atan2(to.y - from.y, to.x - from.x); g.beginPath(); g.arc(wc.x - Math.cos(a) * back, wc.y - Math.sin(a) * back, 12 - k * 1.5, 0, 7); g.fill(); }
-    g.fillStyle = '#fff'; g.beginPath(); g.arc(wc.x, wc.y, 8, 0, 7); g.fill(); }
-  if (t >= WFX.suck + WFX.glide - 120) { const p = Math.min(1, (t - WFX.suck - WFX.glide + 120) / (WFX.pop + 120)); vortex(to.x, to.y, 60 * (1 - p * .6), .9 * (1 - p)); }
-}
-const hideMeForWarp = now => { const wc = warpFx && now - warpFx.t0; return wc != null && wc < WFX.suck + WFX.glide; };
 $('sabClose').onclick = () => openSab(false); $('warpClose').onclick = () => openWarp(false);
 $('sabPop').onclick = e => { if (e.target.id === 'sabPop') openSab(false); };
 $('warpPop').onclick = e => { if (e.target.id === 'warpPop') openWarp(false); };
@@ -2604,7 +2382,7 @@ function drawGame(dt, now) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const w = cv.width / DPR, h = cv.height / DPR; ctx.clearRect(0, 0, w, h);
   if (S.ph === 'meeting' || !mapCv || !MAP) return;
   for (const e of ents.values()) { e.x += (e.tx - e.x) * Math.min(1, dt * 18); e.y += (e.ty - e.y) * Math.min(1, dt * 18); e.ph = e.mv ? e.ph + dt * 13 : 0; }
-  const me = S.me, mine = myEnt(), wcam = warpCam(now), cam = wcam || mine || [...ents.values()][0] || { x: init.W / 2, y: init.H / 2 };
+  const me = S.me, mine = myEnt(), cam = mine || [...ents.values()][0] || { x: init.W / 2, y: init.H / 2 };
   const sc = Math.max(1.5, h / 430);
   ctx.fillStyle = '#05070d'; ctx.fillRect(0, 0, w, h);
   ctx.save(); ctx.translate(w / 2, h / 2); ctx.scale(sc, sc); ctx.translate(-cam.x, -cam.y);
@@ -2648,10 +2426,8 @@ function drawGame(dt, now) {
   drawSabWorld(now, me);
   if (me.det) drawDetTraces(ctx, now, 1);
   for (const b of S.bodies) drawBody(b);
-  const hideMe = hideMeForWarp(now);
-  [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => { if (hideMe && e.id === init.you) return; drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff')); });
+  [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff')));
   for (const e of ents.values()) drawEmote(ctx, e.id, e.x, e.y - 72, 1, now);
-  drawWarpFx(ctx, now, wcam);
   ctx.restore();
   if (me.alive && !me.late) {
     const g = ctx.createRadialGradient(w / 2, h / 2, 190 * sc * .8, w / 2, h / 2, 330 * sc); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.93)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
@@ -2767,7 +2543,6 @@ function frame(t) {
   else if (mini && mini.kind === 'compass') updateCompass(dt);
   else if (mini && mini.kind === 'wire') updateWire();
   drawFx(t);
-  drawWarpMap(t);
   if (!joined) { // タイトルの等身大アバタープレビュー
     pvPh += dt * 7; pvg.clearRect(0, 0, 340, 420);
     const g = pvg.createRadialGradient(170, 330, 10, 170, 330, 150); g.addColorStop(0, 'rgba(140,200,255,.25)'); g.addColorStop(1, 'rgba(0,0,0,0)'); pvg.fillStyle = g; pvg.fillRect(0, 0, 340, 420);
