@@ -127,6 +127,31 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
 .sabItem kbd{margin-left:auto;padding:2px 8px;border-radius:6px;background:#2b3552;font-family:inherit}
 #bWarp{background:linear-gradient(#9775fa,#6741d9);box-shadow:0 4px 0 #3b1f8f}
 @media (max-width:1000px){#sabBanner{left:auto;right:max(12px,env(safe-area-inset-right));transform:none;top:168px;white-space:normal;max-width:46vw;font-size:14px}}
+button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a5a00;color:#2b1d00}
+#lobbyBar .emoBtn{min-width:0!important;padding:14px 18px!important;font-size:24px!important}
+#mBar .emoBtn{font-size:20px;padding:6px 14px}
+#emoteWheel{position:fixed;inset:0;z-index:46;display:flex;align-items:center;justify-content:center;background:#0006}
+#ewRing{position:relative;width:min(340px,80vw);height:min(340px,80vw);border-radius:50%;background:radial-gradient(circle,#14212bf2 55%,#0b1620f2);border:3px solid #ffd43b88;box-shadow:0 10px 40px #000c;animation:popIn .15s ease-out}
+.ewItem{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;padding:0;font-size:34px;background:#ffffff14;border:2px solid #ffffff33;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.ewItem small{font-size:10px;font-weight:700;margin-top:3px;opacity:.85}
+.ewItem kbd{position:absolute;top:-4px;right:-4px;font-size:11px;background:#2b3552;border-radius:6px;padding:0 5px;font-family:inherit}
+.ewItem:hover{background:#ffd43b44;border-color:#ffd43b}
+#ewClose{position:absolute;width:64px;height:64px;border-radius:50%;padding:0;font-size:24px;background:#555;box-shadow:none}
+#ewTip{position:absolute;bottom:calc(50% - min(170px,40vw) - 34px);font-size:12px;opacity:.8}
+#lobbyChat{position:absolute;left:max(12px,env(safe-area-inset-left));bottom:calc(84px + env(safe-area-inset-bottom));width:min(360px,calc(50% - 60px));background:#06121cdd;border:2px solid #fff3;border-radius:14px;display:flex;flex-direction:column;overflow:hidden;z-index:2}
+#lcHead{padding:6px 10px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px}
+#lcHead .bdg{position:static;background:#fa5252;color:#fff;font-size:11px;border-radius:99px;padding:1px 6px}
+#lcMin{margin-left:auto;opacity:.7}
+#lcLog{height:150px;overflow:auto;padding:2px 10px 4px;font-size:14px;line-height:1.5;text-align:left;user-select:text;-webkit-user-select:text}
+#lcLog .sys{opacity:.6;font-size:12px}
+#lcLog b{margin-right:6px}
+#lcForm{display:flex;gap:6px;padding:6px;border-top:1px solid #fff2}
+#lcIn{flex:1;width:auto!important;font-size:15px!important;text-align:left!important;padding:6px 10px!important}
+#lcForm button{padding:6px 14px;font-size:14px;box-shadow:0 3px 0 #1a4f80}
+#lobbyChat.min #lcLog,#lobbyChat.min #lcForm{display:none}
+#lobbyChat.min #lcMin{transform:rotate(180deg)}
+#lobbyChat.inPanel{position:static;width:100%;grid-area:chat;flex-basis:100%}
+#lobbyChat.inPanel #lcLog{height:96px}
 #codePop{position:fixed;inset:0;z-index:46;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;animation:popIn .18s ease-out}
 #codeBig{font-size:clamp(80px,20vw,240px);font-weight:900;letter-spacing:.18em;padding-left:.18em;color:#ffd43b;text-shadow:0 0 40px #ffd43b88;font-variant-numeric:tabular-nums;line-height:1.1}
 #btnLeave{position:absolute;top:12px;right:12px;padding:8px 16px;font-size:15px}
@@ -242,13 +267,14 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
   #lobbyTop{left:50%;max-width:min(640px,80vw);top:12px}
   #lobbyHint{left:50%}
   #mapPanel{top:auto;left:14px;right:14px;bottom:calc(100px + env(safe-area-inset-bottom));width:auto;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
-    grid-template-areas:"head tabs" "prev row" "prev desc" "prev note" "prev imp";gap:6px 14px;align-items:center;justify-items:center;padding:12px 14px}
+    grid-template-areas:"head tabs" "prev row" "prev desc" "prev note" "prev imp" "chat chat";gap:6px 14px;align-items:center;justify-items:center;padding:12px 14px}
   .mpHead{grid-area:head}#mpTabs{grid-area:tabs}#mapPrev{grid-area:prev}#mpRow{grid-area:row}#mpDesc{grid-area:desc}#mpNote{grid-area:note}#mapPanel #impBox{grid-area:imp}
   #mpName{min-width:0;font-size:18px}#mpDesc{min-height:0}
 }
 /* 幅が狭いとき (iPad縦など): アイテム欄を右下のボタン列より上へ */
 @media (max-width:1000px){#itemHud{bottom:calc(86px + env(safe-area-inset-bottom))}#hint{bottom:calc(160px + env(safe-area-inset-bottom))}#spec{bottom:calc(200px + env(safe-area-inset-bottom))}body.touch #roleTag{bottom:calc(150px + env(safe-area-inset-bottom))}}
 @media (orientation:portrait) and (max-width:1100px){
+  #lobbyKeys{display:none}
   #mMain{flex-direction:column}#mStage{flex:1.4}#mChat{flex:1;min-height:180px}
 }
 </style>
@@ -309,6 +335,12 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
   <div id="lobbyBar">
     <button id="btnReady" class="blue">準備OK</button>
     <button id="btnGo" class="green hidden">ゲーム開始</button>
+    <button id="bEmoteL" class="emoBtn" title="エモート (T)">😀</button>
+  </div>
+  <div id="lobbyChat" class="lbPanel">
+    <div id="lcHead">💬 ロビーチャット <span id="lcBadge" class="bdg hidden"></span><span id="lcMin">▾</span></div>
+    <div id="lcLog"></div>
+    <form id="lcForm"><input type="text" id="lcIn" maxlength="80" placeholder="メッセージ… (Enterで送信)" autocomplete="off"><button type="submit" class="blue">送信</button></form>
   </div>
   <div id="lobbyKeys">WASD / 矢印キー: 移動 ・ 奥のクローゼットで着替え</div>
 </div>
@@ -333,6 +365,7 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
     <button id="bSab" class="hidden">妨害<small>F</small></button>
     <button id="bKill" class="hidden">キル<small>E</small></button>
     <button id="bWarp" class="hidden">ワープ<small>G</small></button>
+    <button id="bEmote" class="emoBtn">😀<small>T</small></button>
   </div>
   <div id="roleTag"></div><div id="spec" class="hidden"></div>
   <div id="sabBanner" class="hidden"></div>
@@ -344,13 +377,14 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
   <div id="mHead"><div id="mTitle"></div><div id="mTimer"></div></div>
   <div id="mMain">
     <div id="mStage"><canvas id="mCv"></canvas><div id="mRes"></div>
-      <div id="mBar"><button id="bVote" class="green hidden">🗳 投票する (V)</button><button id="mMapBtn" class="blue mapBtn">🗺 マップ (M)</button></div></div>
+      <div id="mBar"><button id="bVote" class="green hidden">🗳 投票する (V)</button><button id="mMapBtn" class="blue mapBtn">🗺 マップ (M)</button><button id="mEmote" class="emoBtn mapBtn" title="エモート (T)">😀</button></div></div>
     <div id="mChat"><div id="chatLog"></div>
       <form id="chatForm"><input type="text" id="chatIn" maxlength="60" autocomplete="off" placeholder="発言する…"><button type="submit" class="blue">送信</button></form></div></div>
 </div>
+<div id="emoteWheel" class="hidden"><div id="ewRing"></div><button id="ewClose" title="閉じる (Esc)">✕</button><div id="ewTip">数字キー 1〜8 / T で閉じる</div></div>
 <div id="sabPop" class="hidden"><div class="dlgBox">
   <h2>🔪 妨害 (サボタージュ)</h2>
-  <div class="sub">どれを使っても全体進捗 −20%・クールタイム30秒 (インポスター共通)</div>
+  <div class="sub">📉 進捗妨害は単体の独立した妨害 (−20%・専用クールタイム30秒)<br>暗闇・マップ専用の妨害は共通クールタイム30秒・同時に1つまで</div>
   <div id="sabList"></div>
   <button id="sabClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc)</button>
 </div></div>
@@ -1299,6 +1333,7 @@ function drawLobby(dt, now) {
     ctx.font = 'bold 11px sans-serif'; const tw = ctx.measureText(t).width + 12;
     ctx.fillStyle = col; rrg(ctx, e.x - tw / 2, e.y + 28, tw, 16, 8); ctx.fill(); ctx.fillStyle = p.host || p.ready ? '#111' : '#fff'; ctx.textBaseline = 'middle'; ctx.fillText(t, e.x, e.y + 36);
   });
+  for (const e of ents.values()) { drawChatBubble(ctx, e.id, e.x, e.y - 76, now); drawEmote(ctx, e.id, e.x, e.y - 86, 1.15, now); }
   ctx.restore();
 }
 let lobbyLayout = null;
@@ -1311,7 +1346,8 @@ cv.addEventListener('click', ev => { // クローゼットを直接クリック/
 // ---------- フェーズ ----------
 function onPhase(old, now) {
   const hide = (...ids) => ids.forEach(i => $(i).classList.add('hidden')), show = (...ids) => ids.forEach(i => $(i).classList.remove('hidden'));
-  document.body.dataset.ph = now; $('codePop').classList.add('hidden'); openSab(false); openWarp(false);
+  document.body.dataset.ph = now; $('codePop').classList.add('hidden'); openSab(false); openWarp(false); openEmote(false);
+  if (now === 'lobby') placeChat();
   if (now !== 'playing' && now !== 'meeting') openMap(false);
   openStats(false);
   if (now === 'lobby') { hide('hud', 'meeting', 'endscr', 'mini'); show('lobby'); mini = null; ents.clear(); fx = null; fxc.classList.add('hidden'); trail = []; deathPos = null; releaseFocus(); sendInput(true); return; }
@@ -1379,7 +1415,7 @@ function renderSab(s) { // 画面上部の警報バナー + 妨害メニュー�
   let cls = '', html = '';
   if (sb.short) { cls = 'short'; html = `⚡ 電気がショート! 酸素切れまで ${mmss(sb.short.left)} ・ 修理 ${sb.short.fixed}/${sb.short.need}<small>${imp ? 'クルーが直す前に時間切れを狙え' : '赤く光る配線を直そう (タスクは一時停止)'}</small>`; }
   else if (sb.flood) { cls = 'flood'; html = `🌊 水が氾濫! 残り ${sb.flood.zones.length}か所<small>水たまりの前で SPACE を${sb.flood.need}回連打すると通れる</small>`; }
-  else if (sb.dark > 0) { cls = 'dark'; html = `🌑 暗闇 あと${Math.ceil(sb.dark / 1000)}秒<small>${imp ? 'インポスターは普段どおり見える' : '懐中電灯の明かりだけが頼り'}</small>`; }
+  else if (sb.dark > 0) { cls = 'dark'; html = `🌑 暗闇 あと${Math.ceil(sb.dark / 1000)}秒<small>${imp ? 'インポスターは普段どおり見える' : '自分のまわりしか見えない'}</small>`; }
   el.className = cls; el.classList.toggle('hidden', !cls); if (cls && el.innerHTML !== html) el.innerHTML = html;
   if (sabOpen) buildSabList(); if (warpOpen) buildWarpList();
 }
@@ -1409,12 +1445,76 @@ function renderHud(s) {
   if (imp) {
     $('bKill').classList.toggle('cd', me.kcd > 0); $('bKill').classList.toggle('rdy', me.kcd <= 0 && h.tgt);
     $('bKill').innerHTML = `キル<small>${me.kcd > 0 ? Math.ceil(me.kcd / 1000) + 's' : 'E'}</small>`;
-    $('bSab').classList.toggle('cd', me.scd > 0); $('bSab').innerHTML = `妨害<small>${me.scd > 0 ? Math.ceil(me.scd / 1000) + 's' : 'F'}</small>`;
+    const scdMin = Math.min(me.scd, me.pcd || 0); // どれか1つでも使えれば押せる
+    $('bSab').classList.toggle('cd', scdMin > 0); $('bSab').innerHTML = `妨害<small>${scdMin > 0 ? Math.ceil(scdMin / 1000) + 's' : 'F'}</small>`;
   }
   $('roleTag').textContent = me.late ? '' : me.role === 'imposter' ? '🔪 インポスター' : '🧑‍🚀 クルー' + (me.alive ? '' : ' (霊)');
   $('roleTag').style.color = me.role === 'imposter' ? '#ff6b6b' : '#8ecbff';
   $('spec').classList.toggle('hidden', !(me.late || !me.alive));
   $('spec').textContent = me.late ? '👀 ゲーム進行中のため観戦中 (次のロビーから参加)' : '👻 霊: 壁を通り抜けられる・移動1.5倍・タスクは続行可';
+}
+// ---------- エモート (頭上に感情アイコン。サーバー経由で全員に共有) ----------
+const EMOTE_LIST = [['wave', '👋', '手を振る'], ['heart', '❤️', 'ハート'], ['angry', '💢', '怒り'], ['wow', '😲', '驚き'], ['good', '👍', 'いいね'], ['lol', '😂', '笑い'], ['sad', '😢', 'かなしい'], ['q', '❓', 'はてな']];
+const EMOTE_ICON = Object.fromEntries(EMOTE_LIST.map(([k, ic]) => [k, ic]));
+const EMOTE_MS = 2600; let ewOpen = false; const emotes = {};
+socket.on('emote', d => { emotes[d.id] = { e: d.e, t0: performance.now() }; });
+function buildWheel() {
+  if ($('ewRing').dataset.built) return; $('ewRing').dataset.built = 1;
+  $('ewRing').innerHTML = EMOTE_LIST.map(([k, ic, nm], i) => { const a = -Math.PI / 2 + i * Math.PI / 4;
+    return `<button class="ewItem" data-e="${k}" style="left:${50 + Math.cos(a) * 36}%;top:${50 + Math.sin(a) * 36}%">${ic}<small>${nm}</small><kbd>${i + 1}</kbd></button>`; }).join('');
+  $('ewRing').querySelectorAll('[data-e]').forEach(b => b.onclick = () => sendEmote(b.dataset.e));
+}
+function openEmote(v) { if (v && !(S && joined)) return; ewOpen = v; $('emoteWheel').classList.toggle('hidden', !v); if (v) { buildWheel(); releaseFocus(); } }
+function sendEmote(k) { socket.emit('emote', k); openEmote(false); SFX.click(); }
+for (const id of ['bEmote', 'bEmoteL', 'mEmote']) $(id).onclick = () => { openEmote(true); $(id).blur(); };
+$('ewClose').onclick = () => openEmote(false);
+$('emoteWheel').onclick = e => { if (e.target.id === 'emoteWheel') openEmote(false); };
+function drawEmote(g, id, x, y, sc, now) { // 吹き出し付きの絵文字をアニメーション表示
+  const em = emotes[id]; if (!em) return;
+  const t = (now - em.t0) / 1000, T = EMOTE_MS / 1000; if (t > T) { delete emotes[id]; return; }
+  const pop = t < .2 ? t / .2 : 1, fade = clamp((T - t) / .4, 0, 1), k = em.e;
+  let dx = 0, dy = -Math.min(t, .3) * 20, rot = 0, s = (.6 + .4 * pop) * (1 + (t < .3 ? Math.sin(t / .3 * Math.PI) * .25 : 0));
+  if (k === 'wave') rot = Math.sin(t * 14) * .45;
+  else if (k === 'heart') { s *= 1 + Math.sin(t * 9) * .12; dy -= t * 8; }
+  else if (k === 'angry') dx = Math.sin(t * 50) * 3;
+  else if (k === 'good' || k === 'q') dy -= Math.abs(Math.sin(t * 6)) * 8;
+  else if (k === 'lol') rot = Math.sin(t * 20) * .2;
+  else if (k === 'sad') dy += t * 6;
+  g.save(); g.globalAlpha = fade; g.translate(x + dx, y + dy); g.scale(sc * s, sc * s);
+  g.fillStyle = '#fff'; g.strokeStyle = '#000a'; g.lineWidth = 2; elg(g, 0, 0, 22, 20); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(-6, 17); g.lineTo(0, 27); g.lineTo(6, 17); g.closePath(); g.fill();
+  g.rotate(rot); g.font = '26px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#000'; g.fillText(EMOTE_ICON[k] || '❓', 0, 1);
+  if (k === 'heart') for (let i = 0; i < 3; i++) { const tt = (t * 1.2 + i * .33) % 1; g.globalAlpha = fade * (1 - tt); g.font = '12px serif'; g.fillText('❤️', (i - 1) * 18, -22 - tt * 26); }
+  g.restore();
+}
+// ---------- ロビーチャット ----------
+const chatBub = {}; let lcUnread = 0;
+function addLobbyMsg(m, hist) {
+  const d = document.createElement('div');
+  if (m.sys) { d.className = 'sys'; d.textContent = '・' + m.t; } else d.innerHTML = `<b style="color:${m.c}">${esc(m.n)}</b>${esc(m.t)}`;
+  const l = $('lcLog'); l.appendChild(d); while (l.children.length > 60) l.firstChild.remove(); l.scrollTop = l.scrollHeight;
+  if (!hist && !m.sys) { chatBub[m.id] = { t: m.t, t0: performance.now() };
+    if ($('lobbyChat').classList.contains('min')) { lcUnread++; $('lcBadge').textContent = lcUnread; $('lcBadge').classList.remove('hidden'); } }
+}
+socket.on('lchat', m => addLobbyMsg(m));
+socket.on('lchatHist', list => { $('lcLog').innerHTML = ''; (list || []).forEach(m => addLobbyMsg(m, true)); });
+$('lcForm').onsubmit = e => { e.preventDefault(); const v = $('lcIn').value.trim(); if (v) socket.emit('lobbyChat', v); $('lcIn').value = ''; };
+$('lcIn').addEventListener('keydown', e => { if (e.key === 'Escape') { $('lcIn').blur(); releaseFocus(); } });
+$('lcHead').onclick = () => { const mn = $('lobbyChat').classList.toggle('min'); if (!mn) { lcUnread = 0; $('lcBadge').classList.add('hidden'); $('lcLog').scrollTop = 1e9; } };
+// 縦向き/狭い画面ではゲーム設定パネルの中、横向きではロビーの左下に置く
+function placeChat() {
+  const inPanel = (matchMedia('(orientation:portrait)').matches && innerWidth <= 1100) || innerWidth <= 700, c = $('lobbyChat');
+  if (inPanel && c.parentElement !== $('mapPanel')) { $('mapPanel').appendChild(c); c.classList.add('inPanel'); }
+  else if (!inPanel && c.parentElement !== $('lobby')) { $('lobby').appendChild(c); c.classList.remove('inPanel'); }
+}
+addEventListener('resize', placeChat); placeChat();
+function drawChatBubble(g, id, x, y, now) { // 発言を話した人の頭上に4秒表示
+  const b = chatBub[id]; if (!b) return; const t = (now - b.t0) / 1000; if (t > 4) { delete chatBub[id]; return; }
+  const txt = b.t.length > 18 ? b.t.slice(0, 17) + '…' : b.t;
+  g.save(); g.globalAlpha = clamp((4 - t) / .4, 0, 1); g.font = 'bold 12px sans-serif'; const tw = g.measureText(txt).width + 16;
+  g.fillStyle = '#fffbe6'; g.strokeStyle = '#0008'; g.lineWidth = 1.5; rrg(g, x - tw / 2, y - 12, tw, 22, 10); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(x - 5, y + 10); g.lineTo(x, y + 16); g.lineTo(x + 5, y + 10); g.fill();
+  g.fillStyle = '#222'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, x, y - 1); g.restore();
 }
 const press = ev => () => { if (!mini) { socket.emit(ev); if (document.activeElement) document.activeElement.blur(); } };
 $('bUse').onclick = press('action'); $('bRep').onclick = press('report'); $('bKill').onclick = press('kill');
@@ -1422,16 +1522,17 @@ $('bSab').onclick = () => { openSab(true); $('bSab').blur(); };
 $('bWarp').onclick = () => { openWarp(true); $('bWarp').blur(); };
 // ---------- 妨害メニュー (F) / ワープ (G) ----------
 let sabOpen = false, warpOpen = false;
-const SAB_DEFS = { dark: { ic: '🌑', name: '暗闇', desc: '30秒間、クルーの視界が懐中電灯の明かりだけになる' },
+const SAB_DEFS = { prog: { ic: '📉', name: '進捗妨害', desc: 'タスクの全体進捗を一気に20%下げる。ほかの妨害とは別枠 (専用クールタイム30秒・ほかの妨害中でも使える)' },
+  dark: { ic: '🌑', name: '暗闇', desc: '30秒間、クルーの見える範囲が自分のまわりの小さな円だけに縮む' },
   short: { ic: '⚡', name: '電気のショート', desc: 'クルーのタスクが配線修理に変わる。2分で5か所直せないと酸素切れでクルー全滅' },
   flood: { ic: '🌊', name: '水の氾濫', desc: '通路3か所が水没して通れなくなる。SPACE30回連打で掻き出せる' } };
-const sabKinds = () => ['dark', isSpace() ? 'short' : 'flood'];
+const sabKinds = () => ['prog', 'dark', isSpace() ? 'short' : 'flood'];
 function buildSabList() {
-  const me = S.me, sb = S.sab || {}, busy = !!(sb.short || sb.flood || sb.dark > 0), cd = me.scd > 0;
-  const sig = sabKinds().join() + busy + Math.ceil(me.scd / 1000); if (buildSabList.sig === sig) return; buildSabList.sig = sig;
-  $('sabList').innerHTML = sabKinds().map((k, i) => { const d = SAB_DEFS[k];
-    return `<button class="sabItem" data-k="${k}" ${busy || cd ? 'disabled' : ''}><big>${d.ic}</big><span><b>${d.name} <span style="color:#ff8787">進捗 −20%</span></b><small>${d.desc}</small></span><kbd>${i + 1}</kbd></button>`; }).join('')
-    + (busy ? '<div class="sub" style="color:#ffd43b">ほかの妨害が進行中…</div>' : cd ? `<div class="sub" style="color:#ffd43b">クールタイム あと${Math.ceil(me.scd / 1000)}秒</div>` : '');
+  const me = S.me, sb = S.sab || {}, busy = !!(sb.short || sb.flood || sb.dark > 0), cd = me.scd > 0, pcd = me.pcd > 0;
+  const sig = sabKinds().join() + busy + Math.ceil(me.scd / 1000) + '/' + Math.ceil(me.pcd / 1000); if (buildSabList.sig === sig) return; buildSabList.sig = sig;
+  const note = k => k === 'prog' ? (pcd ? `あと${Math.ceil(me.pcd / 1000)}秒` : '') : busy ? '別の妨害が進行中' : cd ? `あと${Math.ceil(me.scd / 1000)}秒` : '';
+  $('sabList').innerHTML = sabKinds().map((k, i) => { const d = SAB_DEFS[k], off = k === 'prog' ? pcd : (busy || cd), n = note(k);
+    return `<button class="sabItem" data-k="${k}" ${off ? 'disabled' : ''}><big>${d.ic}</big><span><b>${d.name} ${k === 'prog' ? '<span style="color:#ff8787">進捗 −20%</span>' : ''}${n ? ` <span style="color:#ffd43b;font-size:13px">(${n})</span>` : ''}</b><small>${d.desc}</small></span><kbd>${i + 1}</kbd></button>`; }).join('');
   $('sabList').querySelectorAll('[data-k]').forEach(b => b.onclick = () => useSab(b.dataset.k));
 }
 function useSab(k) { socket.emit('sabotage', k); openSab(false); }
@@ -1539,6 +1640,7 @@ function drawMeeting(now) {
     if (p.voted && m.mode === 'vote') { g.fillStyle = '#51cf66'; elg(g, s0.x - 18 * sc, s0.y - 30 * sc, 9, 9); g.fill(); g.fillStyle = '#fff'; g.font = 'bold 12px sans-serif'; g.fillText('✔', s0.x - 18 * sc, s0.y - 30 * sc); }
     if (m.res && tally[p.id] && reveal >= 1) { g.fillStyle = '#ffd43b'; rrg(g, s0.x - 22, s0.y + 26 * sc, 44, 22, 11); g.fill(); g.fillStyle = '#222'; g.font = 'bold 14px sans-serif'; g.fillText(`${tally[p.id]}票`, s0.x, s0.y + 26 * sc + 11); }
   });
+  m.roster.forEach((p, i) => drawEmote(g, p.id, seats[i].x, seats[i].y - 72 * sc, sc * .9, now));
   if (m.mode === 'discuss') { g.fillStyle = 'rgba(255,255,255,.8)'; g.font = 'bold 15px sans-serif'; g.textAlign = 'center'; g.fillText('💬 議論タイム — チャットで話し合おう', cx, h - 70); }
 }
 // ---------- マップオーバーレイ ----------
@@ -1976,6 +2078,9 @@ function onKeyDown(e) {
     if (!rep) { if (k === 'escape') cancelMini(); else miniKey(k); }
     return;
   }
+  // エモートホイール: 数字で選択 / Esc・T で閉じる
+  if (ewOpen) { e.preventDefault(); if (!rep) { if (k === 'escape' || k === 't') openEmote(false); else if (/^[1-8]$/.test(k)) sendEmote(EMOTE_LIST[+k - 1][0]); } return; }
+  if (!rep && k === 't' && (S.ph === 'lobby' || S.ph === 'playing' || S.ph === 'meeting') && !closetOpen && !sabOpen && !warpOpen && !voteOpen) { e.preventDefault(); openEmote(true); return; }
   // 拡大表示中は Esc / M / SPACE で閉じる
   if (statsOpen && !rep && (k === 'escape' || k === 'space')) { e.preventDefault(); openStats(false); return; }
   if (mapOpen && !rep && (k === 'escape' || k === 'm')) { e.preventDefault(); e.stopPropagation(); openMap(false); return; }
@@ -2130,13 +2235,14 @@ function drawGame(dt, now) {
   drawSabWorld(now, me);
   for (const b of S.bodies) drawBody(b);
   [...ents.values()].sort((a, b) => a.y - b.y).forEach(e => drawAstro(ctx, e, 1, e.id === init.you ? (me.role === 'imposter' ? '#ff6b6b' : '#ffe066') : (me.mates.includes(e.id) ? '#ff6b6b' : '#fff')));
+  for (const e of ents.values()) drawEmote(ctx, e.id, e.x, e.y - 72, 1, now);
   ctx.restore();
   if (me.alive && !me.late) {
     const g = ctx.createRadialGradient(w / 2, h / 2, 190 * sc * .8, w / 2, h / 2, 330 * sc); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.93)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
   }
   // 暗闇: クルーは足元の明かりと進行方向の懐中電灯だけ見える
   const sbx = S.sab || {};
-  if (sbx.dark > 0 && me.alive && !me.late && me.role !== 'imposter') drawDarkness(w, h, sc);
+  if (me.alive && !me.late && me.role !== 'imposter') drawDarkness(w, h, sc, now); else darkWas = !!(sbx.dark > 0);
   // ショート中は修理地点への矢印 (クルーのみ)
   if (sbx.short && !me.late && me.role !== 'imposter' && me.alive) {
     const R = Math.min(w, h) * .38;
@@ -2199,22 +2305,26 @@ function drawSabWorld(now, me) {
     ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText('🕳 ワープ', wp.x, wp.y - 24); ctx.fillStyle = '#d0bfff'; ctx.fillText('🕳 ワープ', wp.x, wp.y - 24);
   }
 }
-// 暗闇: 画面全体を闇で覆い、足元の円と進行方向の懐中電灯の光だけを抜く
-const darkCv = document.createElement('canvas'), darkG = darkCv.getContext('2d'); let lookA = 0;
-function drawDarkness(w, h, sc) {
-  const jx = joy ? joy.dx : 0, jy = joy ? joy.dy : 0;
-  const ix = ((keysDown.d || keysDown.right) ? 1 : 0) - ((keysDown.a || keysDown.left) ? 1 : 0) + jx / JOY_R, iy = ((keysDown.s || keysDown.down) ? 1 : 0) - ((keysDown.w || keysDown.up) ? 1 : 0) + jy / JOY_R;
-  if (Math.abs(ix) + Math.abs(iy) > .3) lookA = Math.atan2(iy, ix);
+// 暗闇: 画面全体を闇で覆い、プレイヤーを中心とした丸い視野だけを照らす。発動時は視野の縁がギュッと縮み、終わると広がる
+const darkCv = document.createElement('canvas'), darkG = darkCv.getContext('2d');
+let darkT0 = 0, darkEndT = 0, darkWas = false;
+function darkRadius(now, sc) {
+  const on = !!(S && S.sab && S.sab.dark > 0), R0 = 300 * sc, R1 = 92 * sc, ease = t => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+  if (on && !darkWas) darkT0 = now; if (!on && darkWas) darkEndT = now; darkWas = on;
+  if (on) return R0 - (R0 - R1) * ease((now - darkT0) / 900);
+  const t = (now - darkEndT) / 700; return t < 1 ? R1 + (R0 - R1) * ease(t) : 0; // 0 = 描かない
+}
+function drawDarkness(w, h, sc, now) {
+  const r = darkRadius(now, sc); if (!r) return;
   if (darkCv.width !== cv.width || darkCv.height !== cv.height) { darkCv.width = cv.width; darkCv.height = cv.height; }
   const g = darkG; g.setTransform(DPR, 0, 0, DPR, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, h);
-  g.fillStyle = 'rgba(0,0,0,.97)'; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(0,0,0,.985)'; g.fillRect(0, 0, w, h);
   g.globalCompositeOperation = 'destination-out';
-  const cx = w / 2, cy = h / 2, r0 = 62 * sc, L = 270 * sc;
-  let gr = g.createRadialGradient(cx, cy, r0 * .3, cx, cy, r0); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r0, 0, 7); g.fill();
-  gr = g.createRadialGradient(cx, cy, 10, cx, cy, L); gr.addColorStop(0, 'rgba(0,0,0,.95)'); gr.addColorStop(.75, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = gr; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, L, lookA - .42, lookA + .42); g.closePath(); g.fill();
+  const cx = w / 2, cy = h / 2, gr = g.createRadialGradient(cx, cy, r * .55, cx, cy, r);
+  gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
   g.globalCompositeOperation = 'source-over';
   ctx.drawImage(darkCv, 0, 0, w, h);
+  ctx.strokeStyle = 'rgba(255,230,150,.18)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r * .9, 0, 7); ctx.stroke(); // 視野の縁
 }
 let lastT = performance.now(), pvPh = 0;
 function frame(t) {
