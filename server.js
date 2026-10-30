@@ -20,12 +20,19 @@ const GAME_MS = 10 * 60 * 1000;
 const SPEED = 250, GHOST_MULT = 1.5, PR = 16, REACH = 70;
 const MIN_PLAYERS = 2, MAX_PLAYERS = 10, MAX_IMP = 3;
 const KILL_RANGE = 95, REPORT_RANGE = 110, BTN_RANGE = 90;
-const KILL_CD = 20000, FIRST_KILL_CD = 15000, SAB_CD = 45000, SAB_PCT = 5;
+const KILL_CD = 20000, FIRST_KILL_CD = 15000;
+// 妨害: どれを使っても全体進捗 -20% / インポスター共通のクールタイム30秒 / 同時に進行できるのは1つ
+const SAB_CD = 30000, SAB_PCT = 20;
+const DARK_MS = 30000;                       // 暗闇の長さ
+const SHORT_MS = 120000, SHORT_NEED = 5;     // 電気のショート: 2分以内に5か所直さないとクルー全滅
+const FLOOD_N = 3, BAIL_NEED = 30, FLOOD_MAX_MS = 150000; // 水の氾濫: 3か所。SPACE30回で1か所解消 (150秒で自然に引く)
+const WARP_CD = 6000, WARP_RANGE = 70;       // インポスター専用ワープ
+const SABS = { dark: { name: '暗闇', theme: null }, short: { name: '電気のショート', theme: 'space' }, flood: { name: '水の氾濫', theme: 'island' } };
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
 const DISCUSS_MS = process.env.DOA_TEST === '1' ? 4000 : 20000; // 自動テスト時だけ議論を短く
 const VOTE_MS = 30000, RESULT_MS = 9500, END_AUTO_MS = 25000;
 const ACTIVE_TASKS = 3, ACTION_MIN = 60;
-const MIN_MINI = { weld: 6000, seq: 1000, alt: 1200, space: 800, fire: 1800, vine: 2000, compass: 1500 };
+const MIN_MINI = { weld: 6000, seq: 1000, alt: 1200, space: 800, fire: 1800, vine: 2000, compass: 1500, wire: 1500 };
 const MINI_TIMEOUT = 90000;
 // ロビー: 正方形の床 (640x640) + 奥(上)の壁にクローゼット
 const LOBBY = { x0: 60, y0: 120, x1: 700, y1: 760 };
@@ -345,11 +352,25 @@ function genMap(layoutIdx, seedIn) {
   for (const it in TR.stations) stations[it] = spot(TR.stations[it]);
   const tasks = {};
   for (const d of tasksOf(theme)) tasks[d.id] = spot(TR[d.id]);
+  // インポスター専用のワープ地点 (6か所。クルーには見えない)
+  const WR = theme === 'space' ? ['upperEngine', 'lowerEngine', 'reactor', 'nav', 'security', 'comms'] : ['wreck', 'forest', 'light', 'bamboo', 'rocks', 'drift'];
+  const warps = WR.filter(k => R[k]).map(k => ({ ...spot(k), th: R[k].th }));
+  // 宇宙船: 電気のショートで火花が散る配線 (5か所)
+  const shorts = theme === 'space' ? ['electrical', 'upperEngine', 'nav', 'comms', 'storage'].map(k => ({ ...spot(k), th: R[k].th })) : [];
+  // 孤島: 水が氾濫しうる通路 (通路の途中の 3x3 マス)
+  const floods = [];
+  const inAnyRoom = (c, r) => Object.values(R).some(rm => c >= rm.x && c < rm.x + rm.w && r >= rm.y && r < rm.y + rm.h);
+  if (theme === 'island') for (const pts of [...L.corridors, ...opt]) for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1]; if (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) < 4) continue;
+    const mc = Math.round((a[0] + b[0]) / 2), mr = Math.round((a[1] + b[1]) / 2), z = { c0: mc - 1, r0: mr - 1, c1: mc + 1, r1: mr + 1 };
+    let ok = true; for (let r = z.r0; r <= z.r1; r++) for (let c = z.c0; c <= z.c1; c++) if (wall(c, r) || !reach.has(r * COLS + c) || inAnyRoom(c, r)) ok = false;
+    if (ok && !floods.some(f => Math.abs(f.c0 - z.c0) < 3 && Math.abs(f.r0 - z.r0) < 3)) floods.push(z);
+  }
 
   return {
     seed, layout: layoutIdx, name: L.name, theme, grid: g, rows: g.map(row => row.map(v => (v ? '1' : '0')).join('')),
     rooms: Object.values(R).map(r => [r.x, r.y, r.w, r.h, r.th]),
-    button: cp(bc.c, bc.r), stations, tasks,
+    button: cp(bc.c, bc.r), stations, tasks, warps, shorts, floods,
   };
 }
 // GENMAP>>
@@ -358,8 +379,8 @@ function genMap(layoutIdx, seedIn) {
 let MAP_PREVIEWS = null;
 const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
 
-function resolveWalls(grid, p) {
-  const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : grid[r][c];
+function resolveWalls(grid, p, extra) {
+  const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : (grid[r][c] || (extra ? extra(c, r) : false));
   for (let it = 0; it < 16; it++) {
     let moved = false;
     const c0 = Math.floor((p.x - PR) / CELL), c1 = Math.floor((p.x + PR) / CELL);
@@ -452,7 +473,7 @@ function startGame(R) {
   R.map = genMap(R.mapIdx);
   R.mapMsg = mapPayload(R.map);
   rEmit(R, 'map', R.mapMsg);
-  R.phase = 'playing'; R.progress = 0; R.result = null; R.bodies = []; R.meeting = null;
+  R.phase = 'playing'; R.progress = 0; R.result = null; R.bodies = []; R.meeting = null; resetSab(R);
   R.endsAt = now + GAME_MS; R.noMeetingUntil = now + BTN_LOCK; R.freezeUntil = now + FREEZE_MS;
   const n = part.length;
   R.impN = Math.min(R.impCount, maxImp(n));
@@ -461,7 +482,7 @@ function startGame(R) {
   part.forEach((p, i) => {
     resetPlayer(R, p, i, n); p.theme = R.map.theme;
     p.role = imps.has(p) ? 'imposter' : 'crew';
-    p.killReady = now + FIRST_KILL_CD; p.sabReady = now + 30000;
+    p.killReady = now + FIRST_KILL_CD; p.sabReady = now + SAB_CD; p.warpReady = 0;
     fillTasks(p);
   });
   rEmit(R, 'sfx', 'start');
@@ -478,7 +499,7 @@ function endGame(R, winner, reason) {
 }
 
 function toLobby(R) {
-  R.phase = 'lobby'; R.meeting = null; R.bodies = []; R.result = null; R.remainAtEnd = GAME_MS; R.progress = 0;
+  R.phase = 'lobby'; R.meeting = null; R.bodies = []; R.result = null; R.remainAtEnd = GAME_MS; R.progress = 0; resetSab(R);
   R.map = null; R.mapMsg = null;
   const all = [...R.players.values()];
   all.forEach((p, i) => {
@@ -539,7 +560,11 @@ function resolveVotes(R, now) {
 
 function endMeeting(R, now) {
   const m = R.meeting;
-  R.endsAt += now - m.startAt;
+  const paused = now - m.startAt;
+  R.endsAt += paused;
+  if (R.sab.dark > m.startAt) R.sab.dark += paused;      // 会議中は妨害のタイマーも止まる
+  if (R.sab.short) R.sab.short.endsAt += paused;
+  if (R.sab.flood) R.sab.flood.endsAt += paused;
   R.phase = 'playing'; R.meeting = null; R.bodies = [];
   R.noMeetingUntil = now + BTN_LOCK;
   for (const p of participants(R)) if (p.role === 'imposter') p.killReady = Math.max(p.killReady, now + 10000);
@@ -562,6 +587,33 @@ function doAction(R, p) {
   const now = Date.now();
   if (now - p.lastAct < ACTION_MIN) return;
   p.lastAct = now;
+  const sb = R.sab;
+  // 水の氾濫: 水たまりの前で SPACE を連打して掻き出す (30回で1か所解消。複数人で協力可)
+  if (sb.flood && p.alive) {
+    const z = sb.flood.zones.find(z => !z.done && nearRect(p, z, REACH));
+    if (z) {
+      z.bail++;
+      if (z.bail >= BAIL_NEED) {
+        z.done = true; rebuildFlood(R);
+        rEmit(R, 'toast', { text: `🌊 ${p.name}が水を掻き出した! 通路が通れるようになった`, kind: 'good' }); rEmit(R, 'sfx', 'done');
+        if (sb.flood.zones.every(q => q.done)) { sb.flood = null; rebuildFlood(R); rEmit(R, 'toast', { text: '🌊 氾濫がすべておさまった!', kind: 'good' }); }
+      } else if (z.bail % 5 === 0) io.to(p.id).emit('sfx', 'click');
+      return;
+    }
+  }
+  // 電気のショート中: 通常タスク・会議ボタンは使えず、配線の修理だけができる
+  if (sb.short) {
+    const i = sb.short.spots.findIndex(q => !q.done && near(p, q, REACH));
+    if (i >= 0) {
+      if (!p.alive) { toast(p, '幽霊は修理できない', 'error'); return; }
+      if (p.role === 'imposter') { toast(p, 'インポスターは配線を修理できない', 'error'); return; }
+      p.mini = { wire: i, kind: 'wire', start: now }; p.input = { x: 0, y: 0 }; p.moving = false;
+      io.to(p.id).emit('miniStart', { wire: i }); return;
+    }
+    if (p.tasks.some(id => near(p, tpos(R, id), REACH)) || near(p, R.map.button, BTN_RANGE) || Object.values(R.map.stations).some(st => near(p, st, REACH)))
+      toast(p, '⚡ 電気がショート中! 先にショートした配線を直そう', 'error');
+    return;
+  }
   // 運搬中: 届け先に着いたら設置。それ以外のミニゲーム系タスクは手がふさがっていて行えない
   if (p.item) {
     const dest = p.tasks.find(id => defOf(id).item === p.item && near(p, tpos(R, id), REACH));
@@ -625,14 +677,66 @@ function doKill(R, p) {
   checkWin(R);
 }
 
-function doSabotage(R, p) {
+// ---------- 妨害 (サボタージュ) ----------
+function resetSab(R) { R.sab = { dark: 0, short: null, flood: null, cells: new Set() }; }
+const sabActive = (R, now) => R.sab.dark > now || !!R.sab.short || !!R.sab.flood;
+function nearRect(p, z, rng) { // 点と矩形(マス単位)の距離
+  const x0 = z.c0 * CELL, y0 = z.r0 * CELL, x1 = (z.c1 + 1) * CELL, y1 = (z.r1 + 1) * CELL;
+  return Math.hypot(Math.max(x0 - p.x, 0, p.x - x1), Math.max(y0 - p.y, 0, p.y - y1)) <= rng;
+}
+function rebuildFlood(R) {
+  R.sab.cells = new Set();
+  if (R.sab.flood) for (const z of R.sab.flood.zones) if (!z.done) for (let r = z.r0; r <= z.r1; r++) for (let c = z.c0; c <= z.c1; c++) R.sab.cells.add(r * COLS + c);
+}
+function doSabotage(R, p, kind) {
   if (R.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter') return;
-  const now = Date.now();
-  if (now < p.sabReady) return;
-  p.sabReady = now + SAB_CD;
+  const now = Date.now(), def = SABS[kind];
+  if (!def) return;
+  if (def.theme && def.theme !== R.map.theme) { toast(p, `「${def.name}」はこのマップでは使えない`, 'error'); return; }
+  if (now < p.sabReady) { toast(p, `妨害はあと${Math.ceil((p.sabReady - now) / 1000)}秒で使える`, 'error'); return; }
+  if (sabActive(R, now)) { toast(p, 'ほかの妨害が進行中', 'error'); return; }
+  let zones = null;
+  if (kind === 'flood') { // 誰も立っていない通路を選んで水没させる
+    const empty = R.map.floods.filter(z => !participants(R).some(q => nearRect(q, z, PR + 4)));
+    zones = empty.sort(() => Math.random() - .5).slice(0, FLOOD_N).map(z => ({ ...z, bail: 0, done: false }));
+    if (!zones.length) { toast(p, '今は水を氾濫させられる通路がない', 'error'); return; }
+  }
+  for (const q of participants(R)) if (q.role === 'imposter') q.sabReady = now + SAB_CD; // インポスター共通のクールタイム
   R.progress = Math.max(0, R.progress - SAB_PCT);
+  if (kind === 'dark') R.sab.dark = now + DARK_MS;
+  else if (kind === 'short') {
+    R.sab.short = { endsAt: now + SHORT_MS, need: SHORT_NEED, fixed: 0, spots: R.map.shorts.slice(0, SHORT_NEED).map(q => ({ x: q.x, y: q.y, th: q.th, done: false })) };
+    for (const q of participants(R)) if (q.mini) cancelMini(q); // 作業中のタスクは中断
+  } else if (kind === 'flood') { R.sab.flood = { endsAt: now + FLOOD_MAX_MS, zones }; rebuildFlood(R); }
   rEmit(R, 'sfx', 'alarm');
-  rEmit(R, 'toast', { text: `⚠ 妨害工作! 進捗が${SAB_PCT}%低下`, kind: 'error' });
+  const msg = { dark: '🌑 暗闇! 視界がほとんど効かない', short: `⚡ 電気がショート! 2分以内に配線を${SHORT_NEED}か所直さないと酸素が尽きる`, flood: '🌊 水が氾濫! 水たまりの前で SPACE を連打して掻き出そう' }[kind];
+  rEmit(R, 'toast', { text: `${msg} (進捗 -${SAB_PCT}%)`, kind: 'error' });
+}
+function tickSab(R, now) {
+  const sb = R.sab;
+  if (sb.short && now >= sb.short.endsAt) { // 時間切れ: 酸素が尽きてクルー全滅
+    sb.short = null;
+    for (const q of participants(R)) if (q.role === 'crew' && q.alive) { q.alive = false; cancelMini(q); }
+    endGame(R, 'imposter', '⚡ ショートを直しきれず酸素が尽きた… クルー全滅');
+  }
+  if (sb.flood && now >= sb.flood.endsAt) { sb.flood = null; rebuildFlood(R); rEmit(R, 'toast', { text: '🌊 水が自然に引いた', kind: 'info' }); }
+}
+function doWarp(R, p, idx) {
+  if (R.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter' || p.mini) return;
+  const now = Date.now(), ws = R.map.warps, to = ws[idx | 0];
+  if (!to) return;
+  if (!ws.some(w => near(p, w, WARP_RANGE))) { toast(p, 'ワープ地点の上で使おう', 'error'); return; }
+  if (now < (p.warpReady || 0)) { toast(p, `ワープはあと${Math.ceil((p.warpReady - now) / 1000)}秒`, 'error'); return; }
+  p.x = to.x; p.y = to.y + 20; p.warpReady = now + WARP_CD;
+  io.to(p.id).emit('sfx', 'click');
+}
+function sabView(R, now) {
+  const sb = R.sab; if (!sb) return null;
+  return {
+    dark: Math.max(0, sb.dark - now),
+    short: sb.short ? { left: Math.max(0, sb.short.endsAt - now), need: sb.short.need, fixed: sb.short.fixed, spots: sb.short.spots } : null,
+    flood: sb.flood ? { zones: sb.flood.zones.filter(z => !z.done).map(({ c0, r0, c1, r1, bail }) => ({ c0, r0, c1, r1, bail })), need: BAIL_NEED } : null,
+  };
 }
 
 // ---------- ループ ----------
@@ -661,11 +765,12 @@ function tickRoom(R, now, dt) {
         const ghost = !p.alive;
         const sp = SPEED * (ghost ? GHOST_MULT : 1);
         p.x += dx * sp * dt; p.y += dy * sp * dt;
-        if (!ghost) resolveWalls(R.map.grid, p); // 幽霊は壁通り抜け
+        if (!ghost) resolveWalls(R.map.grid, p, R.sab.flood ? (c, r) => R.sab.cells.has(r * COLS + c) : null); // 幽霊は壁も水も通り抜け
         p.x = clamp(p.x, PR, W - PR); p.y = clamp(p.y, PR, H - PR);
         if (dx !== 0) p.face = dx > 0 ? 1 : -1;
       }
     }
+    tickSab(R, now);
     if (now >= R.endsAt) endGame(R, 'imposter', '時間切れ… クルーは間に合わなかった');
   } else if (R.phase === 'meeting') tickMeeting(R, now);
   else if (R.phase === 'end') { if (now - R.endedAt > END_AUTO_MS) toLobby(R); }
@@ -678,7 +783,7 @@ function broadcast(R, now) {
   else if (R.phase === 'meeting') remain = Math.max(0, R.endsAt - R.meeting.startAt);
   else if (R.phase === 'end') remain = R.remainAtEnd;
   const part = participants(R), host = hostId(R);
-  const base = { ph: R.phase, remain, prog: Math.round(R.progress * 10) / 10, result: R.result, ic: R.impN, code: R.code };
+  const base = { ph: R.phase, remain, prog: Math.round(R.progress * 10) / 10, result: R.result, ic: R.impN, code: R.code, sab: R.phase === 'lobby' ? null : sabView(R, now) };
   let lobby = null;
   if (R.phase === 'lobby') {
     lobby = {
@@ -698,6 +803,7 @@ function broadcast(R, now) {
         kcd: Math.max(0, (v.killReady || 0) - now), scd: Math.max(0, (v.sabReady || 0) - now),
         em: v.emUsed, emLock: Math.max(0, R.noMeetingUntil - now),
         mates: v.role === 'imposter' ? part.filter(x => x.role === 'imposter' && x !== v).map(x => x.id) : [],
+        warps: v.role === 'imposter' && R.map ? R.map.warps : null, wcd: Math.max(0, (v.warpReady || 0) - now), // ワープ地点はインポスターだけに送る
       },
     };
     if (lobby) msg.lobby = lobby;
@@ -907,24 +1013,42 @@ io.on('connection', (socket) => {
   socket.on('action', () => { const { R, p } = C(); if (p) doAction(R, p); });
   socket.on('report', () => { const { R, p } = C(); if (p) doReport(R, p); });
   socket.on('kill', () => { const { R, p } = C(); if (p) doKill(R, p); });
-  socket.on('sabotage', () => { const { R, p } = C(); if (p) doSabotage(R, p); });
+  socket.on('sabotage', (kind) => { const { R, p } = C(); if (p) doSabotage(R, p, kind); });
+  socket.on('warp', (idx) => { const { R, p } = C(); if (p) doWarp(R, p, idx); });
   // discard廃止（スロットシステム廃止）
 
   // 自動テスト専用 (DOA_TEST=1 のときだけ有効): 指定タスク/置き場へワープ
   if (process.env.DOA_TEST === '1') socket.on('__tp', (d) => {
     const { R, p } = C(); if (!p || R.phase !== 'playing' || !d) return;
     if (d.button) R.noMeetingUntil = 0;
-    const pos = d.button ? { x: R.map.button.x + 40, y: R.map.button.y } : d.station ? R.map.stations[d.station] : R.map.tasks[d.task];
+    if (d.role) p.role = d.role;
+    if (d.resetCd) { p.sabReady = 0; p.warpReady = 0; }
+    if (d.shortLeft != null && R.sab.short) R.sab.short.endsAt = Date.now() + d.shortLeft;
+    if (d.clearDark) R.sab.dark = 0;
+    const fz = d.flood != null && R.sab.flood ? R.sab.flood.zones[d.flood] : null;
+    const pos = d.button ? { x: R.map.button.x + 40, y: R.map.button.y } : d.short != null ? R.map.shorts[d.short] : d.warp != null ? R.map.warps[d.warp] : fz ? floodSide(R, fz) : d.pos ? d.pos : d.station ? R.map.stations[d.station] : R.map.tasks[d.task];
     const slot = () => { const i = p.tasks.findIndex(t => defOf(t).kind !== 'carry'); return i >= 0 ? i : p.tasks.length - 1; };
     if (d.task && !p.tasks.includes(d.task)) p.tasks[slot()] = d.task;
     if (d.station) { const t = TASK_DEFS.find(x => x.item === d.station); if (t && !p.tasks.includes(t.id)) p.tasks[slot()] = t.id; }
     if (pos) { p.x = pos.x; p.y = pos.y; }
   });
+  // テスト用: 水たまりのすぐ外側 (通れる側) の位置
+  const floodSide = (R, z) => { const mc = (z.c0 + z.c1) / 2, mr = (z.r0 + z.r1) / 2;
+    for (const [c, r] of [[z.c0 - 1, mr], [z.c1 + 1, mr], [mc, z.r0 - 1], [mc, z.r1 + 1]]) { const cc = Math.round(c), rr = Math.round(r); if (!R.map.grid[rr][cc] && !R.sab.cells.has(rr * COLS + cc)) return cp(cc, rr); }
+    return cp(z.c0 - 1, z.r0); };
   socket.on('miniEnd', (d) => {
     const { R, p } = C(); if (!p || !p.mini) return;
     const m = p.mini; p.mini = null;
     if (R.phase !== 'playing' || !d || d.cancel) return;
     if (!d.ok) { toast(p, '失敗… もう一度挑戦しよう', 'error'); return; }
+    if (m.wire != null) { // ショートした配線の修理
+      const sh = R.sab.short; if (!sh || sh.spots[m.wire].done) return;
+      if (Date.now() - m.start < MIN_MINI.wire) { toast(p, '操作が速すぎる?', 'error'); return; }
+      sh.spots[m.wire].done = true; sh.fixed++;
+      rEmit(R, 'toast', { text: `⚡ ${p.name}が配線を修理 (${sh.fixed}/${sh.need})`, kind: 'good' });
+      if (sh.fixed >= sh.need) { R.sab.short = null; rEmit(R, 'toast', { text: '⚡ ショートをすべて修理! 電気が復旧した', kind: 'good' }); rEmit(R, 'sfx', 'done'); }
+      return;
+    }
     if (!p.tasks.includes(m.taskId)) return;
     if (Date.now() - m.start < MIN_MINI[m.kind]) { toast(p, '操作が速すぎる?', 'error'); return; }
     completeTask(R, p, m.taskId);
