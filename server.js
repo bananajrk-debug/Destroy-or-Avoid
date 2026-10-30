@@ -30,7 +30,7 @@ const FLOOD_N = 3, BAIL_NEED = 30, FLOOD_MAX_MS = 150000; // 水の氾濫: 3か�
 const WARP_CD = 6000, WARP_RANGE = 70;       // インポスター専用ワープ
 // 探偵: キルが起きると、探偵だけに被害者の直前5秒の移動軌跡が届く
 const TRAIL_MS = 5000, TRAIL_STEP = 100, MAX_DET = 2, DET_TRACE_MS = 45000;
-const SABS = { prog: { name: '進捗妨害', theme: null }, dark: { name: '暗闇', theme: null }, short: { name: '電気のショート', theme: 'space' }, flood: { name: '水の氾濫', theme: 'island' } };
+const SABS = { prog: { name: '進捗妨害', themes: null }, dark: { name: '暗闇', themes: null }, short: { name: '電気のショート', themes: ['space'] }, flood: { name: '水の氾濫', themes: ['island', 'sky'] } };
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
 const DISCUSS_MS = process.env.DOA_TEST === '1' ? 4000 : 20000; // 自動テスト時だけ議論を短く
 const VOTE_MS = 30000, RESULT_MS = 9500, END_AUTO_MS = 25000;
@@ -49,7 +49,7 @@ function lobbySpawn(i, n) {
 const cp = (c, r) => ({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 });
 // 運搬アイテム (孤島サバイバル)
 // 運搬アイテム: 孤島 (薪など) + 宇宙船 (ヒューズなど)
-const ITEM_NAME = { wood: '薪', nut: '木の実', sos: 'SOS信号機', scrap: '漂流資材', fuse: 'ヒューズ', battery: 'バッテリー', core: 'プラズマコア' };
+const ITEM_NAME = { wood: '薪', nut: '木の実', sos: 'SOS信号機', scrap: '漂流資材', fuse: 'ヒューズ', battery: 'バッテリー', core: 'プラズマコア', stone: '浮遊石', gear: '風車の歯車', seed: '天空の種' };
 const COLORS = ['#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b', '#cc5de8', '#ff922b', '#22b8cf', '#f783ac', '#a9e34b', '#c08457'];
 const ACCS = ['', '🐥', '💩', '👑', '🎩', '😎', '🌸', '🔥', '🎀', '🍕'];
 
@@ -92,6 +92,25 @@ const SPACE_TASKS = [
   { id: 115, name: '点火システムの調整',   pct: 5,  kind: 'space', n: 10, icon: '🚀' },
 ];
 SPACE_TASKS.forEach(d => { d.theme = 'space'; TASK_DEFS.push(d); });
+// 空島のタスク (id 201〜)
+const SKY_TASKS = [
+  { id: 201, name: '浮遊石を広場へ運ぶ',     pct: 15, kind: 'carry',   item: 'stone', icon: '💎' },
+  { id: 202, name: '風車に歯車を取り付ける', pct: 15, kind: 'carry',   item: 'gear',  icon: '⚙️' },
+  { id: 203, name: '天空の種を庭に植える',   pct: 10, kind: 'carry',   item: 'seed',  icon: '🌱' },
+  { id: 204, name: '飛行船のロープを結ぶ',   pct: 5,  kind: 'vine',    n: 4, icon: '🪢' },
+  { id: 205, name: '風車の羽根を回す',       pct: 10, kind: 'alt',     n: 24, icon: '🌬️' },
+  { id: 206, name: '石板の暗号を解く',       pct: 5,  kind: 'seq',     n: 6, icon: '🗿' },
+  { id: 207, name: '天文台の星図を合わせる', pct: 5,  kind: 'compass', n: 3, icon: '🔭' },
+  { id: 208, name: '祠の聖火を灯す',         pct: 10, kind: 'fire',    icon: '🕯️' },
+  { id: 209, name: '鐘楼の鐘を鳴らす',       pct: 5,  kind: 'space',   n: 8, icon: '🔔' },
+  { id: 210, name: '泉の水を汲み上げる',     pct: 5,  kind: 'alt',     n: 16, icon: '💧' },
+  { id: 211, name: '雲の茨を払う',           pct: 5,  kind: 'vine',    n: 5, icon: '☁️' },
+  { id: 212, name: '浮遊石を削り出す',       pct: 10, kind: 'weld',    icon: '⛏️' },
+  { id: 213, name: '飛行船の暗証番号',       pct: 5,  kind: 'seq',     n: 5, icon: '🎈' },
+  { id: 214, name: '巣のヒナにエサをやる',   pct: 5,  kind: 'space',   n: 6, icon: '🐣' },
+  { id: 215, name: '風向きを読む',           pct: 5,  kind: 'compass', n: 2, icon: '🧭' },
+];
+SKY_TASKS.forEach(d => { d.theme = 'sky'; TASK_DEFS.push(d); });
 const tasksOf = (theme) => TASK_DEFS.filter(d => d.theme === theme);
 const defOf = (id) => TASK_DEFS.find(d => d.id === id);
 
@@ -112,7 +131,9 @@ function mulberry32(a) {
 // 大: camp, beach / 中: forest, bamboo, wreck, light / 小: falls, mangrove, tower, rocks, drift
 const ROOM_TH = { camp: 0, beach: 1, forest: 2, bamboo: 3, falls: 4, wreck: 5, light: 6, rocks: 7, mangrove: 8, tower: 9, drift: 10,
   // 宇宙船の部屋 (クライアントの THEMES[20〜30])
-  cafeteria: 20, storage: 21, upperEngine: 22, lowerEngine: 23, reactor: 24, nav: 25, medbay: 26, security: 27, electrical: 28, o2: 29, comms: 30 };
+  cafeteria: 20, storage: 21, upperEngine: 22, lowerEngine: 23, reactor: 24, nav: 25, medbay: 26, security: 27, electrical: 28, o2: 29, comms: 30,
+  // 空島の部屋 (クライアントの THEMES[40〜50])
+  plaza: 40, garden: 41, windmill: 42, ruins: 43, crystal: 44, harbor: 45, shrine: 46, observatory: 47, nest: 48, spring: 49, bellTower: 50 };
 const LAYOUTS = [
   {
     theme: 'island', name: 'ヤシの入り江', desc: '拠点が北にある基本の島。南に大きな浜辺、西に灯台と難破船。',
@@ -127,7 +148,7 @@ const LAYOUTS = [
       mangrove: { x: 12, y: 20, w: 6,  h: 5 },  // 【小】マングローブ (行き止まり)
       tower:    { x: 16, y: 27, w: 8,  h: 7 },  // 【小】見張り台 (袋小路)
       rocks:    { x: 37, y: 2,  w: 7,  h: 6 },  // 【小】岩場の入り江
-      drift:    { x: 38, y: 28, w: 8,  h: 7 },  // 【小】漂着物の浜
+      drift:    { x: 40, y: 28, w: 8,  h: 7 },  // 【小】漂着物の浜 (大きな浜辺と重ならないよう2マス右へ)
     },
     corridors: [
       [[22, 5], [11, 5]], [[17, 5], [17, 11]], [[6, 9], [6, 16]], [[5, 24], [5, 29]], [[8, 21], [12, 21]],
@@ -223,6 +244,111 @@ LAYOUTS.push({
     101: 'nav', 102: 'nav', 103: 'o2', 104: 'upperEngine', 105: 'storage', 106: 'electrical', 107: 'comms', 108: 'security',
     109: 'medbay', 110: 'upperEngine', 111: 'o2', 112: 'storage', 113: 'reactor', 114: 'comms', 115: 'lowerEngine',
   },
+});
+
+
+// ===== 宇宙船レイアウト 2〜3 (部屋の種類・タスク配置は宇宙船1と共通) =====
+const SPACE_TR = LAYOUTS[LAYOUTS.length - 1].taskRooms;
+LAYOUTS.push({
+  theme: 'space', name: '貨物船', desc: '横長の貨物船。中央の背骨通路で左の機関部と右の大型貨物室を結ぶ。上下に小部屋が並ぶ。',
+  hub: 'cafeteria', crates: ['storage', 'upperEngine', 'lowerEngine', 'comms'], taskRooms: SPACE_TR,
+  rooms: {
+    cafeteria:   { x: 25, y: 15, w: 14, h: 10 }, // 【大】食堂 (中央)
+    storage:     { x: 46, y: 15, w: 14, h: 11 }, // 【大】貨物室 (右)
+    upperEngine: { x: 3,  y: 3,  w: 10, h: 8 },  // 【中】
+    lowerEngine: { x: 3,  y: 29, w: 10, h: 8 },  // 【中】
+    reactor:     { x: 2,  y: 16, w: 9,  h: 8 },  // 【中】
+    nav:         { x: 50, y: 3,  w: 11, h: 9 },  // 【中】
+    medbay:      { x: 16, y: 4,  w: 7,  h: 6 },  // 【小】
+    security:    { x: 16, y: 30, w: 7,  h: 6 },  // 【小】
+    electrical:  { x: 34, y: 4,  w: 8,  h: 6 },  // 【小】
+    o2:          { x: 34, y: 31, w: 8,  h: 6 },  // 【小】
+    comms:       { x: 51, y: 30, w: 9,  h: 6 },  // 【小】
+  },
+  corridors: [
+    [[10, 20], [25, 20]], [[38, 20], [46, 20]], [[7, 10], [7, 16]], [[7, 23], [7, 29]], [[12, 6], [16, 6]], [[12, 32], [16, 32]],
+    [[19, 9], [19, 13], [28, 13], [28, 15]], [[19, 30], [19, 27], [28, 27], [28, 24]], [[37, 15], [37, 9]], [[37, 24], [37, 31]],
+    [[55, 15], [55, 11]], [[55, 25], [55, 30]], [[41, 6], [50, 6]],
+  ],
+  optional: [[[41, 33], [51, 33]], [[22, 5], [34, 5]], [[22, 34], [34, 34]], [[61, 11], [61, 30]]],
+  pillars: [[28, 17, 1, 2], [35, 17, 1, 2], [28, 22, 1, 1], [36, 22, 1, 1], [49, 18, 2, 2], [54, 21, 2, 2], [3, 19, 2, 2], [55, 6, 2, 1]],
+});
+LAYOUTS.push({
+  theme: 'space', name: '研究ステーション', desc: '環状の宇宙ステーション。中央ハブの食堂から4方向へ通路が伸び、外周をリング通路が一周する。',
+  hub: 'cafeteria', crates: ['storage', 'upperEngine', 'lowerEngine', 'reactor'], taskRooms: SPACE_TR,
+  rooms: {
+    cafeteria:   { x: 25, y: 14, w: 14, h: 11 }, // 【大】中央ハブ
+    storage:     { x: 24, y: 29, w: 15, h: 9 },  // 【大】
+    upperEngine: { x: 2,  y: 2,  w: 10, h: 9 },  // 【中】
+    lowerEngine: { x: 2,  y: 29, w: 10, h: 9 },  // 【中】
+    reactor:     { x: 52, y: 15, w: 10, h: 10 }, // 【中】
+    nav:         { x: 26, y: 2,  w: 12, h: 8 },  // 【中】
+    medbay:      { x: 14, y: 15, w: 7,  h: 6 },  // 【小】
+    security:    { x: 44, y: 4,  w: 7,  h: 6 },  // 【小】
+    electrical:  { x: 52, y: 30, w: 8,  h: 6 },  // 【小】
+    o2:          { x: 44, y: 30, w: 7,  h: 6 },  // 【小】
+    comms:       { x: 3,  y: 17, w: 7,  h: 6 },  // 【小】
+  },
+  corridors: [
+    [[11, 5], [26, 5]], [[37, 6], [44, 6]], [[48, 9], [48, 12], [56, 12], [56, 15]], [[56, 24], [56, 30]], [[52, 33], [49, 33]],
+    [[44, 33], [38, 33]], [[24, 33], [11, 33]], [[6, 29], [6, 22]], [[6, 17], [6, 10]],
+    [[31, 9], [31, 14]], [[33, 24], [33, 29]], [[20, 18], [25, 18]], [[9, 19], [14, 19]], [[38, 20], [52, 20]],
+  ],
+  optional: [[[46, 30], [46, 9]], [[17, 15], [17, 8], [11, 8]], [[60, 30], [60, 24]]],
+  pillars: [[28, 16, 1, 2], [36, 16, 1, 2], [28, 22, 1, 1], [36, 22, 1, 1], [27, 31, 2, 2], [34, 34, 2, 1], [56, 18, 2, 2], [30, 4, 1, 1]],
+});
+
+// ===== 空島レイアウト (雲海に浮かぶ島々を吊り橋で結ぶ。3種・どれも11部屋: 大2 中4 小5) =====
+// 部屋: 大=plaza(天空の広場)/garden(浮遊庭園)  中=windmill(風車の丘)/ruins(古代遺跡)/crystal(浮遊石の鉱床)/harbor(飛行船の港)
+//       小=shrine(風の祠)/observatory(天文台)/nest(巨鳥の巣)/spring(天空の泉)/bellTower(鐘楼)
+const SKY_TR = {
+  stations: { stone: 'crystal', gear: 'ruins', seed: 'nest' },
+  201: 'plaza', 202: 'windmill', 203: 'garden', 204: 'harbor', 205: 'windmill', 206: 'ruins', 207: 'observatory', 208: 'shrine',
+  209: 'bellTower', 210: 'spring', 211: 'garden', 212: 'crystal', 213: 'harbor', 214: 'nest', 215: 'spring',
+};
+const SKY_COMMON = { theme: 'sky', hub: 'plaza', crates: ['garden', 'crystal', 'ruins', 'harbor'], taskRooms: SKY_TR, warpRooms: ['windmill', 'ruins', 'garden', 'crystal', 'nest', 'spring'] };
+LAYOUTS.push({
+  ...SKY_COMMON, name: '雲上の広場', desc: '中央の天空広場から四方へ吊り橋が伸びる基本の空島。外周の島々も橋で一周できる。',
+  rooms: {
+    plaza: { x: 25, y: 14, w: 14, h: 11 }, garden: { x: 3, y: 26, w: 14, h: 11 },
+    windmill: { x: 3, y: 3, w: 10, h: 9 }, ruins: { x: 48, y: 3, w: 12, h: 9 }, crystal: { x: 50, y: 26, w: 11, h: 10 }, harbor: { x: 26, y: 30, w: 12, h: 8 },
+    shrine: { x: 29, y: 3, w: 7, h: 6 }, observatory: { x: 43, y: 15, w: 7, h: 6 }, nest: { x: 5, y: 16, w: 7, h: 6 }, spring: { x: 53, y: 16, w: 7, h: 6 }, bellTower: { x: 17, y: 18, w: 6, h: 6 },
+  },
+  corridors: [
+    [[32, 14], [32, 8]], [[29, 5], [12, 5]], [[35, 5], [48, 5]], [[8, 11], [8, 16]], [[8, 21], [8, 26]], [[11, 20], [17, 20]], [[22, 20], [25, 20]],
+    [[38, 17], [43, 17]], [[49, 18], [53, 18]], [[55, 11], [55, 16]], [[55, 21], [55, 26]], [[31, 24], [31, 30]], [[26, 33], [16, 33]], [[37, 32], [50, 32]],
+  ],
+  optional: [[[19, 23], [19, 28], [16, 28]], [[12, 9], [20, 9], [20, 18]], [[46, 15], [46, 9], [48, 9]], [[38, 23], [45, 23], [45, 28], [50, 28]]],
+  pillars: [[28, 16, 1, 1], [36, 16, 1, 1], [28, 22, 1, 1], [36, 22, 1, 1], [6, 29, 2, 2], [12, 33, 1, 1], [53, 29, 2, 2], [57, 32, 1, 1], [29, 35, 1, 1], [34, 35, 1, 1], [51, 6, 1, 1], [56, 6, 1, 1], [51, 9, 1, 1], [56, 9, 1, 1]],
+});
+LAYOUTS.push({
+  ...SKY_COMMON, name: '双子の浮遊大陸', desc: '左の大陸(庭園と風車)と右の大陸(遺跡と鉱床)を、中央広場を挟む長い吊り橋が結ぶ。',
+  rooms: {
+    plaza: { x: 25, y: 13, w: 14, h: 11 }, garden: { x: 2, y: 14, w: 13, h: 11 },
+    windmill: { x: 3, y: 2, w: 10, h: 8 }, harbor: { x: 3, y: 29, w: 11, h: 9 }, ruins: { x: 49, y: 2, w: 11, h: 9 }, crystal: { x: 50, y: 28, w: 11, h: 9 },
+    spring: { x: 50, y: 16, w: 8, h: 6 }, shrine: { x: 28, y: 2, w: 8, h: 6 }, observatory: { x: 28, y: 30, w: 8, h: 6 }, nest: { x: 16, y: 4, w: 7, h: 6 }, bellTower: { x: 40, y: 30, w: 6, h: 6 },
+  },
+  corridors: [
+    [[14, 18], [25, 18]], [[38, 18], [50, 18]], [[7, 9], [7, 14]], [[7, 24], [7, 29]], [[12, 6], [16, 6]], [[22, 5], [28, 5]], [[31, 7], [31, 13]],
+    [[35, 4], [49, 4]], [[54, 10], [54, 16]], [[54, 21], [54, 28]], [[33, 23], [33, 30]], [[35, 33], [40, 33]], [[45, 32], [50, 32]], [[13, 33], [28, 33]],
+  ],
+  optional: [[[12, 14], [12, 11], [19, 11], [19, 9]], [[61, 10], [61, 28]], [[37, 23], [42, 23], [42, 30]]],
+  pillars: [[28, 15, 1, 1], [36, 15, 1, 1], [28, 21, 1, 1], [36, 21, 1, 1], [5, 17, 2, 2], [10, 21, 1, 1], [53, 31, 2, 2], [52, 5, 1, 1], [56, 5, 1, 1], [52, 8, 1, 1], [56, 8, 1, 1], [6, 32, 1, 1], [10, 35, 1, 1]],
+});
+LAYOUTS.push({
+  ...SKY_COMMON, name: '天空の螺旋', desc: '島々が渦を巻くように連なる空島。外周の螺旋ルートは長く、近道の橋は少ない。',
+  rooms: {
+    plaza: { x: 25, y: 15, w: 14, h: 10 }, garden: { x: 46, y: 26, w: 15, h: 11 },
+    windmill: { x: 3, y: 3, w: 10, h: 8 }, ruins: { x: 3, y: 28, w: 11, h: 9 }, crystal: { x: 49, y: 3, w: 11, h: 9 }, harbor: { x: 22, y: 30, w: 12, h: 8 },
+    shrine: { x: 17, y: 4, w: 7, h: 6 }, observatory: { x: 34, y: 3, w: 7, h: 6 }, nest: { x: 4, y: 16, w: 7, h: 6 }, spring: { x: 52, y: 15, w: 7, h: 6 }, bellTower: { x: 38, y: 30, w: 6, h: 6 },
+  },
+  corridors: [
+    [[12, 6], [17, 6]], [[23, 6], [34, 6]], [[40, 5], [49, 5]], [[55, 11], [55, 15]], [[55, 20], [55, 26]], [[46, 33], [43, 33]], [[38, 33], [33, 33]],
+    [[22, 33], [13, 33]], [[7, 28], [7, 21]], [[7, 16], [7, 10]],
+    [[10, 19], [25, 19]], [[38, 18], [52, 18]], [[20, 9], [20, 13], [29, 13], [29, 15]], [[30, 24], [30, 30]],
+  ],
+  optional: [[[37, 8], [37, 15]], [[36, 24], [36, 28], [40, 28], [40, 30]], [[2, 10], [2, 28]], [[61, 11], [61, 26]]],
+  pillars: [[28, 17, 1, 1], [36, 17, 1, 1], [28, 23, 1, 1], [36, 23, 1, 1], [50, 29, 2, 2], [56, 33, 1, 1], [52, 6, 2, 2], [6, 31, 1, 1], [10, 34, 1, 1], [25, 34, 1, 1], [30, 35, 1, 1]],
 });
 
 // タスク・置き場をどの部屋に置くか (森ゾーン: forest/bamboo/falls/mangrove/tower)
@@ -357,14 +483,15 @@ function genMap(layoutIdx, seedIn) {
   const tasks = {};
   for (const d of tasksOf(theme)) tasks[d.id] = spot(TR[d.id]);
   // インポスター専用のワープ地点 (6か所。クルーには見えない)
-  const WR = theme === 'space' ? ['upperEngine', 'lowerEngine', 'reactor', 'nav', 'security', 'comms'] : ['wreck', 'forest', 'light', 'bamboo', 'rocks', 'drift'];
+  const WR = L.warpRooms || (theme === 'space' ? ['upperEngine', 'lowerEngine', 'reactor', 'nav', 'security', 'comms'] : ['wreck', 'forest', 'light', 'bamboo', 'rocks', 'drift']);
   const warps = WR.filter(k => R[k]).map(k => ({ ...spot(k), th: R[k].th }));
   // 宇宙船: 電気のショートで火花が散る配線 (5か所)
   const shorts = theme === 'space' ? ['electrical', 'upperEngine', 'nav', 'comms', 'storage'].map(k => ({ ...spot(k), th: R[k].th })) : [];
   // 孤島: 水が氾濫しうる通路 (通路の途中の 3x3 マス)
   const floods = [];
   const inAnyRoom = (c, r) => Object.values(R).some(rm => c >= rm.x && c < rm.x + rm.w && r >= rm.y && r < rm.y + rm.h);
-  if (theme === 'island') for (const pts of [...L.corridors, ...opt]) for (let i = 0; i < pts.length - 1; i++) {
+  // 孤島=水の氾濫 / 空島=雲海の侵入 で塞がる通路
+  if (theme !== 'space') for (const pts of [...L.corridors, ...opt]) for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1]; if (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) < 4) continue;
     const mc = Math.round((a[0] + b[0]) / 2), mr = Math.round((a[1] + b[1]) / 2), z = { c0: mc - 1, r0: mr - 1, c1: mc + 1, r1: mr + 1 };
     let ok = true; for (let r = z.r0; r <= z.r1; r++) for (let c = z.c0; c <= z.c1; c++) if (wall(c, r) || !reach.has(r * COLS + c) || inAnyRoom(c, r)) ok = false;
@@ -603,8 +730,8 @@ function doAction(R, p) {
       z.bail++;
       if (z.bail >= BAIL_NEED) {
         z.done = true; rebuildFlood(R);
-        rEmit(R, 'toast', { text: `🌊 ${p.name}が水を掻き出した! 通路が通れるようになった`, kind: 'good' }); rEmit(R, 'sfx', 'done');
-        if (sb.flood.zones.every(q => q.done)) { sb.flood = null; rebuildFlood(R); rEmit(R, 'toast', { text: '🌊 氾濫がすべておさまった!', kind: 'good' }); }
+        rEmit(R, 'toast', { text: R.map.theme === 'sky' ? `☁ ${p.name}が雲を吹き払った! 橋が通れるようになった` : `🌊 ${p.name}が水を掻き出した! 通路が通れるようになった`, kind: 'good' }); rEmit(R, 'sfx', 'done');
+        if (sb.flood.zones.every(q => q.done)) { sb.flood = null; rebuildFlood(R); rEmit(R, 'toast', { text: R.map.theme === 'sky' ? '☁ 雲海がすべて晴れた!' : '🌊 氾濫がすべておさまった!', kind: 'good' }); }
       } else if (z.bail % 5 === 0) io.to(p.id).emit('sfx', 'click');
       return;
     }
@@ -708,7 +835,7 @@ function doSabotage(R, p, kind) {
   if (R.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter') return;
   const now = Date.now(), def = SABS[kind];
   if (!def) return;
-  if (def.theme && def.theme !== R.map.theme) { toast(p, `「${def.name}」はこのマップでは使えない`, 'error'); return; }
+  if (def.themes && !def.themes.includes(R.map.theme)) { toast(p, `「${def.name}」はこのマップでは使えない`, 'error'); return; }
   if (kind === 'prog') { // 独立した進捗妨害: ほかの妨害が進行中でも使える
     if (now < (p.progReady || 0)) { toast(p, `進捗妨害はあと${Math.ceil((p.progReady - now) / 1000)}秒で使える`, 'error'); return; }
     for (const q of participants(R)) if (q.role === 'imposter') q.progReady = now + PROG_CD;
@@ -731,7 +858,8 @@ function doSabotage(R, p, kind) {
     for (const q of participants(R)) if (q.mini) cancelMini(q); // 作業中のタスクは中断
   } else if (kind === 'flood') { R.sab.flood = { endsAt: now + FLOOD_MAX_MS, zones }; rebuildFlood(R); }
   rEmit(R, 'sfx', 'alarm');
-  const msg = { dark: '🌑 暗闇! 視界がほとんど効かない', short: `⚡ 電気がショート! 2分以内に配線を${SHORT_NEED}か所直さないと酸素が尽きる`, flood: '🌊 水が氾濫! 水たまりの前で SPACE を連打して掻き出そう' }[kind];
+  const sky = R.map.theme === 'sky';
+  const msg = { dark: '🌑 暗闇! 視界がほとんど効かない', short: `⚡ 電気がショート! 2分以内に配線を${SHORT_NEED}か所直さないと酸素が尽きる`, flood: sky ? '☁ 雲海が吊り橋を覆った! 雲の前で SPACE を連打して吹き払おう' : '🌊 水が氾濫! 水たまりの前で SPACE を連打して掻き出そう' }[kind];
   rEmit(R, 'toast', { text: msg, kind: 'error' });
 }
 function tickSab(R, now) {
@@ -741,7 +869,7 @@ function tickSab(R, now) {
     for (const q of participants(R)) if (q.role === 'crew' && q.alive) { q.alive = false; cancelMini(q); }
     endGame(R, 'imposter', '⚡ ショートを直しきれず酸素が尽きた… クルー全滅');
   }
-  if (sb.flood && now >= sb.flood.endsAt) { sb.flood = null; rebuildFlood(R); rEmit(R, 'toast', { text: '🌊 水が自然に引いた', kind: 'info' }); }
+  if (sb.flood && now >= sb.flood.endsAt) { sb.flood = null; rebuildFlood(R); rEmit(R, 'toast', { text: R.map.theme === 'sky' ? '☁ 雲海が自然に晴れた' : '🌊 水が自然に引いた', kind: 'info' }); }
 }
 function doWarp(R, p, idx) {
   if (R.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter' || p.mini) return;
