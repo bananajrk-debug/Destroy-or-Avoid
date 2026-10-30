@@ -21,13 +21,14 @@ const SPEED = 250, GHOST_MULT = 1.5, PR = 16, REACH = 70;
 const MIN_PLAYERS = 2, MAX_PLAYERS = 10, MAX_IMP = 3;
 const KILL_RANGE = 95, REPORT_RANGE = 110, BTN_RANGE = 90;
 const KILL_CD = 20000, FIRST_KILL_CD = 15000;
-// 妨害: どれを使っても全体進捗 -20% / インポスター共通のクールタイム30秒 / 同時に進行できるのは1つ
-const SAB_CD = 30000, SAB_PCT = 20;
+// 妨害: 「進捗妨害」は単体の独立した妨害 (進捗 -20% / 専用クールタイム30秒)
+//       暗闇・電気のショート・水の氾濫は別枠 (進捗は減らさない / 共通クールタイム30秒 / 同時に1つまで)
+const SAB_CD = 30000, SAB_PCT = 20, PROG_CD = 30000;
 const DARK_MS = 30000;                       // 暗闇の長さ
 const SHORT_MS = 120000, SHORT_NEED = 5;     // 電気のショート: 2分以内に5か所直さないとクルー全滅
 const FLOOD_N = 3, BAIL_NEED = 30, FLOOD_MAX_MS = 150000; // 水の氾濫: 3か所。SPACE30回で1か所解消 (150秒で自然に引く)
 const WARP_CD = 6000, WARP_RANGE = 70;       // インポスター専用ワープ
-const SABS = { dark: { name: '暗闇', theme: null }, short: { name: '電気のショート', theme: 'space' }, flood: { name: '水の氾濫', theme: 'island' } };
+const SABS = { prog: { name: '進捗妨害', theme: null }, dark: { name: '暗闇', theme: null }, short: { name: '電気のショート', theme: 'space' }, flood: { name: '水の氾濫', theme: 'island' } };
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
 const DISCUSS_MS = process.env.DOA_TEST === '1' ? 4000 : 20000; // 自動テスト時だけ議論を短く
 const VOTE_MS = 30000, RESULT_MS = 9500, END_AUTO_MS = 25000;
@@ -410,7 +411,7 @@ function newRoom() {
   let code;
   do { code = String(Math.floor(Math.random() * 90000) + 10000); } while (rooms.has(code));
   const R = {
-    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1, mapIdx: 0,
+    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1, mapIdx: 0, lchat: [],
     phase: 'lobby', endsAt: 0, remainAtEnd: GAME_MS, endedAt: 0, progress: 0, crewTotal: 1,
     result: null, bodies: [], nextBody: 1, meeting: null, noMeetingUntil: 0, freezeUntil: 0, map: null, mapMsg: null,
   };
@@ -482,7 +483,7 @@ function startGame(R) {
   part.forEach((p, i) => {
     resetPlayer(R, p, i, n); p.theme = R.map.theme;
     p.role = imps.has(p) ? 'imposter' : 'crew';
-    p.killReady = now + FIRST_KILL_CD; p.sabReady = now + SAB_CD; p.warpReady = 0;
+    p.killReady = now + FIRST_KILL_CD; p.sabReady = now + SAB_CD; p.progReady = now + PROG_CD; p.warpReady = 0;
     fillTasks(p);
   });
   rEmit(R, 'sfx', 'start');
@@ -693,6 +694,13 @@ function doSabotage(R, p, kind) {
   const now = Date.now(), def = SABS[kind];
   if (!def) return;
   if (def.theme && def.theme !== R.map.theme) { toast(p, `「${def.name}」はこのマップでは使えない`, 'error'); return; }
+  if (kind === 'prog') { // 独立した進捗妨害: ほかの妨害が進行中でも使える
+    if (now < (p.progReady || 0)) { toast(p, `進捗妨害はあと${Math.ceil((p.progReady - now) / 1000)}秒で使える`, 'error'); return; }
+    for (const q of participants(R)) if (q.role === 'imposter') q.progReady = now + PROG_CD;
+    R.progress = Math.max(0, R.progress - SAB_PCT);
+    rEmit(R, 'sfx', 'alarm'); rEmit(R, 'toast', { text: `📉 妨害工作! タスク進捗が${SAB_PCT}%低下`, kind: 'error' });
+    return;
+  }
   if (now < p.sabReady) { toast(p, `妨害はあと${Math.ceil((p.sabReady - now) / 1000)}秒で使える`, 'error'); return; }
   if (sabActive(R, now)) { toast(p, 'ほかの妨害が進行中', 'error'); return; }
   let zones = null;
@@ -701,8 +709,7 @@ function doSabotage(R, p, kind) {
     zones = empty.sort(() => Math.random() - .5).slice(0, FLOOD_N).map(z => ({ ...z, bail: 0, done: false }));
     if (!zones.length) { toast(p, '今は水を氾濫させられる通路がない', 'error'); return; }
   }
-  for (const q of participants(R)) if (q.role === 'imposter') q.sabReady = now + SAB_CD; // インポスター共通のクールタイム
-  R.progress = Math.max(0, R.progress - SAB_PCT);
+  for (const q of participants(R)) if (q.role === 'imposter') q.sabReady = now + SAB_CD; // インポスター共通のクールタイム (進捗は減らさない)
   if (kind === 'dark') R.sab.dark = now + DARK_MS;
   else if (kind === 'short') {
     R.sab.short = { endsAt: now + SHORT_MS, need: SHORT_NEED, fixed: 0, spots: R.map.shorts.slice(0, SHORT_NEED).map(q => ({ x: q.x, y: q.y, th: q.th, done: false })) };
@@ -710,7 +717,7 @@ function doSabotage(R, p, kind) {
   } else if (kind === 'flood') { R.sab.flood = { endsAt: now + FLOOD_MAX_MS, zones }; rebuildFlood(R); }
   rEmit(R, 'sfx', 'alarm');
   const msg = { dark: '🌑 暗闇! 視界がほとんど効かない', short: `⚡ 電気がショート! 2分以内に配線を${SHORT_NEED}か所直さないと酸素が尽きる`, flood: '🌊 水が氾濫! 水たまりの前で SPACE を連打して掻き出そう' }[kind];
-  rEmit(R, 'toast', { text: `${msg} (進捗 -${SAB_PCT}%)`, kind: 'error' });
+  rEmit(R, 'toast', { text: msg, kind: 'error' });
 }
 function tickSab(R, now) {
   const sb = R.sab;
@@ -800,7 +807,7 @@ function broadcast(R, now) {
       me: {
         role: v.role, alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
         tasks: v.tasks, item: v.item || null,
-        kcd: Math.max(0, (v.killReady || 0) - now), scd: Math.max(0, (v.sabReady || 0) - now),
+        kcd: Math.max(0, (v.killReady || 0) - now), scd: Math.max(0, (v.sabReady || 0) - now), pcd: Math.max(0, (v.progReady || 0) - now),
         em: v.emUsed, emLock: Math.max(0, R.noMeetingUntil - now),
         mates: v.role === 'imposter' ? part.filter(x => x.role === 'imposter' && x !== v).map(x => x.id) : [],
         warps: v.role === 'imposter' && R.map ? R.map.warps : null, wcd: Math.max(0, (v.warpReady || 0) - now), // ワープ地点はインポスターだけに送る
@@ -833,6 +840,9 @@ setInterval(() => {
   for (const R of rooms.values()) tickRoom(R, now, dt);
 }, 1000 / TICK_RATE);
 
+// ---------- ロビーチャット / エモート ----------
+const EMOTES = ['wave', 'heart', 'angry', 'wow', 'good', 'lol', 'sad', 'q'];
+function lobbySys(R, t) { const m = { sys: true, t }; R.lchat.push(m); R.lchat = R.lchat.slice(-40); rEmit(R, 'lchat', m); }
 // ---------- Socket.io ----------
 function sendReqs(pid) { // 届いているフレンド申請を本人に送る
   const u = userOf(pid), e = presence.get(pid); if (!u || !e) return;
@@ -881,6 +891,8 @@ function addPlayer(socket, R, d) {
   sockRoom.set(socket.id, R);
   socket.join('r' + R.code);
   socket.emit('joined', { code: R.code });
+  socket.emit('lchatHist', R.lchat);
+  lobbySys(R, `${p.name} が参加しました`);
   if (late && R.mapMsg) socket.emit('map', R.mapMsg);
 }
 
@@ -1022,7 +1034,9 @@ io.on('connection', (socket) => {
     const { R, p } = C(); if (!p || R.phase !== 'playing' || !d) return;
     if (d.button) R.noMeetingUntil = 0;
     if (d.role) p.role = d.role;
-    if (d.resetCd) { p.sabReady = 0; p.warpReady = 0; }
+    if (d.resetCd) { p.sabReady = 0; p.progReady = 0; p.warpReady = 0; }
+    if (d.resetProg) p.progReady = 0;
+    if (d.die) { p.alive = false; cancelMini(p); }
     if (d.shortLeft != null && R.sab.short) R.sab.short.endsAt = Date.now() + d.shortLeft;
     if (d.clearDark) R.sab.dark = 0;
     const fz = d.flood != null && R.sab.flood ? R.sab.flood.zones[d.flood] : null;
@@ -1087,6 +1101,20 @@ io.on('connection', (socket) => {
   });
   socket.on('toLobby', () => { const { R, p } = C(); if (p && R.phase === 'end') toLobby(R); });
 
+  // ロビーのテキストチャット (全員に同期・直近40件を新しく入った人にも送る)
+  socket.on('lobbyChat', (t) => {
+    const { R, p } = C(); if (!p || R.phase !== 'lobby') return;
+    const now = Date.now(); if (now - (p.lastLChat || 0) < 400) return; p.lastLChat = now;
+    const text = String(t || '').replace(/[<>]/g, '').trim().slice(0, 80); if (!text) return;
+    const m = { id: p.id, n: p.name, c: p.color, t: text }; R.lchat.push(m); R.lchat = R.lchat.slice(-40); rEmit(R, 'lchat', m);
+  });
+  // エモート: 頭上に感情アイコンを出す (幽霊のエモートは幽霊・観戦者にだけ届く)
+  socket.on('emote', (e) => {
+    const { R, p } = C(); if (!p || !EMOTES.includes(e)) return;
+    const now = Date.now(); if (now - (p.lastEmote || 0) < 900) return; p.lastEmote = now;
+    const ghostOnly = (R.phase === 'playing' || R.phase === 'meeting') && (!p.alive || p.late);
+    for (const v of R.players.values()) if (!ghostOnly || !v.alive || v.late) io.to(v.id).emit('emote', { id: p.id, e });
+  });
   socket.on('chat', (t) => {
     const { R, p } = C(); const m = R && R.meeting;
     if (!p || R.phase !== 'meeting' || !m || m.mode === 'result' || !p.alive || p.late) return;
@@ -1111,6 +1139,7 @@ io.on('connection', (socket) => {
     if (!p) return;
     R.players.delete(socket.id);
     if (R.meeting) R.meeting.votes.delete(socket.id);
+    lobbySys(R, `${p.name} が退出しました`);
     if (R.players.size === 0) { rooms.delete(R.code); return; }
     if (R.phase === 'playing' || R.phase === 'meeting') {
       if (participants(R).length === 0) { toLobby(R); return; }
