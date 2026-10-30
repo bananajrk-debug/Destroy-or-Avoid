@@ -877,8 +877,9 @@ function doWarp(R, p, idx) {
   if (!to) return;
   if (!ws.some(w => near(p, w, WARP_RANGE))) { toast(p, 'ワープ地点の上で使おう', 'error'); return; }
   if (now < (p.warpReady || 0)) { toast(p, `ワープはあと${Math.ceil((p.warpReady - now) / 1000)}秒`, 'error'); return; }
+  const from = { x: p.x, y: p.y };
   p.x = to.x; p.y = to.y + 20; p.warpReady = now + WARP_CD;
-  io.to(p.id).emit('sfx', 'click');
+  io.to(p.id).emit('warped', { from, to: { x: p.x, y: p.y }, idx: idx | 0 }); // 本人の画面だけでワープ演出 (カメラが滑らかに移動)
 }
 function sabView(R, now) {
   const sb = R.sab; if (!sb) return null;
