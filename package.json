@@ -1,7 +1,7 @@
 {
-  "name": "destroy-or-avoid",
-  "version": "7.1.0",
-  "description": "Destroy or Avoid - online realtime action social-deduction game (asymmetric Skeld-style map + iPad keyboard support edition)",
+  "name": "pachit-monster",
+  "version": "2.0.0",
+  "description": "パチットモンスター 〜風林火山〜 平原を探索してパチモンを集め、3対3じゃんけんバトルに挑むブラウザゲーム",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -10,7 +10,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "socket.io": "^4.7.5"
-  }
+    "express": "^4.21.2"
+  },
+  "license": "MIT"
 }
