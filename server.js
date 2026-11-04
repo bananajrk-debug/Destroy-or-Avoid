@@ -27,10 +27,12 @@ const SAB_CD = 30000, SAB_PCT = 20, PROG_CD = 30000;
 const DARK_MS = 15000;                       // 暗闇の長さ (15秒で自動的に視界が戻る)
 const SHORT_MS = 120000, SHORT_NEED = 5;     // 電気のショート: 2分以内に5か所直さないとクルー全滅
 const FLOOD_N = 3, BAIL_NEED = 30, FLOOD_MAX_MS = 150000; // 水の氾濫: 3か所。SPACE30回で1か所解消 (150秒で自然に引く)
-const WARP_CD = 6000, WARP_RANGE = 70;       // インポスター専用ワープ
+const WARP_CD = 6000, WARP_RANGE = 70;       // インポスター専用ワープ (決められたワープ地点どうしでのみ移動できる)
+const CAM_STATIC_MS = 1500, CAM_RANGE = 90;  // 監視カメラ: 切り替え時の砂嵐 1.5秒 / 端末を使える距離
+const SWAP_COUNT_MS = 3000, SWAP_FLASH_MS = 150; // 位置入れ替え: 3カウント → 白フラッシュ → 入れ替え
 // 探偵: キルが起きると、探偵だけに被害者の直前5秒の移動軌跡が届く
 const TRAIL_MS = 5000, TRAIL_STEP = 100, MAX_DET = 2, DET_TRACE_MS = 45000;
-const SABS = { prog: { name: '進捗妨害', themes: null }, dark: { name: '暗闇', themes: null }, short: { name: '電気のショート', themes: ['space'] }, flood: { name: '水の氾濫', themes: ['island', 'sky'] } };
+const SABS = { prog: { name: '進捗妨害', themes: null }, dark: { name: '暗闇', themes: null }, short: { name: '電気のショート', themes: ['space'] }, flood: { name: '水の氾濫', themes: ['island', 'sky'] }, swap: { name: '位置入れ替え', themes: null } };
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
 const DISCUSS_MS = process.env.DOA_TEST === '1' ? 4000 : 20000; // 自動テスト時だけ議論を短く
 const VOTE_MS = 30000, RESULT_MS = 9500, END_AUTO_MS = 25000;
@@ -227,7 +229,7 @@ LAYOUTS.push({
     reactor:     { x: 2,  y: 15, w: 9,  h: 10 }, // 【中】原子炉
     nav:         { x: 52, y: 14, w: 10, h: 11 }, // 【中】操舵室 (船首)
     medbay:      { x: 15, y: 12, w: 7,  h: 6 },  // 【小】医務室
-    security:    { x: 14, y: 19, w: 6,  h: 5 },  // 【小】警備室
+    security:    { x: 14, y: 19, w: 8,  h: 6 },  // 【小】監視室 (監視カメラの端末。端末を置くため 6x5 → 8x6 に拡張)
     electrical:  { x: 15, y: 26, w: 8,  h: 5 },  // 【小】電気室 (袋小路)
     o2:          { x: 42, y: 6,  w: 7,  h: 6 },  // 【小】酸素室
     comms:       { x: 42, y: 28, w: 8,  h: 6 },  // 【小】通信室
@@ -477,8 +479,9 @@ function genMap(layoutIdx, seedIn) {
     }
     return cp(bc.c + 4, bc.r);
   }
-  const stations = {};
   const TR = L.taskRooms || TASK_ROOMS, theme = L.theme || 'island';
+  const monitor = theme === 'space' && R.security ? spot('security') : null; // 宇宙船: 監視室の端末 (狭い部屋なので最初に場所を確保)
+  const stations = {};
   for (const it in TR.stations) stations[it] = spot(TR.stations[it]);
   const tasks = {};
   for (const d of tasksOf(theme)) tasks[d.id] = spot(TR[d.id]);
@@ -487,6 +490,9 @@ function genMap(layoutIdx, seedIn) {
   const warps = WR.filter(k => R[k]).map(k => ({ ...spot(k), th: R[k].th }));
   // 宇宙船: 電気のショートで火花が散る配線 (5か所)
   const shorts = theme === 'space' ? ['electrical', 'upperEngine', 'nav', 'comms', 'storage'].map(k => ({ ...spot(k), th: R[k].th })) : [];
+  // 宇宙船: 監視室の端末と監視カメラ (部屋の奥の壁に取り付け。映像は部屋全体を映す)
+  const cams = theme === 'space' ? ['cafeteria', 'medbay', 'storage', 'nav', 'electrical'].filter(k => R[k]).map(k => { const r = R[k];
+    return { x: (r.x + r.w / 2) * CELL, y: r.y * CELL + 8, th: r.th, view: { x: (r.x - 1.5) * CELL, y: (r.y - 1.5) * CELL, w: (r.w + 3) * CELL, h: (r.h + 3) * CELL } }; }) : [];
   // 孤島: 水が氾濫しうる通路 (通路の途中の 3x3 マス)
   const floods = [];
   const inAnyRoom = (c, r) => Object.values(R).some(rm => c >= rm.x && c < rm.x + rm.w && r >= rm.y && r < rm.y + rm.h);
@@ -501,14 +507,14 @@ function genMap(layoutIdx, seedIn) {
   return {
     seed, layout: layoutIdx, name: L.name, theme, grid: g, rows: g.map(row => row.map(v => (v ? '1' : '0')).join('')),
     rooms: Object.values(R).map(r => [r.x, r.y, r.w, r.h, r.th]),
-    button: cp(bc.c, bc.r), stations, tasks, warps, shorts, floods,
+    button: cp(bc.c, bc.r), stations, tasks, warps, shorts, floods, monitor, cams,
   };
 }
 // GENMAP>>
 
 // ロビーのプレビュー用 (固定シードで1回だけ生成)
 let MAP_PREVIEWS = null;
-const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, WARPS: (m.warps || []).map(w => ({ x: w.x, y: w.y, th: w.th })), BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
+const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, WARPS: (m.warps || []).map(w => ({ x: w.x, y: w.y, th: w.th })), MONITOR: m.monitor || null, CAMS: m.cams || [], BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
 
 function resolveWalls(grid, p, extra) {
   const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : (grid[r][c] || (extra ? extra(c, r) : false));
@@ -559,7 +565,22 @@ const hostId = (R) => { let h = null; for (const p of R.players.values()) if (!h
 const maxImp = (n) => Math.min(MAX_IMP, Math.max(1, Math.floor((n - 1) / 2)));
 const hasItem = (p, t) => p.item === t;
 const removeItem = (p, t) => { if (!hasItem(p, t)) return false; p.item = null; return true; };
-function cancelMini(p) { if (p.mini) { p.mini = null; io.to(p.id).emit('miniCancel'); } }
+function cancelMini(p) { if (p.mini) { p.mini = null; io.to(p.id).emit('miniCancel'); } closeCam(p); }
+function closeCam(p) { if (p.cam) { p.cam = null; io.to(p.id).emit('camClose'); } }
+// 監視カメラ: 端末の前で開き、矢印で切り替える。切り替え中 (砂嵐 1.5秒) はそのカメラのランプは点かない
+function doCam(R, p, d) {
+  if (!d || typeof d !== 'object') return;
+  if (d.close) { closeCam(p); return; }
+  const cams = R.map && R.map.cams; if (R.phase !== 'playing' || p.late || !p.alive || p.mini || !cams || !cams.length || !R.map.monitor) return;
+  const i = d.i; if (!Number.isInteger(i) || i < 0 || i >= cams.length) return;
+  const now = Date.now();
+  if (!p.cam) { if (!near(p, R.map.monitor, CAM_RANGE)) { toast(p, '監視室の端末の前で使おう', 'error'); return; }
+    if (R.sab.short) { toast(p, '⚡ ショート中はカメラが映らない', 'error'); return; }
+    p.cam = { i, at: now + 400, t: now }; p.input = { x: 0, y: 0 }; p.moving = false; io.to(p.id).emit('camOpen', { i, static: 400 }); return; }
+  if (i === p.cam.i || now < p.cam.at) return; // 砂嵐の最中は次の切り替えを受け付けない
+  p.cam = { i, at: now + CAM_STATIC_MS, t: now }; io.to(p.id).emit('camOpen', { i, static: CAM_STATIC_MS });
+}
+const camsOn = (R, now) => { const on = new Set(); for (const p of R.players.values()) if (p.cam && now >= p.cam.at && p.alive) on.add(p.cam.i); return [...on]; };
 const tpos = (R, id) => R.map.tasks[id];
 
 function ringPos(R, i, n, rad) {
@@ -593,7 +614,7 @@ function completeTask(R, p, id) {
 function resetPlayer(R, p, i, n) {
   const pos = ringPos(R, i, n, 100);
   p.x = pos.x; p.y = pos.y;
-  p.alive = true; p.item = null; p.mini = null; p.input = { x: 0, y: 0 };
+  p.alive = true; p.item = null; p.mini = null; p.cam = null; p.input = { x: 0, y: 0 };
   p.tasks = []; p.doneTasks = new Set(); p.moving = false; p.emUsed = false;
 }
 
@@ -638,7 +659,7 @@ function toLobby(R) {
   const all = [...R.players.values()];
   all.forEach((p, i) => {
     p.late = false; p.ready = false; p.role = null; p.sub = null; p.trail = []; p.alive = true;
-    p.item = null; p.tasks = []; p.mini = null; p.input = { x: 0, y: 0 }; p.moving = false;
+    p.item = null; p.tasks = []; p.mini = null; p.cam = null; p.input = { x: 0, y: 0 }; p.moving = false;
     const s = lobbySpawn(i, all.length); p.x = s.x; p.y = s.y;
   });
 }
@@ -699,6 +720,7 @@ function endMeeting(R, now) {
   if (R.sab.dark > m.startAt) R.sab.dark += paused;      // 会議中は妨害のタイマーも止まる
   if (R.sab.short) R.sab.short.endsAt += paused;
   if (R.sab.flood) R.sab.flood.endsAt += paused;
+  if (R.sab.swap) R.sab.swap.at += paused;
   R.phase = 'playing'; R.meeting = null; R.bodies = [];
   for (const q of R.players.values()) q.trail = []; // 会議で円形に並べ直したぶんの移動は記録しない
   R.noMeetingUntil = now + BTN_LOCK;
@@ -776,6 +798,10 @@ function doAction(R, p) {
     toast(p, `${ITEM_NAME[d.item]}を取得`, 'info'); io.to(p.id).emit('sfx', 'click');
     return;
   }
+  if (R.map.monitor && near(p, R.map.monitor, CAM_RANGE)) { // 監視室の端末
+    if (!p.alive) { toast(p, '幽霊はカメラを使えない', 'error'); return; }
+    doCam(R, p, { i: 0 }); return;
+  }
   if (near(p, R.map.button, BTN_RANGE)) {
     if (!p.alive) return;
     if (p.emUsed) { toast(p, '緊急会議は1人1回まで', 'error'); return; }
@@ -820,7 +846,7 @@ function sendDetTrace(R, victim, now) {
   for (const d of participants(R)) if (d.sub === 'detective' && d.alive && d !== victim) io.to(d.id).emit('detTrace', msg);
 }
 // ---------- 妨害 (サボタージュ) ----------
-function resetSab(R) { R.sab = { dark: 0, short: null, flood: null, cells: new Set(), on: null }; }
+function resetSab(R) { R.sab = { dark: 0, short: null, flood: null, swap: null, cells: new Set(), on: null }; }
 // 妨害 (暗闇・ショート・氾濫) が完全に終わった瞬間から、インポスター共通のクールタイムを開始する
 function sabEnded(R, now) {
   const kind = R.sab.on; R.sab.on = null;
@@ -828,7 +854,16 @@ function sabEnded(R, now) {
   for (const q of participants(R)) if (q.role === 'imposter' && !q.late) toast(q, `妨害が終了 — 次の妨害まで${SAB_CD / 1000}秒`, 'info');
   return kind;
 }
-const sabActive = (R, now) => R.sab.dark > now || !!R.sab.short || !!R.sab.flood;
+const sabActive = (R, now) => R.sab.dark > now || !!R.sab.short || !!R.sab.flood || !!R.sab.swap;
+// 位置入れ替え: 生きている全員を、必ず「自分以外の誰か」の位置へ移す (ランダムな完全順列)
+function doSwap(R) {
+  const ps = participants(R).filter(p => p.alive && !p.late); if (ps.length < 2) return 0;
+  const pos = ps.map(p => ({ x: p.x, y: p.y })); let ord;
+  for (let k = 0; k < 100; k++) { ord = ps.map((_, i) => i).sort(() => Math.random() - .5); if (ord.every((j, i) => j !== i)) break; ord = null; }
+  if (!ord) ord = ps.map((_, i) => (i + 1) % ps.length); // 念のため: 1つずらし
+  ps.forEach((p, i) => { cancelMini(p); p.x = pos[ord[i]].x; p.y = pos[ord[i]].y; p.input = { x: 0, y: 0 }; p.moving = false; });
+  return ps.length;
+}
 function nearRect(p, z, rng) { // 点と矩形(マス単位)の距離
   const x0 = z.c0 * CELL, y0 = z.r0 * CELL, x1 = (z.c1 + 1) * CELL, y1 = (z.r1 + 1) * CELL;
   return Math.hypot(Math.max(x0 - p.x, 0, p.x - x1), Math.max(y0 - p.y, 0, p.y - y1)) <= rng;
@@ -857,19 +892,25 @@ function doSabotage(R, p, kind) {
     zones = empty.sort(() => Math.random() - .5).slice(0, FLOOD_N).map(z => ({ ...z, bail: 0, done: false }));
     if (!zones.length) { toast(p, '今は水を氾濫させられる通路がない', 'error'); return; }
   }
+  if (kind === 'swap' && participants(R).filter(q => q.alive && !q.late).length < 2) { toast(p, '入れ替える相手がいない', 'error'); return; }
   R.sab.on = kind; for (const q of participants(R)) if (q.role === 'imposter') q.sabReady = Infinity; // 発動中はクールタイム停止 → 終了時に sabEnded() で開始
   if (kind === 'dark') R.sab.dark = now + DARK_MS;
   else if (kind === 'short') {
     R.sab.short = { endsAt: now + SHORT_MS, need: SHORT_NEED, fixed: 0, spots: R.map.shorts.slice(0, SHORT_NEED).map(q => ({ x: q.x, y: q.y, th: q.th, done: false })) };
-    for (const q of participants(R)) if (q.mini) cancelMini(q); // 作業中のタスクは中断
+    for (const q of participants(R)) cancelMini(q); // 作業中のタスク・監視カメラは中断 (ショート中はカメラも映らない)
   } else if (kind === 'flood') { R.sab.flood = { endsAt: now + FLOOD_MAX_MS, zones }; rebuildFlood(R); }
+  else if (kind === 'swap') R.sab.swap = { at: now + SWAP_COUNT_MS, flashed: false };
   rEmit(R, 'sfx', 'alarm');
   const sky = R.map.theme === 'sky';
-  const msg = { dark: '🌑 暗闇! 視界がほとんど効かない', short: `⚡ 電気がショート! 2分以内に配線を${SHORT_NEED}か所直さないと酸素が尽きる`, flood: sky ? '☁ 雲海が吊り橋を覆った! 雲の前で SPACE を連打して吹き払おう' : '🌊 水が氾濫! 水たまりの前で SPACE を連打して掻き出そう' }[kind];
+  const msg = { dark: '🌑 暗闇! 視界がほとんど効かない', short: `⚡ 電気がショート! 2分以内に配線を${SHORT_NEED}か所直さないと酸素が尽きる`, flood: sky ? '☁ 雲海が吊り橋を覆った! 雲の前で SPACE を連打して吹き払おう' : '🌊 水が氾濫! 水たまりの前で SPACE を連打して掻き出そう', swap: '🔀 位置入れ替えが始まる! 3カウント後に全員の位置が入れ替わる' }[kind];
   rEmit(R, 'toast', { text: msg, kind: 'error' });
 }
 function tickSab(R, now) {
   const sb = R.sab;
+  if (sb.swap) { // 3カウント → 0で白フラッシュ → フラッシュの最中に入れ替え
+    if (!sb.swap.flashed && now >= sb.swap.at) { sb.swap.flashed = true; rEmit(R, 'swapFlash'); }
+    if (now >= sb.swap.at + SWAP_FLASH_MS) { sb.swap = null; const n = doSwap(R); rEmit(R, 'toast', { text: n ? '🔀 全員の位置が入れ替わった!' : '🔀 入れ替える相手がいなかった', kind: 'error' }); }
+  }
   if (sb.dark && now >= sb.dark) { sb.dark = 0; rEmit(R, 'toast', { text: '🌑 暗闇が晴れた! 視界が元に戻った', kind: 'good' }); }
   if (sb.short && now >= sb.short.endsAt) { // 時間切れ: 酸素が尽きてクルー全滅
     sb.short = null;
@@ -881,19 +922,22 @@ function tickSab(R, now) {
 }
 function doWarp(R, p, idx) {
   if (R.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter' || p.mini) return;
-  const now = Date.now(), ws = R.map.warps, to = ws[idx | 0];
-  if (!to) return;
-  if (!ws.some(w => near(p, w, WARP_RANGE))) { toast(p, 'ワープ地点の上で使おう', 'error'); return; }
+  const now = Date.now(), ws = R.map.warps;
+  if (!Number.isInteger(idx) || idx < 0 || idx >= ws.length) return; // 行き先はマップに決められたワープ地点 (番号) だけ。座標の指定はできない
+  const to = ws[idx], from0 = ws.findIndex(w => near(p, w, WARP_RANGE));
+  if (from0 < 0) { toast(p, 'ワープ地点の上で使おう', 'error'); return; }
+  if (from0 === idx) { toast(p, 'そこはいまいるワープ地点', 'error'); return; }
   if (now < (p.warpReady || 0)) { toast(p, `ワープはあと${Math.ceil((p.warpReady - now) / 1000)}秒`, 'error'); return; }
   const from = { x: p.x, y: p.y };
   p.x = to.x; p.y = to.y + 20; p.warpReady = now + WARP_CD;
-  io.to(p.id).emit('warped', { from, to: { x: p.x, y: p.y }, idx: idx | 0 }); // 本人の画面だけでワープ演出 (カメラが滑らかに移動)
+  io.to(p.id).emit('warped', { from, to: { x: p.x, y: p.y }, idx }); // 本人の画面だけでワープ演出 (カメラが滑らかに移動)
 }
 function sabView(R, now) {
   const sb = R.sab; if (!sb) return null;
   return {
     dark: Math.max(0, sb.dark - now),
     short: sb.short ? { left: Math.max(0, sb.short.endsAt - now), need: sb.short.need, fixed: sb.short.fixed, spots: sb.short.spots } : null,
+    swap: sb.swap ? { left: Math.max(0, sb.swap.at - now) } : null,
     flood: sb.flood ? { zones: sb.flood.zones.filter(z => !z.done).map(({ c0, r0, c1, r1, bail }) => ({ c0, r0, c1, r1, bail })), need: BAIL_NEED } : null,
   };
 }
@@ -921,7 +965,7 @@ function tickRoom(R, now, dt) {
         while (p.trail.length && now - p.trail[0].t > TRAIL_MS) p.trail.shift();
       }
       if (p.mini && now - p.mini.start > MINI_TIMEOUT) cancelMini(p);
-      if (p.mini || now < R.freezeUntil) { p.moving = false; continue; }
+      if (p.mini || p.cam || now < R.freezeUntil) { p.moving = false; continue; }
       const len = Math.hypot(p.input.x, p.input.y);
       p.moving = len > 0;
       if (len > 0) {
@@ -947,7 +991,7 @@ function broadcast(R, now) {
   else if (R.phase === 'meeting') remain = Math.max(0, R.endsAt - R.meeting.startAt);
   else if (R.phase === 'end') remain = R.remainAtEnd;
   const part = participants(R), host = hostId(R);
-  const base = { ph: R.phase, remain, prog: Math.round(R.progress * 10) / 10, result: R.result, ic: R.impN, code: R.code, sab: R.phase === 'lobby' ? null : sabView(R, now) };
+  const base = { ph: R.phase, remain, prog: Math.round(R.progress * 10) / 10, result: R.result, ic: R.impN, code: R.code, sab: R.phase === 'lobby' ? null : sabView(R, now), cams: R.phase === 'playing' && R.map && R.map.cams.length ? camsOn(R, now) : null };
   let lobby = null;
   if (R.phase === 'lobby') {
     lobby = {
@@ -1176,7 +1220,7 @@ io.on('connection', (socket) => {
 
   socket.on('input', (d) => {
     const { R, p } = C(); if (!p) return;
-    if (!d || typeof d !== 'object' || p.mini || (R.phase !== 'playing' && R.phase !== 'lobby')) { p.input = { x: 0, y: 0 }; return; }
+    if (!d || typeof d !== 'object' || p.mini || p.cam || (R.phase !== 'playing' && R.phase !== 'lobby')) { p.input = { x: 0, y: 0 }; return; }
     p.input = { x: (d.right ? 1 : 0) - (d.left ? 1 : 0), y: (d.down ? 1 : 0) - (d.up ? 1 : 0) };
   });
   socket.on('action', () => { const { R, p } = C(); if (p) doAction(R, p); });
@@ -1184,6 +1228,7 @@ io.on('connection', (socket) => {
   socket.on('kill', () => { const { R, p } = C(); if (p) doKill(R, p); });
   socket.on('sabotage', (kind) => { const { R, p } = C(); if (p) doSabotage(R, p, kind); });
   socket.on('warp', (idx) => { const { R, p } = C(); if (p) doWarp(R, p, idx); });
+  socket.on('cam', (d) => { const { R, p } = C(); if (p) doCam(R, p, d); });
   // discard廃止（スロットシステム廃止）
 
   // 自動テスト専用 (DOA_TEST=1 のときだけ有効): 指定タスク/置き場へワープ
