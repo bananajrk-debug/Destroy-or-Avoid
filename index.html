@@ -121,6 +121,32 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
 #sabBanner.short{background:#5c0d0dee;border-color:#ff6b6b;animation:sabBlink 1s infinite}
 #sabBanner.flood{background:#0b3a5ccc;border-color:#4dabf7}
 #sabBanner.dark{background:#111c;border-color:#868e96}
+#sabBanner.swap{background:#3b0d5cdd;border-color:#e599f7;animation:sabBlink .5s infinite}
+#swapCd{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none}
+#swapCd b{font-size:min(34vh,260px);font-weight:900;color:#fff;line-height:1;text-shadow:0 0 30px #e599f7,0 8px 0 #5f3dc4;animation:swapPop 1s ease-out both}
+#swapCd span{font-size:24px;font-weight:900;color:#f3d9fa;text-shadow:0 2px 6px #000;background:#0008;border-radius:99px;padding:4px 18px}
+@keyframes swapPop{0%{transform:scale(1.7);opacity:0}18%{transform:scale(1);opacity:1}85%{opacity:1}100%{transform:scale(.85);opacity:.25}}
+#flash{position:fixed;inset:0;z-index:60;background:#fff;pointer-events:none;opacity:0}
+#flash.go{animation:flashGo .9s ease-out forwards}
+@keyframes flashGo{0%{opacity:1}35%{opacity:1}100%{opacity:0}}
+#camPop{position:fixed;inset:0;z-index:46;background:#000c;display:flex;align-items:center;justify-content:center}
+#camBox{background:#0b1220;border:3px solid #4dabf7;border-radius:16px;padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(980px,96vw,calc((100vh - 150px) * 1.6))}
+#camHead{display:flex;align-items:center;gap:12px;width:100%;font-weight:900;font-size:18px;color:#d0ebff;flex-wrap:wrap}
+#camHead small{margin-left:auto;font-size:12px;font-weight:700;opacity:.7}
+#camRec{display:inline-flex;align-items:center;gap:6px;color:#ff6b6b;font-size:14px}
+#camRec i{width:12px;height:12px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 10px #ff3b3b;animation:recBlink 1s steps(1) infinite}
+@keyframes recBlink{50%{opacity:.15}}
+#camWrap{position:relative;width:100%}
+#camCv{position:relative;z-index:0;display:block;width:100%;aspect-ratio:16/10;border-radius:10px;border:3px solid #263247;background:#000}
+.camArr{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:64px;height:64px;border-radius:50%;font-size:28px;padding:0;min-width:0;background:#000b;border:3px solid #fffa;box-shadow:0 0 12px #000;color:#fff}
+.camArr:disabled{opacity:.35}
+.camArr:active{transform:translateY(-50%) scale(.92)} /* 共通の button:active で位置がずれてクリックが外れないように */
+#camL{left:12px}#camR{right:12px}
+#camFoot{display:flex;align-items:center;gap:16px}
+#camDots{display:flex;gap:8px}
+#camDots span{width:12px;height:12px;border-radius:50%;background:#334}
+#camDots span.on{background:#4dabf7;box-shadow:0 0 8px #4dabf7}
+#camX{background:#555;box-shadow:0 4px 0 #333;padding:8px 20px;font-size:15px}
 #sabBanner small{display:block;font-size:12px;font-weight:700;opacity:.9}
 @keyframes sabBlink{50%{box-shadow:0 0 28px #ff3b3b}}
 #sabList{display:flex;flex-direction:column;gap:8px;width:100%}
@@ -137,6 +163,7 @@ body.touch #lobbyKeys::after{content:' ・ 画面左下をドラッグで移動'
 .wpPin:disabled{opacity:1;cursor:default;filter:none}
 .wpPin.cd:not(.here){filter:grayscale(.85) brightness(.7);animation:none}
 .wpPin.go{animation:wpGo .2s ease-in forwards}
+.wpPin:active{transform:translate(-50%,-50%) scale(.92)}
 @keyframes wpPulse{0%{box-shadow:0 0 0 0 #b197fcaa,0 3px 8px #000a}70%{box-shadow:0 0 0 14px #b197fc00,0 3px 8px #000a}100%{box-shadow:0 0 0 0 #b197fc00,0 3px 8px #000a}}
 @keyframes wpGo{to{transform:translate(-50%,-50%) scale(1.6);box-shadow:0 0 0 30px #b197fc00;background:#fff}}
 #warpCd{min-height:1.3em;color:#ffd43b;font-weight:800}
@@ -426,7 +453,7 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
 <div id="mapOverlay" class="hidden">
   <div id="mapHead">🗺 マップ</div>
   <canvas id="mapBig" width="1600" height="1000"></canvas>
-  <div id="mapLegend"><span>⚪ 現在地</span><span>⭐ 会議直前の位置</span><span style="color:#8ecbff">━ あなたの足跡</span><span>💀 あなたが死んだ場所</span><span style="color:#ff6b6b">✖ 死体 (赤いモヤ)</span><span>🟨 タスク</span><span style="color:#b197fc">🟣 ワープホール (インポスター専用)</span></div>
+  <div id="mapLegend"><span>⚪ 現在地</span><span>⭐ 会議直前の位置</span><span style="color:#8ecbff">━ あなたの足跡</span><span>💀 あなたが死んだ場所</span><span style="color:#ff6b6b">✖ 死体 (赤いモヤ)</span><span>🟨 タスク</span><span style="color:#b197fc">🟣 ワープホール (インポスター専用)</span><span class="spOnly">📹 監視カメラ (🔴=誰かが見ている)</span></div>
   <button class="mapClose" id="mapCloseBtn">✕</button>
 </div>
 <div id="statsPop" class="hidden"><div id="statsBox">
@@ -471,6 +498,13 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
 </div></div>
 <div id="joyZone"></div><div id="joyBase" class="hidden"><div id="joyKnob"></div></div>
 <div id="toast"></div>
+<div id="swapCd" class="hidden"></div>
+<div id="flash"></div>
+<div id="camPop" class="hidden"><div id="camBox">
+  <div id="camHead">📹 監視カメラ <span id="camNm"></span><span id="camRec"><i></i>REC</span><small>◀ ▶ / ← → で切り替え ・ Esc / SPACE で閉じる</small></div>
+  <div id="camWrap"><canvas id="camCv" width="960" height="600"></canvas><button id="camL" class="camArr" title="前のカメラ">◀</button><button id="camR" class="camArr" title="次のカメラ">▶</button></div>
+  <div id="camFoot"><div id="camDots"></div><button id="camX">✕ 閉じる</button></div>
+</div></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -800,7 +834,7 @@ const THEMES = [{ n: 'キャンプ(拠点)', z: 'camp' }, { n: '大きな浜辺'
 // 宇宙船の部屋 (サーバーの ROOM_TH 20〜30)。h = 床の色相
 // 空島の島 (サーバーの ROOM_TH 40〜50)。s = 地面の種類 (草地/石畳/水晶/木の甲板)
 [['天空の広場', 'stone'], ['浮遊庭園', 'grass'], ['風車の丘', 'grass'], ['古代遺跡', 'stone'], ['浮遊石の鉱床', 'crystal'], ['飛行船の港', 'wood'], ['風の祠', 'stone'], ['天文台', 'stone'], ['巨鳥の巣', 'grass'], ['天空の泉', 'grass'], ['鐘楼', 'stone']].forEach(([n, st], i) => THEMES[40 + i] = { n, s: st, z: 'sky' });
-[['食堂', 30], ['貯蔵庫', 35], ['上部エンジン', 8], ['下部エンジン', 8], ['原子炉', 0], ['操舵室', 210], ['医務室', 150], ['警備室', 320], ['電気室', 55], ['酸素室', 120], ['通信室', 240]].forEach(([n, h], i) => THEMES[20 + i] = { n, h, z: 'space' });
+[['食堂', 30], ['貯蔵庫', 35], ['上部エンジン', 8], ['下部エンジン', 8], ['原子炉', 0], ['操舵室', 210], ['医務室', 150], ['監視室', 320], ['電気室', 55], ['酸素室', 120], ['通信室', 240]].forEach(([n, h], i) => THEMES[20 + i] = { n, h, z: 'space' });
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 socket.on('map', m => {
@@ -1659,7 +1693,7 @@ cv.addEventListener('click', ev => { // クローゼットを直接クリック/
 // ---------- フェーズ ----------
 function onPhase(old, now) {
   const hide = (...ids) => ids.forEach(i => $(i).classList.add('hidden')), show = (...ids) => ids.forEach(i => $(i).classList.remove('hidden'));
-  document.body.dataset.ph = now; $('codePop').classList.add('hidden'); openSab(false); openWarp(false); openEmote(false);
+  document.body.dataset.ph = now; $('codePop').classList.add('hidden'); openSab(false); openWarp(false); openEmote(false); closeCamUI(false); $('swapCd').classList.add('hidden'); $('swapCd').dataset.n = 0;
   if (now === 'lobby') placeChat();
   if (now !== 'playing' && now !== 'meeting') openMap(false);
   openStats(false);
@@ -1715,6 +1749,7 @@ function nearHint(me, e) {
     else for (const id of me.tasks) { const d = TB[id]; if (hyp(d.x - e.x, d.y - e.y) <= init.REACH) {
       text = d.kind === 'carry' ? `${init.ITEM_NAME[d.item]}が必要` : me.item ? `${init.ITEM_NAME[me.item]}を運搬中は作業できない (Q長押しで運搬をやめる)` : `SPACE: ${d.name}`; break; } }
     if (!text) for (const id of me.tasks) { const d = TB[id]; if (d.kind !== 'carry') continue; const st = MAP.STATIONS[d.item]; if (hyp(st.x - e.x, st.y - e.y) <= init.REACH) { text = me.item ? '手がふさがっている (先に設置するか、Q長押しで運搬をやめる)' : `SPACE: ${init.ITEM_NAME[d.item]}を取る`; break; } }
+    if (!text && MAP.MONITOR && me.alive && hyp(MAP.MONITOR.x - e.x, MAP.MONITOR.y - e.y) <= 90) text = 'SPACE: 📹 監視カメラを見る';
     if (!text && me.alive && hyp(MAP.BUTTON.x - e.x, MAP.BUTTON.y - e.y) <= 90) text = me.em ? '' : (me.emLock > 0 ? `${isSpace() ? '会議ボタン' : '集合の鐘'} (あと${Math.ceil(me.emLock / 1000)}秒)` : (isSpace() ? 'SPACE: 緊急会議ボタン' : 'SPACE: 集合の鐘を鳴らす (緊急会議)'));
   }
   const warp = me.role === 'imposter' && me.alive && me.warps && me.warps.some(w => hyp(w.x - e.x, w.y - e.y) <= 70);
@@ -1729,10 +1764,15 @@ function renderSab(s) { // 画面上部の警報バナー + 妨害メニュー�
   let cls = '', html = '';
   if (sb.short) { cls = 'short'; html = `⚡ 電気がショート! 酸素切れまで ${mmss(sb.short.left)} ・ 修理 ${sb.short.fixed}/${sb.short.need}<small>${imp ? '放置して時間切れを狙うか、一緒に直してクルーのふりをするか (インポスターも修理できる)' : '赤く光る配線を直そう (タスクは一時停止)'}</small>`; }
   else if (sb.flood) { cls = 'flood'; html = isSky() ? `☁ 雲海が吊り橋を覆った! 残り ${sb.flood.zones.length}か所<small>雲の前で SPACE を${sb.flood.need}回連打すると吹き払える</small>` : `🌊 水が氾濫! 残り ${sb.flood.zones.length}か所<small>水たまりの前で SPACE を${sb.flood.need}回連打すると通れる</small>`; }
+  else if (sb.swap) { cls = 'swap'; html = `🔀 位置入れ替えまで ${Math.ceil(sb.swap.left / 1000)}…<small>0になると画面が白く光り、全員の位置がランダムに入れ替わる</small>`; }
   else if (sb.dark > 0) { cls = 'dark'; html = `🌑 暗闇 あと${Math.ceil(sb.dark / 1000)}秒<small>${imp ? 'インポスターは普段どおり見える' : '自分のまわりしか見えない'}</small>`; }
   el.className = cls; el.classList.toggle('hidden', !cls); if (cls && el.innerHTML !== html) el.innerHTML = html;
   if (sabOpen) buildSabList(); if (warpOpen) buildWarpList();
+  { const n = sb.swap && sb.swap.left > 0 ? Math.ceil(sb.swap.left / 1000) : 0, el2 = $('swapCd'); // 3, 2, 1 のカウントダウン
+    if (n !== +(el2.dataset.n || 0)) { el2.dataset.n = n; el2.classList.toggle('hidden', !n); if (n) { el2.innerHTML = `<b>${n}</b><span>🔀 位置入れ替えまで</span>`; beep(n === 1 ? 880 : 660, .12, 'square', .07); } } }
 }
+socket.on('swapFlash', () => { const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); $('swapCd').classList.add('hidden'); $('swapCd').dataset.n = 0;
+  beep(1400, .3, 'sine', .08); beep(300, .35, 'triangle', .07, .12); });
 function renderHud(s) {
   const me = s.me, e = myEnt();
   $('pfill').style.width = s.prog + '%'; $('ptxt').textContent = 'タスク進捗 ' + Math.floor(s.prog) + '%';
@@ -1871,11 +1911,12 @@ let sabOpen = false, warpOpen = false;
 const SAB_DEFS = { prog: { ic: '📉', name: '進捗妨害', desc: 'タスクの全体進捗を一気に20%下げる。ほかの妨害とは別枠 (専用クールタイム30秒・ほかの妨害中でも使える)' },
   dark: { ic: '🌑', name: '暗闇', desc: '15秒間、クルーの見える範囲が自分のまわりの小さな円だけに縮む (15秒で自動的に元に戻る)' },
   short: { ic: '⚡', name: '電気のショート', desc: 'クルーのタスクが配線修理に変わる。2分で5か所直せないと酸素切れでクルー全滅' },
+  swap: { ic: '🔀', name: '位置入れ替え', desc: '3カウント後に画面が白く光り、生きている全員の位置がほかの誰かとランダムに入れ替わる' },
   flood: { ic: '🌊', name: '水の氾濫', desc: '通路3か所が水没して通れなくなる。SPACE30回連打で掻き出せる' } };
-const sabKinds = () => ['prog', 'dark', isSpace() ? 'short' : 'flood'];
+const sabKinds = () => ['prog', 'dark', isSpace() ? 'short' : 'flood', 'swap'];
 const floodDef = () => isSky() ? { ic: '☁', name: '雲海の侵入', desc: '吊り橋3か所が雲に覆われて通れなくなる。SPACE30回連打で吹き払える' } : SAB_DEFS.flood;
 function buildSabList() {
-  const me = S.me, sb = S.sab || {}, busy = !!(sb.short || sb.flood || sb.dark > 0 || me.sabOn), cd = me.scd > 0, pcd = me.pcd > 0;
+  const me = S.me, sb = S.sab || {}, busy = !!(sb.short || sb.flood || sb.swap || sb.dark > 0 || me.sabOn), cd = me.scd > 0, pcd = me.pcd > 0;
   const sig = sabKinds().join() + busy + Math.ceil(me.scd / 1000) + '/' + Math.ceil(me.pcd / 1000); if (buildSabList.sig === sig) return; buildSabList.sig = sig;
   const note = k => k === 'prog' ? (pcd ? `あと${Math.ceil(me.pcd / 1000)}秒` : '') : busy ? '発動中 — 終わってからクールタイム開始' : cd ? `あと${Math.ceil(me.scd / 1000)}秒` : '';
   $('sabList').innerHTML = sabKinds().map((k, i) => { const d = k === 'flood' ? floodDef() : SAB_DEFS[k], off = k === 'prog' ? pcd : (busy || cd), n = note(k);
@@ -1948,6 +1989,70 @@ const hideMeForWarp = now => { const wc = warpFx && now - warpFx.t0; return wc !
 $('sabClose').onclick = () => openSab(false); $('warpClose').onclick = () => openWarp(false);
 $('sabPop').onclick = e => { if (e.target.id === 'sabPop') openSab(false); };
 $('warpPop').onclick = e => { if (e.target.id === 'warpPop') openWarp(false); };
+
+// ---------- 監視カメラ (宇宙船の監視室) ----------
+// 端末で開く → ◀▶ で切り替え (1.5秒の砂嵐を挟む)。誰かが見ているカメラは本体の赤いランプが光る (全員に見える)
+const camSt = { open: false, i: 0, s0: 0, s1: 0 };
+const camG = $('camCv').getContext('2d'), noiseCv = document.createElement('canvas'); noiseCv.width = 240; noiseCv.height = 150; const noiseG = noiseCv.getContext('2d');
+socket.on('camOpen', d => { camSt.open = true; camSt.i = d.i; camSt.s0 = performance.now(); camSt.s1 = camSt.s0 + d.static; $('camPop').classList.remove('hidden'); renderCamHead(); releaseFocus(); clearKeys();
+  for (let k = 0; k < Math.round(d.static / 120); k++) beep(90 + Math.random() * 80, .1, 'sawtooth', .025, k * .12); });
+socket.on('camClose', () => closeCamUI(false));
+function closeCamUI(send) { if (!camSt.open) return; camSt.open = false; $('camPop').classList.add('hidden'); if (send) socket.emit('cam', { close: true }); }
+function camStep(d) { if (!camSt.open || !MAP || !MAP.CAMS || !MAP.CAMS.length || performance.now() < camSt.s1) return; const n = MAP.CAMS.length; socket.emit('cam', { i: (camSt.i + d + n) % n }); }
+function renderCamHead() { const c = MAP.CAMS[camSt.i]; $('camNm').textContent = `CAM ${camSt.i + 1}/${MAP.CAMS.length} — ${THEMES[c.th].n}`; $('camDots').innerHTML = MAP.CAMS.map((_, k) => `<span class="${k === camSt.i ? 'on' : ''}"></span>`).join(''); }
+$('camL').onclick = () => { camStep(-1); $('camL').blur(); }; $('camR').onclick = () => { camStep(1); $('camR').blur(); }; $('camX').onclick = () => closeCamUI(true);
+function drawCamFeed(now) {
+  if (!camSt.open || !MAP || !mapCv || !MAP.CAMS || !S) return;
+  const g = camG, W = g.canvas.width, H = g.canvas.height, c = MAP.CAMS[camSt.i], stat = now < camSt.s1;
+  $('camL').disabled = $('camR').disabled = stat;
+  if (stat) { // 砂嵐 (ノイズ) 1.5秒
+    const img = noiseG.createImageData(240, 150), dd = img.data;
+    for (let i = 0; i < dd.length; i += 4) { const v = Math.random() * 255; dd[i] = dd[i + 1] = dd[i + 2] = v; dd[i + 3] = 255; }
+    noiseG.putImageData(img, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(noiseCv, 0, 0, W, H); g.imageSmoothingEnabled = true;
+    const by = ((now - camSt.s0) / 3) % (H + 120) - 60; g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(0, by, W, 50); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, by + 70, W, 16);
+    const p = Math.min(1, (now - camSt.s0) / (camSt.s1 - camSt.s0));
+    g.fillStyle = '#000c'; g.fillRect(W / 2 - 200, H / 2 - 44, 400, 88); g.fillStyle = '#fff'; g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(`📡 CAM ${camSt.i + 1} に切り替え中…`, W / 2, H / 2 - 12); g.fillStyle = '#4dabf7'; g.fillRect(W / 2 - 170, H / 2 + 22, 340 * p, 8); g.strokeStyle = '#fff6'; g.strokeRect(W / 2 - 170, H / 2 + 22, 340, 8);
+    return;
+  }
+  const v = c.view, k = Math.min(W / v.w, H / v.h);
+  g.save(); g.fillStyle = '#000'; g.fillRect(0, 0, W, H); g.translate(W / 2, H / 2); g.scale(k, k); g.translate(-(v.x + v.w / 2), -(v.y + v.h / 2));
+  g.drawImage(mapCv, 0, 0);
+  for (const b of S.bodies || []) if (b.x > v.x - 60 && b.x < v.x + v.w + 60 && b.y > v.y - 60 && b.y < v.y + v.h + 60) drawBody(b, g);
+  [...ents.values()].filter(e => e.x > v.x - 60 && e.x < v.x + v.w + 60 && e.y > v.y - 60 && e.y < v.y + v.h + 60).sort((a, b) => a.y - b.y).forEach(e => drawAstro(g, e, 1, '#fff'));
+  g.restore();
+  // 監視カメラらしい質感: 青み・走査線・周辺減光・時刻
+  g.fillStyle = 'rgba(70,150,255,.10)'; g.fillRect(0, 0, W, H);
+  g.fillStyle = 'rgba(0,0,0,.16)'; for (let y = (now / 40) % 4; y < H; y += 4) g.fillRect(0, y, W, 1.5);
+  const vg = g.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, W * .62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.6)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  g.font = 'bold 22px monospace'; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillStyle = '#fff'; g.fillText(`CAM ${camSt.i + 1} ${THEMES[c.th].n}`, 18, 16);
+  g.textAlign = 'right'; const tt = new Date(); g.fillText(`${String(tt.getHours()).padStart(2, '0')}:${String(tt.getMinutes()).padStart(2, '0')}:${String(tt.getSeconds()).padStart(2, '0')}`, W - 18, H - 38);
+  if (Math.floor(now / 600) % 2) { g.fillStyle = '#ff2b2b'; g.beginPath(); g.arc(W - 74, 30, 9, 0, 7); g.fill(); } g.fillStyle = '#fff'; g.fillText('REC', W - 18, 18);
+  if ((S.sab || {}).dark > 0) { g.fillStyle = '#ffd43b'; g.textAlign = 'left'; g.font = 'bold 18px sans-serif'; g.fillText('🌑 暗闇でも監視カメラには映る', 18, H - 36); }
+}
+// 監視カメラ本体と監視室の端末をマップ上に描く (見られているカメラは赤いランプが点滅)
+function drawSecurityWorld(now, mine) {
+  if (!MAP.CAMS || !MAP.CAMS.length) return; const on = S.cams || [];
+  MAP.CAMS.forEach((c, i) => { const lit = on.includes(i);
+    if (lit) { ctx.fillStyle = 'rgba(255,60,60,.07)'; ctx.beginPath(); ctx.moveTo(c.x, c.y + 18); ctx.lineTo(c.x - 190, c.y + 300); ctx.lineTo(c.x + 190, c.y + 300); ctx.closePath(); ctx.fill(); }
+    ctx.save(); ctx.translate(c.x, c.y);
+    ctx.fillStyle = '#2b3245'; ctx.fillRect(-4, -10, 8, 12);
+    ctx.fillStyle = '#ced4da'; rrg(ctx, -18, 0, 36, 18, 6); ctx.fill(); ctx.strokeStyle = '#495057'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#212529'; ctx.beginPath(); ctx.arc(0, 16, 8, 0, 7); ctx.fill(); ctx.fillStyle = '#4dabf7'; ctx.beginPath(); ctx.arc(-2, 14, 3, 0, 7); ctx.fill();
+    if (lit) { const f = .6 + .4 * Math.sin(now / 140); const q = ctx.createRadialGradient(12, 4, 0, 12, 4, 26); q.addColorStop(0, `rgba(255,40,40,${.75 * f})`); q.addColorStop(1, 'rgba(255,40,40,0)'); ctx.fillStyle = q; ctx.beginPath(); ctx.arc(12, 4, 26, 0, 7); ctx.fill(); }
+    ctx.fillStyle = lit ? '#ff2b2b' : '#5c1a1a'; ctx.beginPath(); ctx.arc(12, 4, 4.5, 0, 7); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.restore(); });
+  const M = MAP.MONITOR; if (!M) return;
+  const near = mine && hyp(M.x - mine.x, M.y - mine.y) <= 90;
+  ctx.save(); ctx.translate(M.x, M.y);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; elg(ctx, 0, 26, 52, 10); ctx.fill();
+  ctx.fillStyle = '#343a40'; rrg(ctx, -50, -6, 100, 30, 6); ctx.fill(); ctx.strokeStyle = near ? '#ffd43b' : '#1a1d21'; ctx.lineWidth = near ? 3 : 2; ctx.stroke();
+  for (let k = 0; k < 3; k++) { const sx = -46 + k * 32; ctx.fillStyle = '#1a1d21'; ctx.fillRect(sx, -40, 28, 30);
+    ctx.fillStyle = on.includes(k) || on.length ? '#1c7ed6' : '#0b3d73'; ctx.fillRect(sx + 3, -37, 22, 20); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sx + 3, -37 + ((now / 30 + k * 7) % 20), 22, 2); }
+  ctx.fillStyle = '#868e96'; for (let k = 0; k < 6; k++) ctx.fillRect(-40 + k * 14, 4, 10, 6);
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText('📹 監視カメラ', 0, 40); ctx.fillStyle = near ? '#ffd43b' : '#d0ebff'; ctx.fillText('📹 監視カメラ', 0, 40);
+  ctx.restore();
+}
 
 // ---------- 会議 (全員を円形に並べて表示。投票はリストから選び、投票先を指さす) ----------
 let resultT0 = 0, ejectT = 0, voteOpen = false;
@@ -2063,6 +2168,7 @@ addEventListener('resize', () => { if (mapOpen) fitMapCanvas(); });
 function openMap(v) {
   if (v && (!mapCv || !MAP || !S || (S.ph !== 'playing' && S.ph !== 'meeting'))) { toast('マップはゲーム中に見られます'); return; }
   mapOpen = v; $('mapOverlay').classList.toggle('hidden', !v);
+  if (v) document.querySelectorAll('.spOnly').forEach(el => el.style.display = MAP.CAMS && MAP.CAMS.length ? '' : 'none');
   if (v) { $('mapHead').textContent = S.ph === 'meeting' ? '🗺 マップ — 会議前の行動を思い出そう' : '🗺 マップ'; fitMapCanvas(); drawBigMap(performance.now()); releaseFocus(); }
 }
 function toggleMap() { openMap(!mapOpen); }
@@ -2090,6 +2196,8 @@ function drawBigMap(now) {
     if (sb.flood) for (const z of sb.flood.zones) { g.fillStyle = isSky() ? 'rgba(255,255,255,.95)' : 'rgba(60,160,230,.85)'; g.fillRect(z.c0 * C, z.r0 * C, (z.c1 - z.c0 + 1) * C, (z.r1 - z.r0 + 1) * C); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText(isSky() ? '☁' : '🌊', (z.c0 + 1.5) * C, (z.r0 + 1.5) * C); }
     if (sb.short) for (const q of sb.short.spots) if (!q.done) { g.fillStyle = '#ff3b3b'; elg(g, q.x, q.y, 30, 30); g.fill(); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText('⚡', q.x, q.y); }
     (MAP.WARPS || S.me.warps || []).forEach((wp, i) => drawWarpMarker(g, wp.x, wp.y, i + 1, now)); // ワープホールの位置は全員のマップに表示
+    (MAP.CAMS || []).forEach((c, i) => { const lit = (S.cams || []).includes(i); g.font = '46px serif'; g.fillStyle = '#000'; g.fillText('📹', c.x, c.y + 26); if (lit) { g.fillStyle = '#ff2b2b'; g.beginPath(); g.arc(c.x + 30, c.y + 6, 11, 0, 7); g.fill(); } });
+    if (MAP.MONITOR) { const M = MAP.MONITOR; g.font = '54px serif'; g.fillStyle = '#000'; g.fillText('🖥', M.x, M.y); g.font = 'bold 26px sans-serif'; g.lineWidth = 7; g.strokeStyle = '#000'; g.strokeText('監視カメラ', M.x, M.y + 46); g.fillStyle = '#8ecbff'; g.fillText('監視カメラ', M.x, M.y + 46); }
   }
   if (S.me.det) drawDetTraces(g, now, 2.4);
   if (trail.length > 1) { // 古いほど薄く
@@ -2523,6 +2631,7 @@ function onKeyDown(e) {
   }
   if (S.ph !== 'playing') return;
   if (GAMEKEYS.includes(k)) { e.preventDefault(); e.stopPropagation(); } // フォーカス中ボタンの二重発火・スクロールを防ぐ
+  if (camSt.open) { if (!rep) { if (k === 'escape' || k === 'space') closeCamUI(true); else if (k === 'left' || k === 'a') camStep(-1); else if (k === 'right' || k === 'd') camStep(1); else if (k === 'm') toggleMap(); } return; } // カメラ視聴中は動けない
   if (mapOpen) { sendInput(); return; } // マップ表示中もキャラは動かせる(アクションは無効)
   if (sabOpen || warpOpen) { // メニュー表示中: 数字で選択 / Esc・同じキーで閉じる
     if (!rep) {
@@ -2614,14 +2723,14 @@ function drawBodyMist(g, x, y, now, k = 1) { // 死体の足元に漂う円状�
   for (let i = 0; i < 4; i++) { const ph = (t * .6 + i / 4) % 1, px = x + Math.sin(i * 2.3 + t) * 26 * k, py = y + 6 * k - ph * 46 * k; // 立ちのぼるモヤ
     g.fillStyle = `rgba(255,80,80,${.32 * (1 - ph)})`; g.beginPath(); g.arc(px, py, (6 + ph * 8) * k, 0, 7); g.fill(); }
 }
-function drawBody(b) {
-  drawBodyMist(ctx, b.x, b.y, performance.now());
-  ctx.save(); ctx.translate(b.x, b.y); ctx.fillStyle = 'rgba(0,0,0,.35)'; elg(ctx, 0, 10, 24, 7); ctx.fill();
-  ctx.fillStyle = b.c; rrg(ctx, -14, -9, 30, 20, 9); ctx.fill(); ctx.strokeStyle = shade(b.c, .6); ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = '#f1f3f5'; elg(ctx, -18, 0, 10, 9); ctx.fill();
-  ctx.strokeStyle = '#17324f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-23, -3); ctx.lineTo(-17, 3); ctx.moveTo(-17, -3); ctx.lineTo(-23, 3); ctx.stroke();
-  ctx.fillStyle = '#fff'; rrg(ctx, 10, -15, 4, 14, 2); ctx.fill(); elg(ctx, 12, -16, 4, 3); ctx.fill();
-  ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.fillText('💀', 0, -22 + Math.sin(performance.now() / 300) * 3); ctx.restore();
+function drawBody(b, g = ctx) {
+  drawBodyMist(g, b.x, b.y, performance.now());
+  g.save(); g.translate(b.x, b.y); g.fillStyle = 'rgba(0,0,0,.35)'; elg(g, 0, 10, 24, 7); g.fill();
+  g.fillStyle = b.c; rrg(g, -14, -9, 30, 20, 9); g.fill(); g.strokeStyle = shade(b.c, .6); g.lineWidth = 2; g.stroke();
+  g.fillStyle = '#f1f3f5'; elg(g, -18, 0, 10, 9); g.fill();
+  g.strokeStyle = '#17324f'; g.lineWidth = 2; g.beginPath(); g.moveTo(-23, -3); g.lineTo(-17, 3); g.moveTo(-17, -3); g.lineTo(-23, 3); g.stroke();
+  g.fillStyle = '#fff'; rrg(g, 10, -15, 4, 14, 2); g.fill(); elg(g, 12, -16, 4, 3); g.fill();
+  g.font = '20px serif'; g.textAlign = 'center'; g.fillText('💀', 0, -22 + Math.sin(performance.now() / 300) * 3); g.restore();
 }
 function drawGame(dt, now) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const w = cv.width / DPR, h = cv.height / DPR; ctx.clearRect(0, 0, w, h);
@@ -2669,6 +2778,7 @@ function drawGame(dt, now) {
     drawMachine(d, act || me.late, now);
   }
   drawSabWorld(now, me);
+  drawSecurityWorld(now, mine);
   if (me.det) drawDetTraces(ctx, now, 1);
   for (const b of S.bodies) drawBody(b);
   const hideMe = hideMeForWarp(now);
@@ -2791,6 +2901,7 @@ function frame(t) {
   else if (mini && mini.kind === 'wire') updateWire();
   drawFx(t);
   drawWarpMap(t);
+  drawCamFeed(t);
   if (!joined) { // タイトルの等身大アバタープレビュー
     pvPh += dt * 7; pvg.clearRect(0, 0, 340, 420);
     const g = pvg.createRadialGradient(170, 330, 10, 170, 330, 150); g.addColorStop(0, 'rgba(140,200,255,.25)'); g.addColorStop(1, 'rgba(0,0,0,0)'); pvg.fillStyle = g; pvg.fillRect(0, 0, 340, 420);
