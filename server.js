@@ -32,6 +32,7 @@ const CAM_STATIC_MS = 1500, CAM_RANGE = 90;  // 監視カメラ: 切り替え時
 const SWAP_COUNT_MS = 3000, SWAP_FLASH_MS = 150; // 位置入れ替え: 3カウント → 白フラッシュ → 入れ替え
 // 探偵: キルが起きると、探偵だけに被害者の直前5秒の移動軌跡が届く
 const TRAIL_MS = 5000, TRAIL_STEP = 100, MAX_DET = 2, DET_TRACE_MS = 45000;
+const MAX_SHER = 2;                          // シェリフ: 誰でも撃てる。インポスターなら倒せるが、クルーを撃つと自爆
 const SABS = { prog: { name: '進捗妨害', themes: null }, dark: { name: '暗闇', themes: null }, short: { name: '電気のショート', themes: ['space'] }, flood: { name: '水の氾濫', themes: ['island', 'sky'] }, swap: { name: '位置入れ替え', themes: null } };
 const BTN_LOCK = 10000, FREEZE_MS = 3200;
 const DISCUSS_MS = process.env.DOA_TEST === '1' ? 4000 : 20000; // 自動テスト時だけ議論を短く
@@ -487,7 +488,18 @@ function genMap(layoutIdx, seedIn) {
   for (const d of tasksOf(theme)) tasks[d.id] = spot(TR[d.id]);
   // インポスター専用のワープ地点 (6か所。クルーには見えない)
   const WR = L.warpRooms || (theme === 'space' ? ['upperEngine', 'lowerEngine', 'reactor', 'nav', 'security', 'comms'] : ['wreck', 'forest', 'light', 'bamboo', 'rocks', 'drift']);
-  const warps = WR.filter(k => R[k]).map(k => ({ ...spot(k), th: R[k].th }));
+  const wks = WR.filter(k => R[k]), warps = wks.map(k => ({ ...spot(k), th: R[k].th }));
+  // ワープは2つずつのペア (A↔A, B↔B, C↔C) でだけつながる。部屋の中心で組み合わせを決めるので、
+  // ロビーのプレビューと実際の試合でペアは必ず同じ。いちばん近いペアどうしもできるだけ離れる組み合わせを選ぶ
+  // 部屋はシードで少し揺らぐので、レイアウト定義の位置を使う
+  { const B = k => (L.rooms[k] || R[k]), cen = wks.map(k => ({ x: B(k).x + B(k).w / 2, y: B(k).y + B(k).h / 2 })), dd = (a, b) => Math.hypot(cen[a].x - cen[b].x, cen[a].y - cen[b].y);
+    let best = null, bestMin = -1, bestSum = -1;
+    const rec = (left, pairs) => { if (left.length < 2) { const mn = Math.min(...pairs.map(([a, b]) => dd(a, b))), sm = pairs.reduce((t, [a, b]) => t + dd(a, b), 0);
+        if (mn > bestMin + 1e-9 || (Math.abs(mn - bestMin) < 1e-9 && sm > bestSum)) { best = pairs; bestMin = mn; bestSum = sm; } return; }
+      const [a, ...rest] = left; rest.forEach((b, j) => rec(rest.filter((_, k) => k !== j), [...pairs, [a, b]])); };
+    rec(wks.map((_, i) => i), []);
+    warps.forEach(w => { w.pair = -1; w.mate = -1; });
+    (best || []).forEach(([a, b], n) => { warps[a].pair = warps[b].pair = n; warps[a].mate = b; warps[b].mate = a; }); }
   // 宇宙船: 電気のショートで火花が散る配線 (5か所)
   const shorts = theme === 'space' ? ['electrical', 'upperEngine', 'nav', 'comms', 'storage'].map(k => ({ ...spot(k), th: R[k].th })) : [];
   // 宇宙船: 監視室の端末と監視カメラ (部屋の奥の壁に取り付け。映像は部屋全体を映す)
@@ -514,7 +526,7 @@ function genMap(layoutIdx, seedIn) {
 
 // ロビーのプレビュー用 (固定シードで1回だけ生成)
 let MAP_PREVIEWS = null;
-const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, WARPS: (m.warps || []).map(w => ({ x: w.x, y: w.y, th: w.th })), MONITOR: m.monitor || null, CAMS: m.cams || [], BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
+const mapPayload = (m) => ({ seed: m.seed, layout: m.layout, name: m.name, theme: m.theme, rows: m.rows, rooms: m.rooms, WARPS: (m.warps || []).map(w => ({ x: w.x, y: w.y, th: w.th, pair: w.pair, mate: w.mate })), MONITOR: m.monitor || null, CAMS: m.cams || [], BUTTON: m.button, STATIONS: m.stations, TPOS: m.tasks });
 
 function resolveWalls(grid, p, extra) {
   const isWall = (c, r) => (c < 0 || r < 0 || c >= COLS || r >= ROWS) ? true : (grid[r][c] || (extra ? extra(c, r) : false));
@@ -547,7 +559,7 @@ function newRoom() {
   let code;
   do { code = String(Math.floor(Math.random() * 90000) + 10000); } while (rooms.has(code));
   const R = {
-    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1, detCount: 1, mapIdx: 0, lchat: [],
+    code, players: new Map(), joinCounter: 0, impCount: 1, impN: 1, detCount: 1, sherCount: 1, mapIdx: 0, lchat: [],
     phase: 'lobby', endsAt: 0, remainAtEnd: GAME_MS, endedAt: 0, progress: 0, crewTotal: 1,
     result: null, bodies: [], nextBody: 1, meeting: null, noMeetingUntil: 0, freezeUntil: 0, map: null, mapMsg: null,
   };
@@ -632,11 +644,12 @@ function startGame(R) {
   R.crewTotal = n;
   const imps = new Set(part.slice().sort(() => Math.random() - 0.5).slice(0, R.impN));
   // クルーの中からランダムに探偵を選ぶ (役職はクルー陣営のまま)
-  const dets = new Set(part.filter(p => !imps.has(p)).sort(() => Math.random() - 0.5).slice(0, R.detCount));
+  const crews = part.filter(p => !imps.has(p)).sort(() => Math.random() - 0.5);
+  const dets = new Set(crews.slice(0, R.detCount)), shers = new Set(crews.slice(R.detCount, R.detCount + R.sherCount)); // 探偵とシェリフは別の人
   part.forEach((p, i) => {
     resetPlayer(R, p, i, n); p.theme = R.map.theme;
     p.role = imps.has(p) ? 'imposter' : 'crew';
-    p.sub = dets.has(p) ? 'detective' : null; p.trail = []; p.lastTrail = 0;
+    p.sub = dets.has(p) ? 'detective' : shers.has(p) ? 'sheriff' : null; p.trail = []; p.lastTrail = 0;
     p.killReady = now + FIRST_KILL_CD; p.sabReady = now + SAB_CD; p.progReady = now + PROG_CD; p.warpReady = 0;
     fillTasks(p);
   });
@@ -724,7 +737,7 @@ function endMeeting(R, now) {
   R.phase = 'playing'; R.meeting = null; R.bodies = [];
   for (const q of R.players.values()) q.trail = []; // 会議で円形に並べ直したぶんの移動は記録しない
   R.noMeetingUntil = now + BTN_LOCK;
-  for (const p of participants(R)) if (p.role === 'imposter') p.killReady = Math.max(p.killReady, now + 10000);
+  for (const p of participants(R)) if (p.role === 'imposter' || p.sub === 'sheriff') p.killReady = Math.max(p.killReady, now + 10000);
   checkWin(R);
 }
 
@@ -817,6 +830,7 @@ function doReport(R, p) {
 }
 
 function doKill(R, p) {
+  if (R.phase === 'playing' && !p.late && p.alive && p.sub === 'sheriff') return doSheriff(R, p);
   if (R.phase !== 'playing' || p.late || !p.alive || p.role !== 'imposter') return;
   const now = Date.now();
   if (now < p.killReady || now < R.freezeUntil) return;
@@ -838,6 +852,31 @@ function doKill(R, p) {
   checkWin(R);
 }
 
+// ---------- シェリフ ----------
+// 近くの誰でも撃てる。インポスターなら倒せる。クルー (探偵・シェリフ含む) を撃ってしまうとシェリフ自身が自爆し、撃たれた相手は無事
+function doSheriff(R, p) {
+  const now = Date.now();
+  if (now < p.killReady || now < R.freezeUntil || p.mini) return;
+  let best = null, bd = KILL_RANGE;
+  for (const v of participants(R)) { if (v === p || !v.alive || v.late) continue; const d = dist(p, v); if (d <= bd) { bd = d; best = v; } }
+  if (!best) { toast(p, '範囲内に撃てる相手がいない', 'error'); return; }
+  p.killReady = now + KILL_CD;
+  if (best.role === 'imposter') {
+    best.alive = false; cancelMini(best);
+    R.bodies.push({ id: R.nextBody++, x: Math.round(best.x), y: Math.round(best.y), c: best.color, name: best.name });
+    sendDetTrace(R, best, now);
+    io.to(best.id).emit('killCut', { kc: p.color, ka: p.acc, kn: p.name, vc: best.color, va: best.acc, vn: best.name, sher: true });
+    io.to(best.id).emit('sfx', 'kill');
+    io.to(p.id).emit('sherShot', { ok: true, tn: best.name });
+  } else { // 誤射: シェリフが自爆
+    p.alive = false; cancelMini(p);
+    R.bodies.push({ id: R.nextBody++, x: Math.round(p.x), y: Math.round(p.y), c: p.color, name: p.name });
+    sendDetTrace(R, p, now);
+    io.to(p.id).emit('sherShot', { ok: false, tn: best.name });
+    io.to(p.id).emit('sfx', 'kill');
+  }
+  checkWin(R);
+}
 // ---------- 探偵 ----------
 function sendDetTrace(R, victim, now) {
   const path = (victim.trail || []).filter(q => now - q.t <= TRAIL_MS).map(q => [q.x, q.y, now - q.t]); // [x, y, 死亡の何ms前か]
@@ -927,6 +966,7 @@ function doWarp(R, p, idx) {
   const to = ws[idx], from0 = ws.findIndex(w => near(p, w, WARP_RANGE));
   if (from0 < 0) { toast(p, 'ワープ地点の上で使おう', 'error'); return; }
   if (from0 === idx) { toast(p, 'そこはいまいるワープ地点', 'error'); return; }
+  if (ws[from0].mate !== idx) { toast(p, `このワープ穴は「${'ABC'[ws[from0].pair] || '?'}」どうしでしかつながっていない`, 'error'); return; }
   if (now < (p.warpReady || 0)) { toast(p, `ワープはあと${Math.ceil((p.warpReady - now) / 1000)}秒`, 'error'); return; }
   const from = { x: p.x, y: p.y };
   p.x = to.x; p.y = to.y + 20; p.warpReady = now + WARP_CD;
@@ -997,7 +1037,7 @@ function broadcast(R, now) {
     lobby = {
       list: [...R.players.values()].sort((a, b) => a.joinOrder - b.joinOrder).map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, ready: p.ready, host: p.id === host,
         x: Math.round(p.x), y: Math.round(p.y), mv: p.moving, f: p.face, a: true, pid: p.pid })),
-      imp: R.impCount, max: maxImp(R.players.size), map: R.mapIdx, det: R.detCount,
+      imp: R.impCount, max: maxImp(R.players.size), map: R.mapIdx, det: R.detCount, sher: R.sherCount,
     };
   }
   const pv = R.phase === 'lobby' ? null : part.map(p => ({ id: p.id, name: p.name, c: p.color, acc: p.acc, x: Math.round(p.x), y: Math.round(p.y), a: p.alive, mv: p.moving, f: p.face, item: p.item || null, pid: p.pid }));
@@ -1006,7 +1046,7 @@ function broadcast(R, now) {
     const msg = {
       ...base,
       me: {
-        role: v.role, det: v.sub === 'detective', alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
+        role: v.role, det: v.sub === 'detective', sher: v.sub === 'sheriff', alive: v.alive, late: v.late, ready: v.ready, host: v.id === host,
         tasks: v.tasks, item: v.item || null,
         kcd: Math.max(0, (v.killReady || 0) - now), scd: v.sabReady === Infinity ? 0 : Math.max(0, (v.sabReady || 0) - now), sabOn: !!(R.sab && R.sab.on), pcd: Math.max(0, (v.progReady || 0) - now),
         em: v.emUsed, emLock: Math.max(0, R.noMeetingUntil - now),
@@ -1026,7 +1066,7 @@ function broadcast(R, now) {
           my: m.votes.get(v.id) || null, res: m.result,
         };
       }
-      if (R.phase === 'end') msg.roster = part.map(p => ({ id: p.id, name: p.name, c: p.color, role: p.role, det: p.sub === 'detective', a: p.alive }));
+      if (R.phase === 'end') msg.roster = part.map(p => ({ id: p.id, name: p.name, c: p.color, role: p.role, det: p.sub === 'detective', sher: p.sub === 'sheriff', a: p.alive }));
     }
     io.to(v.id).volatile.emit('state', msg);
   }
@@ -1240,6 +1280,7 @@ io.on('connection', (socket) => {
     if (d.resetProg) p.progReady = 0;
     if (d.die) { p.alive = false; cancelMini(p); }
     if (d.det != null) p.sub = d.det ? 'detective' : null;
+    if (d.sher != null) p.sub = d.sher ? 'sheriff' : null;
     if (d.killNow) p.killReady = 0;
     if (d.shortLeft != null && R.sab.short) R.sab.short.endsAt = Date.now() + d.shortLeft;
     if (d.clearDark) R.sab.dark = 0;
@@ -1289,6 +1330,11 @@ io.on('connection', (socket) => {
     if (!p || R.phase !== 'lobby' || p.id !== hostId(R)) return;
     const n = LAYOUTS.length; R.mapIdx = (((parseInt(i, 10) || 0) % n) + n) % n;
     rEmit(R, 'sfx', 'click');
+  });
+  socket.on('setSher', (n) => { // ホストがシェリフの人数 (0〜2) を設定
+    const { R, p } = C();
+    if (!p || R.phase !== 'lobby' || p.id !== hostId(R)) return;
+    R.sherCount = clamp(parseInt(n, 10) || 0, 0, MAX_SHER);
   });
   socket.on('setDet', (n) => { // ホストが探偵の人数 (0〜2) を設定
     const { R, p } = C();
