@@ -65,7 +65,13 @@ button.green{background:linear-gradient(#51cf66,#2f9e44);box-shadow:0 4px 0 #1d6
 #mpDesc{font-size:13px;min-height:2.6em;max-width:560px}
 #mpNote{font-size:12px;color:var(--lbNote,#8ecbff)}
 #mapPanel #impBox{font-size:15px;padding:6px 12px}
-#detBox{display:flex;gap:12px;align-items:center;font-size:15px;font-weight:700;background:#12192b;border:2px solid #2b3856;padding:6px 12px;border-radius:14px}
+#roleRow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#mpWarp{font-size:12px;color:#d0bfff}
+#sherBox button{padding:4px 14px;font-size:20px;box-shadow:0 3px 0 #8f2323}
+#detBox,#sherBox{display:flex;gap:12px;align-items:center;font-size:15px;font-weight:700;background:#12192b;border:2px solid #2b3856;padding:6px 12px;border-radius:14px}
+#bKill.sher{background:linear-gradient(#fcc419,#e67700);box-shadow:0 4px 0 #8a4b00}
+.wpPin.mate{background:radial-gradient(circle at 35% 30%,#fff,var(--pc) 60%);color:#111;animation:wpPulse 1.1s infinite}
+.wpPin.no{filter:grayscale(.9) brightness(.55);animation:none}
 #detBox button{padding:4px 14px;font-size:20px;box-shadow:0 3px 0 #8f2323}
 button.fr{background:linear-gradient(#f59f00,#d9480f);box-shadow:0 4px 0 #8a3c0a;position:relative}
 #frBadge{position:absolute;top:-8px;right:-8px;background:#51cf66;color:#042;font-size:12px;border-radius:99px;padding:2px 8px;font-weight:900}
@@ -375,8 +381,9 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
     <div id="mpRow"><button id="mpPrev" class="blue">◀</button><div id="mpName">-</div><button id="mpNext" class="blue">▶</button></div>
     <div id="mpDesc" class="sub"></div>
     <div id="mpNote" class="sub"></div>
+    <div id="mpWarp" class="sub"></div>
     <div id="impBox"><span>🔪 インポスター</span><button id="impDn">−</button><span id="impN">1</span><span>人</span><button id="impUp">＋</button></div>
-    <div id="detBox" class="impLike"><span>🔍 探偵 (クルー)</span><button id="detDn">−</button><span id="detN">1</span><span>人</span><button id="detUp">＋</button></div>
+    <div id="roleRow"><div id="detBox" class="impLike"><span>🔍 探偵</span><button id="detDn">−</button><span id="detN">1</span><span>人</span><button id="detUp">＋</button></div><div id="sherBox" class="impLike" title="誰でも撃てる。インポスターなら倒せるが、クルーを撃つと自爆"><span>🔫 シェリフ</span><button id="sherDn">−</button><span id="sherN">1</span><span>人</span><button id="sherUp">＋</button></div></div>
   </div>
   <button id="btnLeave" style="background:#555;box-shadow:0 4px 0 #333">退出</button>
   <div id="lobbyHint" class="hidden">🚪 SPACE: クローゼットを開く</div>
@@ -437,8 +444,8 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
   <button id="sabClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc)</button>
 </div></div>
 <div id="warpPop" class="hidden"><div class="dlgBox" id="warpBox">
-  <h2>🕳 ワープ先の番号をタップ</h2>
-  <div class="sub">インポスターだけが使える抜け穴。マップ上の番号をタップ (数字キーでも可) するとその地点へワープ</div>
+  <h2>🕳 ワープ — 同じ英字の穴へ</h2>
+  <div class="sub">ワープ穴は <b>A↔A・B↔B・C↔C</b> のペアでだけつながっています。光っているもう一方の穴をタップ (または SPACE) でワープ</div>
   <div id="warpWrap"><canvas id="warpMap" width="800" height="600"></canvas><div id="warpPins"></div></div>
   <div id="warpCd" class="sub"></div>
   <button id="warpClose" style="background:#555;box-shadow:0 4px 0 #333">閉じる (Esc / G)</button>
@@ -453,7 +460,7 @@ button.emoBtn{background:linear-gradient(#ffd43b,#f59f00);box-shadow:0 4px 0 #8a
 <div id="mapOverlay" class="hidden">
   <div id="mapHead">🗺 マップ</div>
   <canvas id="mapBig" width="1600" height="1000"></canvas>
-  <div id="mapLegend"><span>⚪ 現在地</span><span>⭐ 会議直前の位置</span><span style="color:#8ecbff">━ あなたの足跡</span><span>💀 あなたが死んだ場所</span><span style="color:#ff6b6b">✖ 死体 (赤いモヤ)</span><span>🟨 タスク</span><span style="color:#b197fc">🟣 ワープホール (インポスター専用)</span><span class="spOnly">📹 監視カメラ (🔴=誰かが見ている)</span></div>
+  <div id="mapLegend"><span>⚪ 現在地</span><span>⭐ 会議直前の位置</span><span style="color:#8ecbff">━ あなたの足跡</span><span>💀 あなたが死んだ場所</span><span style="color:#ff6b6b">✖ 死体 (赤いモヤ)</span><span>🟨 タスク</span><span style="color:#b197fc">🟣 ワープ穴 (インポスター専用・同じ英字どうしがつながる)</span><span class="spOnly">📹 監視カメラ (🔴=誰かが見ている)</span></div>
   <button class="mapClose" id="mapCloseBtn">✕</button>
 </div>
 <div id="statsPop" class="hidden"><div id="statsBox">
@@ -1386,6 +1393,8 @@ $('btnLeave').onclick = () => location.reload();
 $('btnLobby').onclick = () => socket.emit('toLobby');
 $('impUp').onclick = () => socket.emit('setImp', (S.lobby.imp || 1) + 1);
 $('detUp').onclick = () => socket.emit('setDet', (S.lobby.det || 0) + 1);
+$('sherUp').onclick = () => socket.emit('setSher', (S.lobby.sher || 0) + 1);
+$('sherDn').onclick = () => socket.emit('setSher', (S.lobby.sher || 0) - 1);
 $('detDn').onclick = () => socket.emit('setDet', (S.lobby.det || 0) - 1);
 $('impDn').onclick = () => socket.emit('setImp', (S.lobby.imp || 1) - 1);
 function nearCloset() { const e = myEnt(); return !!(e && init && hyp(e.x - init.CLOSET.x, e.y - init.CLOSET.y) <= init.CLOSET.range); }
@@ -1404,6 +1413,8 @@ function renderLobby(s) {
   $('impUp').disabled = L.imp >= 3; $('impDn').disabled = L.imp <= 1;
   $('detN').textContent = L.det; $('detUp').classList.toggle('hidden', !me.host); $('detDn').classList.toggle('hidden', !me.host);
   $('detUp').disabled = L.det >= 2; $('detDn').disabled = L.det <= 0;
+  $('sherN').textContent = L.sher || 0; $('sherUp').classList.toggle('hidden', !me.host); $('sherDn').classList.toggle('hidden', !me.host);
+  $('sherUp').disabled = (L.sher || 0) >= 2; $('sherDn').disabled = (L.sher || 0) <= 0;
   $('btnReady').classList.toggle('hidden', me.host); $('btnReady').textContent = me.ready ? '準備解除' : '準備OK';
   $('btnGo').classList.toggle('hidden', !me.host);
   const ok = L.list.length >= 2 && L.list.filter(p => !p.host).every(p => p.ready);
@@ -1413,6 +1424,12 @@ function renderLobby(s) {
 }
 
 // ---------- マップ選択 & プレビュー (ロビー右半分) ----------
+const PAIR_L = ['A', 'B', 'C'], PAIR_C = ['#ff922b', '#22b8cf', '#f06595']; // ワープのペア (同じ英字どうしがつながる)
+const pairOf = w => (w && w.pair >= 0 ? w.pair : 0);
+function drawPairLines(g, ws, lw, now) { // ペアどうしを点線で結ぶ
+  g.save(); g.lineCap = 'round'; for (let i = 0; i < ws.length; i++) { const w = ws[i], m = ws[w.mate]; if (!m || w.mate < i) continue;
+    g.strokeStyle = PAIR_C[pairOf(w)] + 'cc'; g.lineWidth = lw; g.setLineDash([lw * 2.2, lw * 1.8]); g.lineDashOffset = -(now || 0) / 40; g.beginPath(); g.moveTo(w.x, w.y); g.lineTo(m.x, m.y); g.stroke(); }
+  g.restore(); }
 const previewCache = {}; let shownMap = -1;
 const prevG = $('mapPrev').getContext('2d');
 function drawMapPreview(i) {
@@ -1426,6 +1443,12 @@ function drawMapPreview(i) {
     g.font = `bold ${hub ? 14 : 12}px sans-serif`; g.lineWidth = 4; g.strokeStyle = '#000c'; g.strokeText(THEMES[t].n, cx, cy + (hub ? 16 : 0)); g.fillStyle = col; g.fillText(THEMES[t].n, cx, cy + (hub ? 16 : 0));
   }
   g.font = '20px serif'; g.fillStyle = '#000'; g.fillText(M.theme === 'space' ? '🚨' : '🔔', M.BUTTON.x * k, M.BUTTON.y * k - 4);
+  // ワープ穴の位置とペア (ゲーム設定の時点で全員が確認できる)
+  const ws = (M.WARPS || []).map(w => ({ ...w, x: w.x * k, y: w.y * k }));
+  drawPairLines(g, ws, 2.5, 0);
+  for (const w of ws) { const c = PAIR_C[pairOf(w)];
+    g.fillStyle = '#2b1d55'; g.beginPath(); g.arc(w.x, w.y, 12, 0, 7); g.fill(); g.strokeStyle = c; g.lineWidth = 3.5; g.stroke();
+    g.font = 'bold 14px sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(PAIR_L[pairOf(w)], w.x, w.y + 1); }
 }
 const themeMaps = th => init.MAPS.map((m, i) => m.theme === th ? i : -1).filter(i => i >= 0);
 let lastIsland = 0; const lastByTheme = {}; const TH_ICON = { island: '🏝', sky: '☁', space: '🚀' };
@@ -1433,6 +1456,7 @@ function renderMapPanel(i, isHost) {
   const M = init.MAPS[i], th = M.theme, list = themeMaps(th);
   if (i !== shownMap) {
     shownMap = i; drawMapPreview(i); applyLobbySkin(i); lastByTheme[th] = i; if (th === 'island') lastIsland = i;
+    $('mpWarp').innerHTML = (M.WARPS || []).length ? '🕳 インポスターのワープ穴: <b>同じ英字どうしだけ</b>つながる (' + PAIR_L.slice(0, Math.ceil(M.WARPS.length / 2)).map((l, i) => `<span style="color:${PAIR_C[i]}">${l}↔${l}</span>`).join(' / ') + ')' : '';
     $('mpName').textContent = list.length > 1 ? `${TH_ICON[th]} ${list.indexOf(i) + 1}/${list.length}  ${M.name}` : `${TH_ICON[th]} ${M.name}`; $('mpDesc').textContent = M.desc;
   }
   $('mpTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.th === th)); $('mpTabs').classList.toggle('ro', !isHost);
@@ -1702,7 +1726,7 @@ function onPhase(old, now) {
   if (now === 'playing') {
     hide('meeting', 'endscr'); if (old === 'meeting') { meetSig = ''; trail = []; openMap(false); openVote(false); clearTimeout(ejectT); }
     if (old === 'lobby') { trail = []; deathPos = null; wasAlive = true; lastTrailT = 0; }
-    if (old === 'lobby' && S.me.role) startFx('role', { role: S.me.role, det: S.me.det, mates: S.me.mates, ic: S.ic, players: S.players.map(p => ({ ...p })) }, 3400);
+    if (old === 'lobby' && S.me.role) startFx('role', { role: S.me.role, det: S.me.det, sher: S.me.sher, mates: S.me.mates, ic: S.ic, players: S.players.map(p => ({ ...p })) }, 3400);
     if (old === 'lobby') detTraces.length = 0;
   }
   if (now === 'meeting') { closeMini(); show('meeting'); $('chatLog').innerHTML = ''; meetSig = ''; $('mRes').textContent = ''; prevMode = ''; }
@@ -1734,7 +1758,8 @@ const myEnt = () => ents.get(init && init.you);
 function nearHint(me, e) {
   if (!e || me.late || !MAP) return { text: '', body: false, tgt: false };
   const body = me.alive && S.bodies.some(b => hyp(b.x - e.x, b.y - e.y) <= 110);
-  const tgt = me.role === 'imposter' && S.players.some(p => p.id !== init.you && p.a && !me.mates.includes(p.id) && hyp(p.x - e.x, p.y - e.y) <= 95);
+  const tgt = (me.role === 'imposter' && S.players.some(p => p.id !== init.you && p.a && !me.mates.includes(p.id) && hyp(p.x - e.x, p.y - e.y) <= 95))
+    || (me.sher && me.alive && S.players.some(p => p.id !== init.you && p.a && hyp(p.x - e.x, p.y - e.y) <= 95)); // シェリフは誰でも撃てる
   let text = '';
   const sb = S.sab || {};
   const fz = sb.flood && me.alive && sb.flood.zones.find(z => rectDist(e, z) <= init.REACH);
@@ -1753,7 +1778,7 @@ function nearHint(me, e) {
     if (!text && me.alive && hyp(MAP.BUTTON.x - e.x, MAP.BUTTON.y - e.y) <= 90) text = me.em ? '' : (me.emLock > 0 ? `${isSpace() ? '会議ボタン' : '集合の鐘'} (あと${Math.ceil(me.emLock / 1000)}秒)` : (isSpace() ? 'SPACE: 緊急会議ボタン' : 'SPACE: 集合の鐘を鳴らす (緊急会議)'));
   }
   const warp = me.role === 'imposter' && me.alive && me.warps && me.warps.some(w => hyp(w.x - e.x, w.y - e.y) <= 70);
-  if (warp) text = (text ? text + ' ・ ' : '') + 'G: 🕳 ワープ';
+  if (warp) { const w0 = me.warps.find(w => hyp(w.x - e.x, w.y - e.y) <= 70), L = PAIR_L[pairOf(w0)]; text = (text ? text + ' ・ ' : '') + `G: 🕳 ワープ (${L}→${L})`; }
   return { text, body, tgt, warp };
 }
 // マス単位の矩形 (水たまり) と点の距離
@@ -1792,18 +1817,20 @@ function renderHud(s) {
   const h = nearHint(me, e);
   $('hint').textContent = h.text;
   $('bRep').classList.toggle('rdy', h.body); $('bRep').classList.toggle('hidden', !me.alive || me.late); $('bUse').classList.toggle('hidden', me.late);
-  const imp = me.role === 'imposter' && me.alive;
-  $('bKill').classList.toggle('hidden', !imp); $('bSab').classList.toggle('hidden', !imp); $('bWarp').classList.toggle('hidden', !imp || !h.warp);
+  const imp = me.role === 'imposter' && me.alive, sher = !!me.sher && me.alive && !me.late;
+  $('bKill').classList.toggle('hidden', !imp && !sher); $('bKill').classList.toggle('sher', sher); $('bSab').classList.toggle('hidden', !imp); $('bWarp').classList.toggle('hidden', !imp || !h.warp);
   if (imp && h.warp) { $('bWarp').classList.toggle('cd', me.wcd > 0); $('bWarp').classList.toggle('rdy', me.wcd <= 0); $('bWarp').innerHTML = `ワープ<small>${me.wcd > 0 ? Math.ceil(me.wcd / 1000) + 's' : 'G'}</small>`; }
   renderSab(s);
+  if (sher) { $('bKill').classList.toggle('cd', me.kcd > 0); $('bKill').classList.toggle('rdy', me.kcd <= 0 && h.tgt);
+    $('bKill').innerHTML = `🔫 撃つ<small>${me.kcd > 0 ? Math.ceil(me.kcd / 1000) + 's' : 'E'}</small>`; }
   if (imp) {
     $('bKill').classList.toggle('cd', me.kcd > 0); $('bKill').classList.toggle('rdy', me.kcd <= 0 && h.tgt);
     $('bKill').innerHTML = `キル<small>${me.kcd > 0 ? Math.ceil(me.kcd / 1000) + 's' : 'E'}</small>`;
     const scdMin = Math.min(me.sabOn ? Infinity : me.scd, me.pcd || 0); // どれか1つでも使えれば押せる (発動中の妨害は終了までクールタイムが進まない)
     $('bSab').classList.toggle('cd', scdMin > 0); $('bSab').innerHTML = `妨害<small>${scdMin <= 0 ? 'F' : me.sabOn ? '発動中' : Math.ceil(scdMin / 1000) + 's'}</small>`;
   }
-  $('roleTag').textContent = me.late ? '' : me.role === 'imposter' ? '🔪 インポスター' : (me.det ? '🔍 探偵 (クルー)' : '🧑‍🚀 クルー') + (me.alive ? '' : ' (霊)');
-  $('roleTag').style.color = me.role === 'imposter' ? '#ff6b6b' : me.det ? '#ffd43b' : '#8ecbff';
+  $('roleTag').textContent = me.late ? '' : me.role === 'imposter' ? '🔪 インポスター' : (me.det ? '🔍 探偵 (クルー)' : me.sher ? '🔫 シェリフ (クルー)' : '🧑‍🚀 クルー') + (me.alive ? '' : ' (霊)');
+  $('roleTag').style.color = me.role === 'imposter' ? '#ff6b6b' : me.det ? '#ffd43b' : me.sher ? '#fcc419' : '#8ecbff';
   $('spec').classList.toggle('hidden', !(me.late || !me.alive));
   $('spec').textContent = me.late ? '👀 ゲーム進行中のため観戦中 (次のロビーから参加)' : '👻 霊: 壁を通り抜けられる・移動1.5倍・タスクは続行可';
 }
@@ -1936,10 +1963,11 @@ function fitWarpMap() {
 addEventListener('resize', () => { if (warpOpen) fitWarpMap(); });
 function buildWarpList() { // ピン (番号ボタン) を並べる。状態が変わったときだけ作り直す
   const ws = S.me.warps || [], e = myEnt(), cd = S.me.wcd > 0, hereI = e ? ws.findIndex(w => hyp(w.x - e.x, w.y - e.y) <= 70) : -1;
-  $('warpCd').textContent = cd ? `⏳ ワープはあと${Math.ceil(S.me.wcd / 1000)}秒` : (hereI >= 0 ? `いま ${hereI + 1} 番にいます — 行き先の番号をタップ` : '');
+  const mateI = hereI >= 0 ? ws[hereI].mate : -1, L0 = hereI >= 0 ? PAIR_L[pairOf(ws[hereI])] : '';
+  $('warpCd').textContent = cd ? `⏳ ワープはあと${Math.ceil(S.me.wcd / 1000)}秒` : (hereI >= 0 ? `いま「${L0}」にいます — もう一方の「${L0}」へだけワープできる (タップ / SPACE)` : '');
   const sig = ws.length + '|' + cd + '|' + hereI; if (buildWarpList.sig === sig) return; buildWarpList.sig = sig;
-  $('warpPins').innerHTML = ws.map((w, i) => { const here = i === hereI, nm = THEMES[w.th] ? THEMES[w.th].n : 'ワープ' + (i + 1);
-    return `<button class="wpPin ${here ? 'here' : ''} ${cd ? 'cd' : ''}" data-w="${i}" style="left:${w.x / init.W * 100}%;top:${w.y / init.H * 100}%" ${here || cd ? 'disabled' : ''} title="${nm}">${i + 1}<small>${here ? '📍いまここ' : nm}</small></button>`; }).join('');
+  $('warpPins').innerHTML = ws.map((w, i) => { const here = i === hereI, mate = i === mateI, pc = PAIR_C[pairOf(w)], L = PAIR_L[pairOf(w)], nm = THEMES[w.th] ? THEMES[w.th].n : 'ワープ';
+    return `<button class="wpPin ${here ? 'here' : mate ? 'mate' : 'no'} ${cd ? 'cd' : ''}" data-w="${i}" style="--pc:${pc};border-color:${pc};left:${w.x / init.W * 100}%;top:${w.y / init.H * 100}%" ${!mate || cd ? 'disabled' : ''} title="${nm}">${L}<small>${here ? '📍いまここ' : mate ? '➡ ' + nm : nm}</small></button>`; }).join('');
   $('warpPins').querySelectorAll('[data-w]').forEach(b => b.onclick = ev => { ev.stopPropagation(); useWarp(+b.dataset.w); });
 }
 function drawWarpMap(now) {
@@ -1949,6 +1977,7 @@ function drawWarpMap(now) {
   for (const r of MAP.rooms || []) { const [x, y, w, h, t] = r; if (!THEMES[t]) continue; const C = init.CELL; // 部屋名 (うすく)
     g.font = 'bold 70px sans-serif'; g.lineWidth = 14; g.strokeStyle = 'rgba(0,0,0,.55)'; g.strokeText(THEMES[t].n, (x + w / 2) * C, (y + h - .6) * C); g.fillStyle = 'rgba(255,255,255,.55)'; g.fillText(THEMES[t].n, (x + w / 2) * C, (y + h - .6) * C); }
   const ws = S.me.warps || [], sel = useWarp.sel;
+  drawPairLines(g, ws, 12, now);
   if (sel != null && ws[sel]) { const e = myEnt(); if (e) { g.strokeStyle = 'rgba(208,191,255,.9)'; g.lineWidth = 16; g.setLineDash([40, 30]); g.lineDashOffset = -now / 4; g.beginPath(); g.moveTo(e.x, e.y); g.lineTo(ws[sel].x, ws[sel].y); g.stroke(); g.setLineDash([]); } }
   for (const w of ws) { const r = 70 + Math.sin(now / 250) * 10; g.strokeStyle = 'rgba(177,151,252,.7)'; g.lineWidth = 10; g.beginPath(); g.arc(w.x, w.y, r, 0, 7); g.stroke(); }
   const e = myEnt(); if (e) { const r = 34 + Math.sin(now / 200) * 8; g.fillStyle = '#fff'; g.beginPath(); g.arc(e.x, e.y, r, 0, 7); g.fill(); g.strokeStyle = '#ff6b6b'; g.lineWidth = 12; g.stroke(); }
@@ -1958,6 +1987,8 @@ function useWarp(i) {
   const ws = S.me.warps || [], e = myEnt(); if (!ws[i] || useWarp.sel != null) return;
   if (S.me.wcd > 0) { toast(`ワープはあと${Math.ceil(S.me.wcd / 1000)}秒`, 'error'); return; }
   if (e && hyp(ws[i].x - e.x, ws[i].y - e.y) <= 70) { toast('そこはいまいる地点です', 'error'); return; }
+  const hereI = e ? ws.findIndex(w => hyp(w.x - e.x, w.y - e.y) <= 70) : -1;
+  if (hereI >= 0 && ws[hereI].mate !== i) { toast(`「${PAIR_L[pairOf(ws[hereI])]}」のワープ穴は、もう一方の「${PAIR_L[pairOf(ws[hereI])]}」にしか行けない`, 'error'); return; }
   useWarp.sel = i; const b = $('warpPins').querySelector(`[data-w="${i}"]`); if (b) b.classList.add('go'); SFX.click();
   setTimeout(() => { useWarp.sel = null; socket.emit('warp', i); openWarp(false); }, 200); // ピンが弾ける演出のあとワープ
 }
@@ -2172,13 +2203,13 @@ function openMap(v) {
   if (v) { $('mapHead').textContent = S.ph === 'meeting' ? '🗺 マップ — 会議前の行動を思い出そう' : '🗺 マップ'; fitMapCanvas(); drawBigMap(performance.now()); releaseFocus(); }
 }
 function toggleMap() { openMap(!mapOpen); }
-function drawWarpMarker(g, x, y, n, now) { // 全体マップ用のワープホール記号 (番号はインポスターのワープ番号と同じ)
-  const r = 34 + Math.sin(now / 300 + n) * 3;
+function drawWarpMarker(g, x, y, w, now) { // 全体マップ用のワープホール記号 (英字 = ペア。同じ英字どうしがつながる)
+  const pi = pairOf(w), n = PAIR_L[pi], pc = PAIR_C[pi], r = 34 + Math.sin(now / 300 + pi) * 3;
   g.fillStyle = 'rgba(151,117,250,.3)'; g.beginPath(); g.arc(x, y, r + 22, 0, 7); g.fill();
-  g.fillStyle = '#5f3dc4'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.strokeStyle = '#e5dbff'; g.lineWidth = 6; g.stroke();
+  g.fillStyle = '#5f3dc4'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.strokeStyle = pc; g.lineWidth = 8; g.stroke();
   g.strokeStyle = '#b197fc'; g.lineWidth = 5; g.beginPath(); g.arc(x, y, r * .62, now / 400, now / 400 + 4.4); g.stroke();
   g.font = 'bold 40px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText(n, x, y + 2);
-  g.font = 'bold 26px sans-serif'; g.lineWidth = 7; g.strokeStyle = '#000'; g.strokeText('🕳 ワープ', x, y + r + 26); g.fillStyle = '#d0bfff'; g.fillText('🕳 ワープ', x, y + r + 26);
+  g.font = 'bold 26px sans-serif'; g.lineWidth = 7; g.strokeStyle = '#000'; g.strokeText(`🕳 ワープ${n}`, x, y + r + 26); g.fillStyle = pc; g.fillText(`🕳 ワープ${n}`, x, y + r + 26);
 }
 function drawBigMap(now) {
   const g = mapBigG, cw = 1600, ch = 1000, k = cw / mapCv.width;
@@ -2195,7 +2226,7 @@ function drawBigMap(now) {
   { const sb = S.sab || {}, C = init.CELL; // 妨害の状況
     if (sb.flood) for (const z of sb.flood.zones) { g.fillStyle = isSky() ? 'rgba(255,255,255,.95)' : 'rgba(60,160,230,.85)'; g.fillRect(z.c0 * C, z.r0 * C, (z.c1 - z.c0 + 1) * C, (z.r1 - z.r0 + 1) * C); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText(isSky() ? '☁' : '🌊', (z.c0 + 1.5) * C, (z.r0 + 1.5) * C); }
     if (sb.short) for (const q of sb.short.spots) if (!q.done) { g.fillStyle = '#ff3b3b'; elg(g, q.x, q.y, 30, 30); g.fill(); g.font = '60px serif'; g.fillStyle = '#000'; g.fillText('⚡', q.x, q.y); }
-    (MAP.WARPS || S.me.warps || []).forEach((wp, i) => drawWarpMarker(g, wp.x, wp.y, i + 1, now)); // ワープホールの位置は全員のマップに表示
+    { const ws = MAP.WARPS || S.me.warps || []; drawPairLines(g, ws, 10, now); ws.forEach(wp => drawWarpMarker(g, wp.x, wp.y, wp, now)); } // ワープ穴とペアは全員のマップに表示
     (MAP.CAMS || []).forEach((c, i) => { const lit = (S.cams || []).includes(i); g.font = '46px serif'; g.fillStyle = '#000'; g.fillText('📹', c.x, c.y + 26); if (lit) { g.fillStyle = '#ff2b2b'; g.beginPath(); g.arc(c.x + 30, c.y + 6, 11, 0, 7); g.fill(); } });
     if (MAP.MONITOR) { const M = MAP.MONITOR; g.font = '54px serif'; g.fillStyle = '#000'; g.fillText('🖥', M.x, M.y); g.font = 'bold 26px sans-serif'; g.lineWidth = 7; g.strokeStyle = '#000'; g.strokeText('監視カメラ', M.x, M.y + 46); g.fillStyle = '#8ecbff'; g.fillText('監視カメラ', M.x, M.y + 46); }
   }
@@ -2235,13 +2266,17 @@ function renderEnd(s) {
   const w = s.result.winner, won = s.me.late ? null : (w === 'crew') === (s.me.role === 'crew');
   $('endTitle').textContent = w === 'crew' ? 'CREW WIN!' : 'IMPOSTER WIN!'; $('endTitle').style.color = w === 'crew' ? '#8ecbff' : '#ff4d4d';
   $('endReason').textContent = (won === null ? '' : won ? '🎉 あなたの勝利! ' : '💀 あなたの敗北… ') + s.result.reason;
-  $('roster').innerHTML = s.roster.map(r => `<div class="pcard">${avatar(r.c)}<b>${esc(r.name)}</b><span class="tag" style="background:${r.role === 'imposter' ? '#fa5252' : r.det ? '#f59f00' : '#4dabf7'}">${r.role === 'imposter' ? 'インポスター' : r.det ? '🔍 探偵' : 'クルー'}</span></div>`).join('');
+  $('roster').innerHTML = s.roster.map(r => `<div class="pcard">${avatar(r.c)}<b>${esc(r.name)}</b><span class="tag" style="background:${r.role === 'imposter' ? '#fa5252' : r.det ? '#f59f00' : r.sher ? '#e67700' : '#4dabf7'}">${r.role === 'imposter' ? 'インポスター' : r.det ? '🔍 探偵' : r.sher ? '🔫 シェリフ' : 'クルー'}</span></div>`).join('');
 }
 
 // ---------- 演出 (ロール発表 / キルカット(被害者のみ) / 海への追放) ----------
 const STARS = Array.from({ length: 140 }, () => ({ x: Math.random(), y: Math.random(), z: .2 + Math.random() * .8 }));
 function startFx(kind, data, dur) { fx = { kind, data, t0: performance.now(), dur }; fxc.classList.remove('hidden'); }
 socket.on('killCut', d => startFx('kill', d, 2600));
+socket.on('sherShot', d => { // シェリフの射撃結果 (本人だけに届く)
+  if (d.ok) { toast(`🔫 インポスター「${d.tn}」を撃ち抜いた!`, 'good'); beep(1200, .08, 'square', .08); beep(200, .25, 'sawtooth', .08, .05); }
+  else { toast(`💥 クルー「${d.tn}」を撃ってしまった… シェリフは自爆した`, 'error'); beep(1200, .08, 'square', .08); beep(90, .5, 'sawtooth', .1, .08);
+    const f = $('flash'); f.style.background = '#ff2b2b'; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); setTimeout(() => f.style.background = '', 950); } });
 function fxSea(t) { // 夜の孤島の海 (星空 + 月 + 波)
   const w = fxc.width / DPR, h = fxc.height / DPR, hz = h * .55;
   const sky = fxg.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, '#050a1f'); sky.addColorStop(1, '#1d3a5f'); fxg.fillStyle = sky; fxg.fillRect(0, 0, w, hz);
@@ -2280,9 +2315,10 @@ function drawFx(now) {
     fxStars(t, 4); if (imp) { const g = fxg.createRadialGradient(w / 2, h / 2, 50, w / 2, h / 2, h); g.addColorStop(0, 'rgba(160,0,0,0)'); g.addColorStop(1, 'rgba(160,0,0,.5)'); fxg.fillStyle = g; fxg.fillRect(0, 0, w, h); }
     const ease = 1 - Math.pow(1 - clamp(t / .6, 0, 1), 3), fade = clamp((fx.dur / 1000 - t) / .5, 0, 1);
     fxg.globalAlpha = fade;
-    fxText(imp ? 'あなたは インポスター' : d.det ? 'あなたは 探偵' : 'あなたは クルー', w / 2, h * .16, Math.min(72, w / 10) * (.4 + .6 * ease), imp ? '#ff4d4d' : d.det ? '#ffd43b' : '#8ecbff', ease);
+    fxText(imp ? 'あなたは インポスター' : d.det ? 'あなたは 探偵' : d.sher ? 'あなたは シェリフ' : 'あなたは クルー', w / 2, h * .16, Math.min(72, w / 10) * (.4 + .6 * ease), imp ? '#ff4d4d' : d.det ? '#ffd43b' : d.sher ? '#fcc419' : '#8ecbff', ease);
     if (d.det) fxText('キルが起きると、被害者の直前5秒の足跡があなたにだけ見える', w / 2, h * .34, Math.min(22, w / 32), '#ffe8a3', ease, w * .92);
-    const sub = d.det ? `クルー陣営 ・ この中にインポスターが ${d.ic}人` : imp ? (d.mates.length ? '仲間: ' + d.players.filter(p => d.mates.includes(p.id)).map(p => p.name).join(', ') : '仲間はいない… 一人で全員を欺け') : `この中に インポスターが ${d.ic}人 紛れている`;
+    if (d.sher) fxText('E で誰でも撃てる。インポスターなら倒せるが、クルーを撃つと自爆する', w / 2, h * .34, Math.min(22, w / 32), '#ffe8a3', ease, w * .92);
+    const sub = (d.det || d.sher) ? `クルー陣営 ・ この中にインポスターが ${d.ic}人` : imp ? (d.mates.length ? '仲間: ' + d.players.filter(p => d.mates.includes(p.id)).map(p => p.name).join(', ') : '仲間はいない… 一人で全員を欺け') : `この中に インポスターが ${d.ic}人 紛れている`;
     fxText(sub, w / 2, h * .27, Math.min(26, w / 28), '#fff', ease, w * .92);
     const n = d.players.length, sc = Math.min(2.2 * u / 2, w / (n * 62)), gap = Math.min(110 * sc / 1.3, w / (n + 1));
     d.players.forEach((p, i) => { const ent = { x: w / 2 + (i - (n - 1) / 2) * gap, y: h * .68 + Math.sin(t * 6 + i) * 4, f: 1, ph: t * 12 + i, mv: true, a: true, c: p.c, acc: p.acc, name: p.name };
@@ -2636,6 +2672,7 @@ function onKeyDown(e) {
   if (sabOpen || warpOpen) { // メニュー表示中: 数字で選択 / Esc・同じキーで閉じる
     if (!rep) {
       if (k === 'escape' || (sabOpen && k === 'f') || (warpOpen && k === 'g')) { openSab(false); openWarp(false); }
+      else if (warpOpen && (k === 'space' || k === 'enter')) { const e = myEnt(), ws = S.me.warps || [], h = e ? ws.findIndex(w => hyp(w.x - e.x, w.y - e.y) <= 70) : -1; if (h >= 0) useWarp(ws[h].mate); }
       else if (/^[1-9]$/.test(k)) { const i = +k - 1; if (sabOpen) { const kk = sabKinds()[i]; if (kk && !$('sabList').querySelector(`[data-k=${kk}]`).disabled) useSab(kk); } else if (S.me.warps && S.me.warps[i]) useWarp(i); }
     }
     sendInput(); return;
@@ -2861,7 +2898,7 @@ function drawSabWorld(now, me) {
     const gl = ctx.createRadialGradient(wp.x, wp.y, 4, wp.x, wp.y, 34); gl.addColorStop(0, 'rgba(151,117,250,.55)'); gl.addColorStop(1, 'rgba(151,117,250,0)'); ctx.fillStyle = gl; ctx.fillRect(wp.x - 36, wp.y - 36, 72, 72);
     if (isSpace()) { ctx.fillStyle = '#1a1f2b'; rrg(ctx, wp.x - 22, wp.y - 14, 44, 28, 4); ctx.fill(); ctx.strokeStyle = '#6b7799'; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = '#3b4252'; for (let k = 0; k < 4; k++) ctx.fillRect(wp.x - 18, wp.y - 10 + k * 6, 36, 3); }
     else { ctx.fillStyle = '#5c3d22'; elg(ctx, wp.x, wp.y, 24, 15); ctx.fill(); ctx.fillStyle = '#120a04'; elg(ctx, wp.x, wp.y + 1, 15, 9); ctx.fill(); }
-    ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText('🕳 ワープ', wp.x, wp.y - 24); ctx.fillStyle = '#d0bfff'; ctx.fillText('🕳 ワープ', wp.x, wp.y - 24);
+    ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`🕳 ワープ${PAIR_L[pairOf(wp)]}`, wp.x, wp.y - 24); ctx.fillStyle = PAIR_C[pairOf(wp)]; ctx.fillText(`🕳 ワープ${PAIR_L[pairOf(wp)]}`, wp.x, wp.y - 24);
   }
 }
 // 暗闇: 画面全体を闇で覆い、プレイヤーを中心とした丸い視野だけを照らす。発動時は視野の縁がギュッと縮み、終わると広がる
